@@ -1,0 +1,22 @@
+#################################################################################
+									Week 1
+#################################################################################
+
+Lining up with our Gantt chart, I started developing the Vulkan backend of the
+engine. I gave myself 2 weeks to do this, and it's looking like I might be able
+to get a bit ahead, I had a really productive night on Wednesday. 
+
+In order for the code to run, you need to have the Vulkan SDK installed on your
+machine.
+
+In ./vulkan_stuff, I added:
+	- diskovery.py
+		I'm hoping DisKovery can be set up like SDL or GLFW in that the 
+		programmer calls an init() function called Diskovery_Init() or 
+		something and Diskovery_Quit() (mirroring SDL_Init() and SDL_Quit()) 
+		and doing it with Python makes that really easy. 
+		I'm hoping to have 3 main methods in here that the user can call:
+			Diskovery_Init()
+			Diskovery_Run()
+			Diskovery_Quit()
+	- main.py (tester)
