@@ -6,17 +6,62 @@ Lining up with our Gantt chart, I started developing the Vulkan backend of the
 engine. I gave myself 2 weeks to do this, and it's looking like I might be able
 to get a bit ahead, I had a really productive night on Wednesday. 
 
-In order for the code to run, you need to have the Vulkan SDK installed on your
-machine.
+In order for the code to run, you need to have the Vulkan SDK installed and the
+python modules "vulkan" and "pysdl2" installed on your machine. If you do, you
+should see a red triangle with a green background show up when you run 
+	
+	python ./vulkan_stuff/main.py
+
+Work I did this week:
 
 In ./vulkan_stuff, I added:
 	- diskovery.py
-		I'm hoping DisKovery can be set up like SDL or GLFW in that the 
-		programmer calls an init() function called Diskovery_Init() or 
-		something and Diskovery_Quit() (mirroring SDL_Init() and SDL_Quit()) 
-		and doing it with Python makes that really easy. 
-		I'm hoping to have 3 main methods in here that the user can call:
-			Diskovery_Init()
-			Diskovery_Run()
-			Diskovery_Quit()
+		The actual Diskovery module, the top level that all other diskovery
+		components will be underneath. Handles initialization, cleanup, and
+		drawing the frame
+	- diskovery_window.py
+		Handles the SDL window (placeholder until integrated with pygame and 
+		tkinter), the Vulkan instance, and the surface that connects the two
+	- diskovery_device_manager.py
+		Handles the selection of the physical device (the graphics card) and
+		the creation of the Vulkan logical device. Stores info about queues
+	- diskovery_swap_chain.py
+		Handles the creation of a VkSwapChainKHR object and other relevant
+		info that goes with it. 
+	- diskovery_pipeline.py
+		Handles the creation of a VkPipeline, VkPipelineLayout, parsing in a
+		shader file, and creating a full pipeline from these and a render pass
+	- diskovery_command_buffer.py
+		Handles the command buffers, which handle draw calls asynchronously.
+		Uses a command pool and pulls from it to draw to each individual 
+		frame buffer.
+	- diskovery_sync_objects.py
+		Handles the actual displaying of different frames through semaphores
+		and fences. Holds references to these VkSemaphores and VkFences.
+	- diskovery_vulkan.py
+		Random create methods that weren't big enough to warrant getting their
+		own classes around them. Includes VkRenderPass and VkFramebuffer.
 	- main.py (tester)
+		Just runs Diskovery via Diskovery_Init() and Diskovery_Run()
+
+	frag.spv and vert.spv are ripped from the example included in our Python
+	wrapper, and placeholders. Next week we will have original GLSL shaders,
+	converted to SPIR-V format realtime.
+
+	The SDL2.dll is necessary for the placeholder SDL window to run. Once we're
+	better integrated with pygame we won't need it anymore.
+
+I've been basing this mostly on an example included in the Python wrapper 
+we're using:
+
+	https://github.com/realitix/vulkan/blob/master/example/example_sdl2.py
+
+It doesn't have anything about a whole Object-Oriented structure like we're 
+trying to set up so I'm adapting as I go, and really just wanted to get 
+something on the screen before tidying everything up and making
+it look nice, so some of it is pretty ugly for now, I'll also need to add
+comments in a lot of places for our autogen Sphinx doc.
+
+For next week, I'll need to add more stuff for customizable shaders, uniform
+buffers and the whole system around them, loading textures and sampling them,
+and generally cleaning up the code that's here. 
