@@ -1,10 +1,10 @@
 #!/bin/env python
 
-from diskovery import *
+import diskovery
 
 def main():
-	Diskovery_init()
-	Diskovery_run()
+	diskovery.init()
+	diskovery.run()
 
 if __name__ == "__main__":
 	main()

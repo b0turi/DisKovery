@@ -1,8 +1,7 @@
 #!/bin/env python
 
 import pygame
-from sdl2 import *
-from sdl2.ext import *
+import platform
 from vulkan import *
 from diskovery_vulkan import get_vulkan_command
 
@@ -16,16 +15,16 @@ layers = ['VK_LAYER_LUNARG_standard_validation']
 def surface_xlib(wm_info, instance):
     surface_create = VkXlibSurfaceCreateInfoKHR(
         sType=VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR,
-        dpy=wm_info.info.x11.display,
-        window=wm_info.info.x11.window,
+        dpy=wm_info['display'],
+        window=wm_info['window'],
         flags=0)
     return get_vulkan_command(instance, "vkCreateXlibSurfaceKHR")(instance, surface_create, None)
 
 def surface_wayland(wm_info, instance):
     surface_create = VkWaylandSurfaceCreateInfoKHR(
         sType=VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR,
-        display=wm_info.info.wl.display,
-        surface=wm_info.info.wl.surface,
+        display=wm_info['display'],
+        surface=wm_info['window'],
         flags=0)
     return get_vulkan_command(instance, "vkCreateWaylandSurfaceKHR")(instance, surface_create, None)
 
@@ -39,15 +38,14 @@ def surface_win32(wm_info, instance):
 
     surface_create = VkWin32SurfaceCreateInfoKHR(
         sType=VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
-        hinstance=get_instance(wm_info.info.win.window),
-        hwnd=wm_info.info.win.window,
+        hinstance=get_instance(wm_info['window']),
+        hwnd=wm_info['window'],
         flags=0)
     return get_vulkan_command(instance, "vkCreateWin32SurfaceKHR")(instance, surface_create, None)
 
 
 class DiskoveryWindow:
 	def __init__(self, width, height):
-		self.window = None
 		self.instance = None
 		self.surface = None
 
@@ -56,17 +54,9 @@ class DiskoveryWindow:
 		self.link_surface()
 
 	def make_window(self, width, height):
-		self.window = SDL_CreateWindow(
-			"Diskovery".encode('ascii'),
-			SDL_WINDOWPOS_UNDEFINED,
-			SDL_WINDOWPOS_UNDEFINED, width, height, 0)
-
-		if not self.window:
-			raise Exception(SDL_GetError())
-
-		self.wm_info = SDL_SysWMinfo()
-		SDL_VERSION(self.wm_info.version)
-		SDL_GetWindowWMInfo(self.window, ctypes.byref(self.wm_info))
+		pygame.display.init()
+		pygame.display.set_mode((width, height))
+		self.wm_info = pygame.display.get_wm_info()
 
 	def make_instance(self):
 
@@ -80,11 +70,13 @@ class DiskoveryWindow:
 
 		# Add platform specific extensions for displaying a window
 		
-		if self.wm_info.subsystem == SDL_SYSWM_WINDOWS: # Windows
+		pl = platform.system()
+
+		if pl == 'Windows':
 			extensions.append('VK_KHR_win32_surface')
-		elif self.wm_info.subsystem == SDL_SYSWM_X11: # Mac OS
+		elif pl == 'Darwin': # Mac OS
 			extensions.append('VK_KHR_xlib_surface')
-		elif self.wm_info.subsystem == SDL_SYSWM_WAYLAND: # Linux
+		elif pl == 'Linux':
 			extensions.append('VK_KHR_wayland_surface')
 		else:
 			raise Exception("This platform is not supported!")
@@ -102,15 +94,14 @@ class DiskoveryWindow:
 
 	def link_surface(self):
 		surface_mapping = {
-		    SDL_SYSWM_X11: surface_xlib,
-		    SDL_SYSWM_WAYLAND: surface_wayland,
-		    SDL_SYSWM_WINDOWS: surface_win32
+		    'Linux': surface_xlib,
+		    'Darwin': surface_wayland,
+		    'Windows': surface_win32
 		}
 
-		self.surface = surface_mapping[self.wm_info.subsystem](self.wm_info, self.instance)
+		self.surface = surface_mapping[platform.system()](self.wm_info, self.instance)
 
 	def cleanup(self):
 		get_vulkan_command(self.instance, "vkDestroySurfaceKHR")(self.instance, self.surface, None)
 		vkDestroyInstance(self.instance, None)
-		SDL_DestroyWindow(self.window)
-		SDL_Quit()
+		pygame.display.quit()

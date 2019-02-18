@@ -10,9 +10,8 @@ from diskovery_pipeline import Pipeline
 from diskovery_command_buffer import *
 from diskovery_sync_objects import SyncObjects
 
+import pygame
 from vulkan import *
-from sdl2 import *
-from sdl2.ext import *
 
 import os
 import time
@@ -47,11 +46,10 @@ def draw_frame():
 	getVulkanCommand(window.instance, "vkQueuePresentKHR")(device_manager.present_queue["queue"], 
 		sync.present_create)
 
-def Diskovery_init():
+def init():
 	global window, device_manager, swap_chain, command_buffers, sync, render_pass, command_pool, pipeline, framebuffers
-	# Make sure SDL is supported
-	if SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0:
-		raise Exception(SDL_GetError())
+
+	pygame.init()
 
 	window = DiskoveryWindow(800, 600)
 	device_manager = DeviceManager(window)
@@ -75,7 +73,7 @@ def Diskovery_init():
 		command_buffers.buffers, swap_chain.swap_chain_ref)
 
 
-def Diskovery_run():
+def run():
 	global device_manager
 	# Main loop
 	running = True
@@ -93,17 +91,16 @@ def Diskovery_run():
 	        print("FPS: %s" % fps)
 	        fps = 0
 
-	    events = get_events()
 	    draw_frame()
-	    for event in events:
-	        if event.type == SDL_QUIT:
+	    for event in pygame.event.get():
+	        if event.type == pygame.QUIT:
 	            running = False
 	            vkDeviceWaitIdle(device_manager.logical_device)
-	            Diskovery_exit()
+	            quit()
 	            break
 	
 
-def Diskovery_exit():
+def quit():
 	global sync, device_manager, framebuffers, command_pool, pipeline, render_pass, swap_chain, window
 	sync.cleanup()
 	destroy_frame_buffers(device_manager.logical_device, framebuffers)
