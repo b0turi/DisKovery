@@ -65,7 +65,7 @@ class DisKovery():
 			self.swap_chain.swap_chain_ref
 		)
 
-	def cleanup(self):
+	def cleanup(self): 
 		self.sync.cleanup()
 		self.command_buffers.cleanup()
 		destroy_frame_buffers(self.device_manager.logical_device, self.framebuffers)

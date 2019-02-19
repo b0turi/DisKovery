@@ -3,6 +3,31 @@ from vulkan import *
 
 import diskovery
 
+def make_set_layout(definition):
+	bindings = []
+
+	for i in range(0, len(definition)):
+		b = VkDescriptorSetLayoutBinding()
+		b.binding = i
+		b.descriptorCount = 1
+		
+		b.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER if definition[i] == 0 \
+					  else VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
+
+		b.stageFlags = VK_SHADER_STAGE_VERTEX_BIT if definition[i] == 0 \
+				  else VK_SHADER_STAGE_FRAGMENT_BIT
+
+		bindings.append(b)
+
+	layout_create = VkDescriptorSetLayoutCreateInfo(
+		sType=VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+		bindingCount=len(bindings),
+		pBindings=bindings
+	)
+
+	layout = vkCreateDescriptorSetLayout(diskovery.device(), layout_create, None)
+	return layout
+
 class Descriptor:
 	def __init__(self, definition, uniforms, textures):
 		self.pool = None
@@ -35,3 +60,9 @@ class Descriptor:
 		)
 
 		self.pool = vkCreateDescriptorPool(diskovery.device(), pool_create, None)
+
+	def make_sets(self, uniforms, textures):
+		pass
+
+	def cleanup(self):
+		pass
