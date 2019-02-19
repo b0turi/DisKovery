@@ -17,7 +17,9 @@ def surface_xlib(wm_info, instance):
         sType=VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR,
         dpy=wm_info['display'],
         window=wm_info['window'],
-        flags=0)
+        flags=0
+    )
+
     return get_vulkan_command(instance, "vkCreateXlibSurfaceKHR")(instance, surface_create, None)
 
 def surface_wayland(wm_info, instance):
@@ -25,7 +27,9 @@ def surface_wayland(wm_info, instance):
         sType=VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR,
         display=wm_info['display'],
         surface=wm_info['window'],
-        flags=0)
+        flags=0
+    )
+
     return get_vulkan_command(instance, "vkCreateWaylandSurfaceKHR")(instance, surface_create, None)
 
 def surface_win32(wm_info, instance):
@@ -40,7 +44,9 @@ def surface_win32(wm_info, instance):
         sType=VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
         hinstance=get_instance(wm_info['window']),
         hwnd=wm_info['window'],
-        flags=0)
+        flags=0
+    )
+
     return get_vulkan_command(instance, "vkCreateWin32SurfaceKHR")(instance, surface_create, None)
 
 
@@ -66,12 +72,12 @@ class DiskoveryWindow:
 			applicationVersion=VK_MAKE_VERSION(1, 0, 0),
 			pEngineName="DisKovery",
 			engineVersion=VK_MAKE_VERSION(0, 0, 1),
-			apiVersion=VK_API_VERSION_1_0)
+			apiVersion=VK_API_VERSION_1_0
+		)
 
 		# Add platform specific extensions for displaying a window
 		
 		pl = platform.system()
-
 		if pl == 'Windows':
 			extensions.append('VK_KHR_win32_surface')
 		elif pl == 'Darwin': # Mac OS
@@ -88,7 +94,8 @@ class DiskoveryWindow:
 			enabledExtensionCount=len(extensions),
 			ppEnabledExtensionNames=extensions,
 			enabledLayerCount=len(layers),
-			ppEnabledLayerNames=layers)
+			ppEnabledLayerNames=layers
+		)
 
 		self.instance = vkCreateInstance(createInfo, None)
 

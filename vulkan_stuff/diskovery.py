@@ -2,13 +2,9 @@
 
 layers = ['VK_LAYER_LUNARG_standard_validation']
 
-from diskovery_window import DiskoveryWindow
-from diskovery_device_manager import DeviceManager
-from diskovery_swap_chain import SwapChain
-from diskovery_vulkan import *
-from diskovery_pipeline import Pipeline
-from diskovery_command_buffer import *
-from diskovery_sync_objects import SyncObjects
+
+from diskovery_instance import DisKovery
+from diskovery_vulkan import get_vulkan_command
 
 import pygame
 from vulkan import *
@@ -16,65 +12,15 @@ from vulkan import *
 import os
 import time
 
-def getVulkanCommand(instance, cmd):
-	return vkGetInstanceProcAddr(instance, cmd)
-
-window = None
-device_manager = None
-swap_chain = None
-render_pass = None
-pipeline = None
-framebuffers = None
-command_pool = None
-command_buffers = None
-sync = None
-
-def draw_frame():
-	global window, device_manager, swap_chain, command_buffers, sync
-	try:
-	    image_index = getVulkanCommand(window.instance, "vkAcquireNextImageKHR")(
-	    	device_manager.logical_device, swap_chain.swap_chain_ref, UINT64_MAX, 
-	       	sync.image_available, None)
-	except VkNotReady:
-	    print('not ready')
-	    return
-
-	sync.submit_create.pCommandBuffers[0] = command_buffers.buffers[image_index]
-	vkQueueSubmit(device_manager.graphics_queue["queue"], 1, sync.submit_list, None)
-
-	sync.present_create.pImageIndices[0] = image_index
-	getVulkanCommand(window.instance, "vkQueuePresentKHR")(device_manager.present_queue["queue"], 
-		sync.present_create)
+_dk = None
 
 def init():
-	global window, device_manager, swap_chain, command_buffers, sync, render_pass, command_pool, pipeline, framebuffers
-
+	global _dk
 	pygame.init()
-
-	window = DiskoveryWindow(800, 600)
-	device_manager = DeviceManager(window)
-	swap_chain = SwapChain(window, device_manager)
-
-	extent = swap_chain.extent
-
-	render_pass = make_render_pass(swap_chain.surface_format, device_manager.logical_device)
-	pipeline = Pipeline(device_manager, render_pass, extent)
-
-	framebuffers = make_frame_buffers(swap_chain.image_views, render_pass, 
-										extent, device_manager.logical_device)
-
-	command_pool = make_command_pool(device_manager.logical_device, 
-									 device_manager.graphics_queue["index"])
-
-	command_buffers = CommandBuffer(command_pool, device_manager.logical_device,
-			framebuffers, render_pass, extent, pipeline.pipeline_ref)
-
-	sync = SyncObjects(device_manager.logical_device, 
-		command_buffers.buffers, swap_chain.swap_chain_ref)
-
+	_dk = DisKovery()
 
 def run():
-	global device_manager
+	global _dk
 	# Main loop
 	running = True
 	if sys.version_info >= (3, 3):
@@ -91,22 +37,57 @@ def run():
 	        print("FPS: %s" % fps)
 	        fps = 0
 
-	    draw_frame()
+	    _dk.draw_frame()
 	    for event in pygame.event.get():
 	        if event.type == pygame.QUIT:
 	            running = False
-	            vkDeviceWaitIdle(device_manager.logical_device)
+	            vkDeviceWaitIdle(_dk.device_manager.logical_device)
 	            quit()
 	            break
-	
+
+# Helper methods for readability that allow other modules to access Vulkan objects
+# that are often necessary, like the logical_device stored in the device_manager,
+# rather than having to pass the values in the constructors of the classes and store
+# references
+
+def instance():
+	global _dk
+	return _dk.window.instance
+
+def surface():
+	global _dk
+	return _dk.window.surface
+
+def device_manager():
+	global _dk
+	return _dk.device_manager
+
+def physical_device():
+	global _dk
+	return _dk.device_manager.physical_device
+
+def device():
+	global _dk
+	return _dk.device_manager.logical_device
+
+def graphics_queue():
+	global _dk
+	return _dk.device_manager.graphics_queue["queue"]
+
+def present_queue():
+	global _dk
+	return _dk.device_manager.present_queue["queue"]
+
+def pool():
+	global _dk
+	return _dk.command_pool
+
+def num_back_buffers():
+	global _dk
+	return len(_dk.framebuffers)
+
+
 
 def quit():
-	global sync, device_manager, framebuffers, command_pool, pipeline, render_pass, swap_chain, window
-	sync.cleanup()
-	destroy_frame_buffers(device_manager.logical_device, framebuffers)
-	destroy_command_pool(device_manager.logical_device, command_pool)
-	pipeline.cleanup()
-	destroy_render_pass(device_manager.logical_device, render_pass)
-	swap_chain.cleanup()
-	device_manager.cleanup()
-	window.cleanup()
+	global _dk
+	_dk.cleanup()

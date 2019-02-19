@@ -1,4 +1,5 @@
 from vulkan import *
+import diskovery 
 
 def make_command_pool(device, index):
 	command_pool_create = VkCommandPoolCreateInfo(
@@ -10,6 +11,38 @@ def make_command_pool(device, index):
 def destroy_command_pool(device, pool):
 	vkDestroyCommandPool(device, pool, None)
 
+def start_command():
+	allocate_info = VkCommandBufferAllocateInfo(
+		sType=VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+		level=VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+		commandPool=diskovery.pool(),
+		commandBufferCount=1
+	)
+
+	buff = vkAllocateCommandBuffers(diskovery.device(), allocate_info)
+
+	begin_info = VkCommandBufferBeginInfo(
+		sType=VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+		flags=VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+	)
+
+	vkBeginCommandBuffer(buff, begin_info)
+	return buff
+
+def end_command(buff):
+	vkEndCommandBuffer(buff)
+
+	submit_info = VkSubmitInfo(
+		sType=VK_STRUCTURE_TYPE_SUBMIT_INFO,
+		commandBufferCount=1,
+		pCommandBuffers=buff
+	)
+
+	vkQueueSubmit(diskovery.graphics_queue(), 1, submit_info, VK_NULL_HANDLE)
+	vkQueueWaitIdle(diskovery.graphics_queue())
+
+	vkFreeCommandBuffers(diskovery.device(), diskovery.pool(), 1, buff)
+
 class CommandBuffer:
 	def __init__(self, pool, device, framebuffers, render_pass, extent, pipeline):
 		self.pool = pool
@@ -20,7 +53,7 @@ class CommandBuffer:
 		self.device = device
 
 
-		self.command_buffers = None
+		self.buffers = None
 
 		self.make_command_buffers()
 
@@ -30,15 +63,18 @@ class CommandBuffer:
 			sType=VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
 			commandPool=self.pool,
 			level=VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-			commandBufferCount=len(self.framebuffers))
+			commandBufferCount=len(self.framebuffers)
+		)
 
 		self.buffers = vkAllocateCommandBuffers(self.device, command_buffers_create)
 
 		for i, command_buffer in enumerate(self.buffers):
+
 			command_buffer_begin_create = VkCommandBufferBeginInfo(
 				sType=VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 				flags=VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
-				pInheritanceInfo=None)
+				pInheritanceInfo=None
+			)
 
 			vkBeginCommandBuffer(command_buffer, command_buffer_begin_create)
 
@@ -67,3 +103,6 @@ class CommandBuffer:
 			# End
 			vkCmdEndRenderPass(command_buffer)
 			vkEndCommandBuffer(command_buffer)
+
+	def cleanup(self):
+		vkFreeCommandBuffers(self.device, self.pool, len(self.buffers), self.buffers)

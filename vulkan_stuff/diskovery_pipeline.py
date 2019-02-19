@@ -2,8 +2,8 @@ from vulkan import *
 import os
 
 class Pipeline:
-	def __init__(self, device_manager, render_pass, extent):
-		self.device_manager = device_manager
+	def __init__(self, device, render_pass, extent):
+		self.device = device
 		self.render_pass = render_pass
 		self.extent = extent
 
@@ -17,7 +17,8 @@ class Pipeline:
 		push_constant_ranges = VkPushConstantRange(
 		    stageFlags=0,
 		    offset=0,
-		    size=0)
+		    size=0
+		)
 
 		pipeline_layout_create = VkPipelineLayoutCreateInfo(
 		    sType=VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -25,10 +26,13 @@ class Pipeline:
 		    setLayoutCount=0,
 		    pSetLayouts=None,
 		    pushConstantRangeCount=0,
-		    pPushConstantRanges=[push_constant_ranges])
+		    pPushConstantRanges=[push_constant_ranges]
+		)
 
-		self.pipeline_layout = vkCreatePipelineLayout(self.device_manager.logical_device, 
-												 		pipeline_layout_create, None)
+		self.pipeline_layout = vkCreatePipelineLayout(
+			self.device, 
+			pipeline_layout_create, None
+		)
 
 	def make_pipeline(self):
 		path = os.path.dirname(os.path.abspath(__file__))
@@ -41,19 +45,27 @@ class Pipeline:
 			sType=VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
 			flags=0,
 			codeSize=len(vert_shader_src),
-			pCode=vert_shader_src)
+			pCode=vert_shader_src
+		)
 
-		vertex_shader = vkCreateShaderModule(self.device_manager.logical_device, 
-											vertex_create, None)
+		vertex_shader = vkCreateShaderModule(
+			self.device, 
+			vertex_create, 
+			None
+		)
 
 		fragment_create = VkShaderModuleCreateInfo(
 			sType=VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
 			flags=0,
 			codeSize=len(frag_shader_src),
-			pCode=frag_shader_src)
+			pCode=frag_shader_src
+		)
 
-		fragment_shader = vkCreateShaderModule(self.device_manager.logical_device, 
-											fragment_create, None)
+		fragment_shader = vkCreateShaderModule(
+			self.device, 
+			fragment_create, 
+			None
+		)
 
 		vertex_stage_create = VkPipelineShaderStageCreateInfo(
 			sType=VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -61,7 +73,8 @@ class Pipeline:
 			module=vertex_shader,
 			flags=0,
 			pSpecializationInfo=None,
-			pName='main')
+			pName='main'
+		)
 
 		fragment_stage_create = VkPipelineShaderStageCreateInfo(
 			sType=VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -69,7 +82,8 @@ class Pipeline:
 			module=fragment_shader,
 			flags=0,
 			pSpecializationInfo=None,
-			pName='main')
+			pName='main'
+		)
 
 		vertex_input_create = VkPipelineVertexInputStateCreateInfo(
 		    sType=VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
@@ -77,16 +91,20 @@ class Pipeline:
 		    vertexBindingDescriptionCount=0,
 		    pVertexBindingDescriptions=None,
 		    vertexAttributeDescriptionCount=0,
-		    pVertexAttributeDescriptions=None)
+		    pVertexAttributeDescriptions=None
+		)
 
 		input_assembly_create = VkPipelineInputAssemblyStateCreateInfo(
 		    sType=VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
 		    flags=0,
 		    topology=VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-		    primitiveRestartEnable=VK_FALSE)
+		    primitiveRestartEnable=VK_FALSE
+		)
+
 		viewport = VkViewport(
 		    x=0., y=0., width=float(self.extent.width), height=float(self.extent.height),
-		    minDepth=0., maxDepth=1.)
+		    minDepth=0., maxDepth=1.
+		)
 
 		scissor_offset = VkOffset2D(x=0, y=0)
 		scissor = VkRect2D(offset=scissor_offset, extent=self.extent)
@@ -96,7 +114,8 @@ class Pipeline:
 		    viewportCount=1,
 		    pViewports=[viewport],
 		    scissorCount=1,
-		    pScissors=[scissor])
+		    pScissors=[scissor]
+		)
 
 		rasterizer_create = VkPipelineRasterizationStateCreateInfo(
 		    sType=VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
@@ -110,7 +129,8 @@ class Pipeline:
 		    depthBiasEnable=VK_FALSE,
 		    depthBiasConstantFactor=0.,
 		    depthBiasClamp=0.,
-		    depthBiasSlopeFactor=0.)
+		    depthBiasSlopeFactor=0.
+		)
 
 		multisample_create = VkPipelineMultisampleStateCreateInfo(
 		    sType=VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
@@ -127,13 +147,15 @@ class Pipeline:
 						    VK_COLOR_COMPONENT_G_BIT | 
 						    VK_COLOR_COMPONENT_B_BIT | 
 						    VK_COLOR_COMPONENT_A_BIT,
+
 		    blendEnable=VK_FALSE,
 		    srcColorBlendFactor=VK_BLEND_FACTOR_ONE,
 		    dstColorBlendFactor=VK_BLEND_FACTOR_ZERO,
 		    colorBlendOp=VK_BLEND_OP_ADD,
 		    srcAlphaBlendFactor=VK_BLEND_FACTOR_ONE,
 		    dstAlphaBlendFactor=VK_BLEND_FACTOR_ZERO,
-		    alphaBlendOp=VK_BLEND_OP_ADD)
+		    alphaBlendOp=VK_BLEND_OP_ADD
+		)
 
 		color_blend_create = VkPipelineColorBlendStateCreateInfo(
 		    sType=VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
@@ -142,7 +164,8 @@ class Pipeline:
 		    logicOp=VK_LOGIC_OP_COPY,
 		    attachmentCount=1,
 		    pAttachments=[color_blend_attachement],
-		    blendConstants=[0, 0, 0, 0])
+		    blendConstants=[0, 0, 0, 0]
+		)
 
 		pipeline_create = VkGraphicsPipelineCreateInfo(
 		    sType=VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -162,16 +185,37 @@ class Pipeline:
 		    renderPass=self.render_pass,
 		    subpass=0,
 		    basePipelineHandle=None,
-		    basePipelineIndex=-1)
+		    basePipelineIndex=-1
+		)
 
-		self.pipeline_ref = vkCreateGraphicsPipelines(self.device_manager.logical_device, 
-											 None, 1, [pipeline_create], None)
+		self.pipeline_ref = vkCreateGraphicsPipelines(
+			self.device, 
+			None, 
+			1, 
+			[pipeline_create], 
+			None
+		)
 
-		vkDestroyShaderModule(self.device_manager.logical_device, 
-								fragment_shader, None)
-		vkDestroyShaderModule(self.device_manager.logical_device, 
-								vertex_shader, None)
+		vkDestroyShaderModule(
+			self.device, 
+			fragment_shader, 
+			None
+		)
+		vkDestroyShaderModule(
+			self.device, 
+			vertex_shader, 
+			None
+		)
 
 	def cleanup(self):
-		vkDestroyPipeline(self.device_manager.logical_device, self.pipeline_ref, None)
-		vkDestroyPipelineLayout(self.device_manager.logical_device, self.pipeline_layout, None)
+		vkDestroyPipeline(
+			self.device, 
+			self.pipeline_ref, 
+			None
+		)
+
+		vkDestroyPipelineLayout(
+			self.device, 
+			self.pipeline_layout, 
+			None
+		)

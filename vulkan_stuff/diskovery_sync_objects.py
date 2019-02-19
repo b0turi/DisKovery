@@ -2,12 +2,13 @@ from vulkan import *
 
 class SyncObjects:
 	def __init__(self, device, buffers, swap_chain):
+		self.mfif = 2
 		self.device = device
 		self.buffers = buffers
 		self.swap_chain = swap_chain
 
-		self.image_available = None
-		self.render_finished = None
+		self.image_available = []
+		self.render_finished = []
 
 		self.submit_create = None
 		self.present_create = None
@@ -20,6 +21,9 @@ class SyncObjects:
 		semaphore_create = VkSemaphoreCreateInfo(
 		    sType=VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
 		    flags=0)
+
+
+
 		self.image_available = vkCreateSemaphore(self.device, semaphore_create, None)
 		self.render_finished = vkCreateSemaphore(self.device, semaphore_create, None)
 

@@ -1,4 +1,5 @@
 from vulkan import *
+from enum import Enum
 
 # Miscellaneous Vulkan creation functions that didn't warrant their own class
 
@@ -80,3 +81,21 @@ def make_frame_buffers(image_views, render_pass, extent, device):
 def destroy_frame_buffers(device, framebuffers):
 	for f in framebuffers:
 	    vkDestroyFramebuffer(device, f, None)
+
+def find_memory_type(physical_device, mem_filter, properties):
+	mem_props = vkGetPhysicalDeviceMemoryProperties(physical_device)
+
+	for i in range(0, mem_props.memoryTypeCount):
+		if (mem_filter & (1 << i)) and (
+			mem_props.memoryTypes[i].propertyFlags & properties) == properties:
+			return i
+
+	print("Unable to find suitable memory type!")
+
+class BindingType(Enum):
+	UNIFORM_BUFFER = 0
+	TEXTURE_SAMPLER = 1
+
+class UniformType(Enum):
+	MVP_MATRIX = 0
+	LIGHT = 1
