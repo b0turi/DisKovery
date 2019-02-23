@@ -6,7 +6,7 @@ from diskovery_vulkan import get_vulkan_command
 layers = ['VK_LAYER_LUNARG_standard_validation']
 
 def debug_callback(*args):
-	print('DisKovery - Vulkan Error: ' + args[5] + ' ' + args[6])
+	print('DisKovery - Vulkan Error: ' + args[5] + ' ' + args[6] + '\n\n')
 	return 0
 
 class DeviceManager:

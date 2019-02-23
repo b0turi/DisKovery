@@ -3,6 +3,7 @@
 import pywavefront
 import glm
 import diskovery
+import ctypes
 from sys import getsizeof
 
 from diskovery_buffer import Buffer
@@ -23,6 +24,44 @@ class Vertex():
 
 	def __hash__(self):
 		return hash((self.position, self.color, self.tex, self.norm))
+
+	@staticmethod
+	def bindings():
+		b = VkVertexInputBindingDescription()
+		b.binding = 0
+		b.stride = getsizeof(Vertex)
+		b.inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+
+		return b
+
+	@staticmethod
+	def attributes():
+		a = [VkVertexInputAttributeDescription(),
+			VkVertexInputAttributeDescription(),
+			VkVertexInputAttributeDescription(),
+			VkVertexInputAttributeDescription()]
+
+		a[0].binding = 0
+		a[0].location = 0
+		a[0].format = VK_FORMAT_R32G32B32_SFLOAT
+		a[0].offset = 0
+
+		a[1].binding = 0
+		a[1].location = 1
+		a[1].format = VK_FORMAT_R32G32B32_SFLOAT
+		a[1].offset = getsizeof(glm.vec3())
+
+		a[2].binding = 0
+		a[2].location = 2
+		a[2].format = VK_FORMAT_R32G32_SFLOAT
+		a[2].offset = getsizeof(glm.vec3()) * 2
+
+		a[3].binding = 0
+		a[3].location = 3
+		a[3].format = VK_FORMAT_R32G32B32_SFLOAT
+		a[3].offset = getsizeof(glm.vec3()) * 2 + getsizeof(glm.vec2())
+
+		return a
 
 class Mesh():
 	def __init__(self, file):
@@ -74,6 +113,8 @@ class Mesh():
 			index_array, 
 			VK_BUFFER_USAGE_INDEX_BUFFER_BIT
 		)
+
+		self.count = len(index_array)
 
 	def cleanup(self):
 		self.vertices.cleanup()

@@ -1,71 +1,52 @@
 from vulkan import *
 import os
+import diskovery
+from sys import getsizeof
+from diskovery_mesh import Vertex
+
+def get_shader_module(src):
+	module_create = VkShaderModuleCreateInfo(
+		sType=VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+		flags=0,
+		codeSize=len(src),
+		pCode=src
+	)
+
+	module = vkCreateShaderModule(diskovery.device(), module_create, None)
+	return module
 
 class Pipeline:
-	def __init__(self, device, render_pass, extent):
-		self.device = device
-		self.render_pass = render_pass
-		self.extent = extent
+	def __init__(self, shader, set_layout):
 
+		self.shader = shader
 		self.pipeline_layout = None
 		self.pipeline_ref = None
 
-		self.make_pipeline_layout()
-		self.make_pipeline()
+		self.make_pipeline_layout(set_layout)
+		self.make_pipeline(shader, set_layout)
 
-	def make_pipeline_layout(self):
-		push_constant_ranges = VkPushConstantRange(
-		    stageFlags=0,
-		    offset=0,
-		    size=0
-		)
-
+	def make_pipeline_layout(self, set_layout):
 		pipeline_layout_create = VkPipelineLayoutCreateInfo(
 		    sType=VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 		    flags=0,
-		    setLayoutCount=0,
-		    pSetLayouts=None,
-		    pushConstantRangeCount=0,
-		    pPushConstantRanges=[push_constant_ranges]
+		    setLayoutCount=1,
+		    pSetLayouts=[set_layout]
 		)
 
 		self.pipeline_layout = vkCreatePipelineLayout(
-			self.device, 
+			diskovery.device(), 
 			pipeline_layout_create, None
 		)
 
-	def make_pipeline(self):
+	def make_pipeline(self, shader, set_layout):
 		path = os.path.dirname(os.path.abspath(__file__))
-		with open(os.path.join(path, "vert.spv"), 'rb') as f:
+		with open(os.path.join(path, shader.filenames['vert']), 'rb') as f:
 			vert_shader_src = f.read()
-		with open(os.path.join(path, "frag.spv"), 'rb') as f:
+		with open(os.path.join(path, shader.filenames['frag']), 'rb') as f:
 			frag_shader_src = f.read()
 
-		vertex_create = VkShaderModuleCreateInfo(
-			sType=VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-			flags=0,
-			codeSize=len(vert_shader_src),
-			pCode=vert_shader_src
-		)
-
-		vertex_shader = vkCreateShaderModule(
-			self.device, 
-			vertex_create, 
-			None
-		)
-
-		fragment_create = VkShaderModuleCreateInfo(
-			sType=VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-			flags=0,
-			codeSize=len(frag_shader_src),
-			pCode=frag_shader_src
-		)
-
-		fragment_shader = vkCreateShaderModule(
-			self.device, 
-			fragment_create, 
-			None
-		)
+		vertex_shader = get_shader_module(vert_shader_src)
+		fragment_shader = get_shader_module(frag_shader_src)
 
 		vertex_stage_create = VkPipelineShaderStageCreateInfo(
 			sType=VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -87,11 +68,10 @@ class Pipeline:
 
 		vertex_input_create = VkPipelineVertexInputStateCreateInfo(
 		    sType=VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
-		    flags=0,
-		    vertexBindingDescriptionCount=0,
-		    pVertexBindingDescriptions=None,
-		    vertexAttributeDescriptionCount=0,
-		    pVertexAttributeDescriptions=None
+		    vertexBindingDescriptionCount=1,
+		    vertexAttributeDescriptionCount=len(Vertex.attributes()),
+		    pVertexBindingDescriptions=Vertex.bindings(),
+		    pVertexAttributeDescriptions=Vertex.attributes()
 		)
 
 		input_assembly_create = VkPipelineInputAssemblyStateCreateInfo(
@@ -102,12 +82,12 @@ class Pipeline:
 		)
 
 		viewport = VkViewport(
-		    x=0., y=0., width=float(self.extent.width), height=float(self.extent.height),
+		    x=0., y=0., width=float(diskovery.extent().width), height=float(diskovery.extent().height),
 		    minDepth=0., maxDepth=1.
 		)
 
 		scissor_offset = VkOffset2D(x=0, y=0)
-		scissor = VkRect2D(offset=scissor_offset, extent=self.extent)
+		scissor = VkRect2D(offset=scissor_offset, extent=diskovery.extent())
 		viewport_state_create = VkPipelineViewportStateCreateInfo(
 		    sType=VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
 		    flags=0,
@@ -141,6 +121,15 @@ class Pipeline:
 		    pSampleMask=None,
 		    alphaToCoverageEnable=VK_FALSE,
 		    alphaToOneEnable=VK_FALSE)
+
+		depth_stencil_create = VkPipelineDepthStencilStateCreateInfo(
+			sType=VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+			depthTestEnable=VK_TRUE,
+			depthWriteEnable=VK_TRUE,
+			depthCompareOp=VK_COMPARE_OP_LESS,
+			depthBoundsTestEnable=VK_FALSE,
+			stencilTestEnable=VK_FALSE
+		)
 
 		color_blend_attachement = VkPipelineColorBlendAttachmentState(
 		    colorWriteMask=VK_COLOR_COMPONENT_R_BIT | 
@@ -178,18 +167,18 @@ class Pipeline:
 		    pViewportState=viewport_state_create,
 		    pRasterizationState=rasterizer_create,
 		    pMultisampleState=multisample_create,
-		    pDepthStencilState=None,
+		    pDepthStencilState=depth_stencil_create,
 		    pColorBlendState=color_blend_create,
 		    pDynamicState=None,
 		    layout=self.pipeline_layout,
-		    renderPass=self.render_pass,
+		    renderPass=diskovery.render_pass(),
 		    subpass=0,
 		    basePipelineHandle=None,
 		    basePipelineIndex=-1
 		)
 
 		self.pipeline_ref = vkCreateGraphicsPipelines(
-			self.device, 
+			diskovery.device(), 
 			None, 
 			1, 
 			[pipeline_create], 
@@ -197,25 +186,25 @@ class Pipeline:
 		)
 
 		vkDestroyShaderModule(
-			self.device, 
+			diskovery.device(), 
 			fragment_shader, 
 			None
 		)
 		vkDestroyShaderModule(
-			self.device, 
+			diskovery.device(), 
 			vertex_shader, 
 			None
 		)
 
 	def cleanup(self):
 		vkDestroyPipeline(
-			self.device, 
+			diskovery.device(), 
 			self.pipeline_ref, 
 			None
 		)
 
 		vkDestroyPipelineLayout(
-			self.device, 
+			diskovery.device(), 
 			self.pipeline_layout, 
 			None
 		)

@@ -1,4 +1,71 @@
 #################################################################################
+									Week 2
+#################################################################################
+
+Had quite a few headaches this week trying to convert tutorial code from C/C++ to
+Python. Ran into a snag about halfway through the week where some of the really
+low level stuff Vulkan does (like calls to memcpy(), sizeof(), offsetof(), etc.)
+wasn't gelling well with the Vulkan wrapper I was using and I couldn't figure out
+how to properly get C Types with pointers and stuff working using that wrapper.
+I found a different Python Vulkan wrapper though that dynamically generates a 
+giant Python script that just sits in the same directory, so that's what "vk.py"
+is in the "engine_core" folder. I'm in the process of migrating "vulkan_stuff" 
+into "engine_core", and I've also been taking the time while migrating to this 
+new wrapper to consolidate stuff into fewer modules so the imports aren't as much 
+of a headache. Sometime next week I'll probably try to modify our design document 
+to reflect the changes in the class structure that resulted. 
+
+"vulkan_stuff" was a very sloppy first run at the core of the engine, and now
+that I have more of an idea of what's going on with Vulkan, "engine_core" will
+be the place where all my new changes happen. Once I'm done moving everything
+over 
+In terms of new content, I've added a lot more of the things listed under the 
+"Engine Capabilities" section in our design doc. The modules listed below in 
+week 1 have moved around a little bit, and there's also some new ones:
+
+	- diskovery_vulkan, diskovery_device_manager, and diskovery_swap_chain 
+		have all been merged into diskovery_instance with a new structure
+
+	- diskovery_mesh (new) stores the Vertex and Mesh classes, which can be
+		used to load a 3D model from a .obj file using PyWavefront, and 
+		stores the data in Buffer objects
+
+	- diskovery_buffer (new) stores the Buffer and UniformBuffer classes.
+		Buffer, as listed above, is used in many places to interface with
+		the GPU memory management Vulkan handles. It's used when creating 
+		Images, Textures, and Meshes. The UniformBuffer class has a list of
+		Buffers that store data in GLSL shader modules.
+
+	- diskovery_pipeline now also contains the Shader class, which can 
+		dynamically load .glsl and .spv files and stores a definition of the
+		uniforms passed into the shader
+
+	- diskovery_descriptor (new) is used inside RenderedEntity to store all 
+		the uniform data and vertex data that will be referenced during draw 
+		calls. It holds the Descriptor class and some helper methods
+
+	- diskovery_image (new) holds the Image and Texture class. The Image class
+		stores an image in Vulkan memory, and the Texture class extends it 
+		to load an external image through Pygame and store it in Vulkan's
+		virtual memory on the GPU.
+
+Stuff I wanted to get done this week, but got too bogged down to do:
+	- diskovery_sync_objects and diskovery_command_buffer merged into a new
+		class: EntityManager, which will refresh command buffers each time an
+		entity is added or removed, handle the draw calls and synchronizing them
+		with the sync objects. 
+
+For next week, my next task is to get the Entity system up and running, which I
+already have a good chunk of the way there because it ended up being necessary
+to test some earlier stuff. Entity and RenderedEntity are basically finished,
+but getting AnimatedEntity working and parsing the animated portions is going to
+be a fair amount of work. My goal over the weekend is to get the program running
+to the point where an external 3D model can be loaded, displayed on screen, 
+and have a texture mapped to it with some basic lighting. By next Friday, I want
+to have a 3D character doing a running animation.
+
+
+#################################################################################
 									Week 1
 #################################################################################
 

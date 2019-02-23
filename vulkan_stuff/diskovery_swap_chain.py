@@ -1,7 +1,7 @@
 #!/bin/env python
 
 from vulkan import *
-from diskovery_vulkan import get_vulkan_command
+from diskovery_vulkan import get_vulkan_command, find_depth_format
 
 def get_surface_format(formats):
 	for f in formats:
@@ -52,6 +52,9 @@ class SwapChain:
 		self.transform = None
 
 		self.make_swap_chain()
+
+		self.image_format = self.surface_format.format
+		self.depth_format = find_depth_format(device_manager.physical_device)
 
 	def make_swap_chain(self):
 

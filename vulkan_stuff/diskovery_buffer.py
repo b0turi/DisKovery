@@ -1,18 +1,16 @@
 
 from vulkan import *
 from diskovery_vulkan import find_memory_type
-from diskovery_command_buffer import start_command, end_command
 import diskovery
-from numpy import array
+import numpy
+import ctypes
 
 class Buffer():
 	def __init__(self, size, info=None, usage=None):
 
 		self.buffer = None
 		self.memory = None
-
-		if info != None:
-			self.length = len(info)
+		self.size = size
 
 		if info != None and usage != None:
 			staging_buffer = Buffer(size, info)
@@ -30,8 +28,17 @@ class Buffer():
 				VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 			)
 
+			if isinstance(info, list):
+				info = numpy.array(info)
+			
+			if isinstance(info, bytearray):
+				info = numpy.frombuffer(info, dtype=numpy.uint8)
+
 			dst = vkMapMemory(diskovery.device(), self.memory, 0, size, 0)
-			ffi.memmove(dst, array(info), size)
+			print(dst)
+			
+			dst = numpy.frombuffer(dst, dtype=numpy.uint8)
+			numpy.copyto(dst, info, size)
 			vkUnmapMemory(diskovery.device(), self.memory)
 		else:
 			self.make_buffer(
@@ -40,7 +47,6 @@ class Buffer():
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
 				VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
 			)
-
 
 
 	def make_buffer(self, size, usage, properties):
@@ -80,10 +86,10 @@ class Buffer():
 		vkBindBufferMemory(diskovery.device(), self.buffer, self.memory, 0)
 
 	def copy_buffer(self, src, dst, size):
-		cmd_buffer = start_command()
+		cmd_buffer = diskovery.start_command()
 		copy_region = VkBufferCopy(size=size)
 		vkCmdCopyBuffer(cmd_buffer, src, dst, 1, [copy_region])
-		end_command(cmd_buffer)
+		diskovery.end_command(cmd_buffer)
 
 	def cleanup(self):
 		vkDestroyBuffer(diskovery.device(), self.buffer, None)
