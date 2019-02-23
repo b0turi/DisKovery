@@ -1,4 +1,32 @@
 /*************************
+           Week 2
+**************************/
+2/18/2019 - 2/22/2019
+Progress has been unnaturally slow due to factors outside of project work, and it is apparent that I've
+fallen behind schedule according to the Gantt chart. While I have been working on menus and buttons, I have
+not made any progress with the property menus. I'm am still working on the first assignment given to me, and
+I still have yet to finish it. While I am not optimistic about catching up to where I should be by next week,
+I'll try to get help and assistance whenever I can, and hopefully, I can implement parts of the previous
+and upcoming tasks into an acceptable beta.
+
+Because our engine will require displaying Vulkan-based 3D environment via an image, the ImageTk package is
+necessary and was implemented into the recent build. We plan to connect Vulkan to the centerpiece of the 
+engine, but for now, I simply had the Vulkan logo centered on the Canvas. While I intend to setup two frames
+on the left side for the environment and outside directories (i.e., from elsewhere on the PC, where property
+assets are stored to be loaded into the environment when using the machine), I settled for one frame loaded
+with button widgets to test out the Python grid geometry manager. I did the same for the right side, for 
+which I later intend to display property menus for any selected objects in the displayed environment or 
+directory menu.
+
+Lastly, I set up the menubar at the top with several options for now: File, Edit, View, and Help. Only File
+has an active function in the form of exiting the application. I am experiencing trouble trying to use
+"root.quit", so currently I use "root.destroy" to destroy the current application instance.
+
+If the engine does not load up due to missing a "pyimage", restart the kernel to fix the problem.
+
+In summary, this week's changes are further editing of diskovery_gui.py and adding vulkan_graphic.gif.
+
+/*************************
            Week 1
 **************************/
 
