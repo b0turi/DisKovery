@@ -95,7 +95,7 @@ class Mesh():
 			vertex_array.append(v)
 
 		for face in self.model.mesh_list[0].faces:
-			index_array.append(face[0])
+			index_array.append(c_uint(face[0]))
 			index_array.append(face[1])
 			index_array.append(face[2])
 

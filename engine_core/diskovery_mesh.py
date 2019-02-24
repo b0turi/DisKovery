@@ -56,51 +56,63 @@ def attributes():
 
 class Mesh():
 	def __init__(self, dk, file):
-		model = pywavefront.Wavefront(file, collect_faces=True)
+		# model = pywavefront.Wavefront(file, collect_faces=True)
 
-		vertex_list = []
-		index_list = []
+		# vertex_list = []
+		# index_list = []
 
-		data = model.mesh_list[0].materials[0].vertices
-		form = model.mesh_list[0].materials[0].vertex_format
+		# data = model.mesh_list[0].materials[0].vertices
+		# form = model.mesh_list[0].materials[0].vertex_format
 
-		while len(data) > 0:
-			v = Vertex()
-			if 'T2F' in form:
-				v.tex_coord[0] = data[0]
-				v.tex_coord[1] = data[1]
-				data = data[2:]
+		# while len(data) > 0:
+		# 	v = Vertex()
+		# 	if 'T2F' in form:
+		# 		v.tex_coord[0] = data[0]
+		# 		v.tex_coord[1] = data[1]
+		# 		data = data[2:]
 
-			if 'N3F' in form:
-				v.normal[0] = data[0]
-				v.normal[1] = data[1]
-				v.normal[2] = data[2]
-				data = data[3:]
+		# 	if 'N3F' in form:
+		# 		v.normal[0] = data[0]
+		# 		v.normal[1] = data[1]
+		# 		v.normal[2] = data[2]
+		# 		data = data[3:]
 
-			v.position[0] = data[0]
-			v.position[1] = data[1]
-			v.position[2] = data[2]
+		# 	v.position[0] = data[0]
+		# 	v.position[1] = data[1]
+		# 	v.position[2] = data[2]
 
-			data = data[3:]
+		# 	data = data[3:]
 
-			vertex_list.append(v)
+		# 	vertex_list.append(v)
 
-		for face in model.mesh_list[0].faces:
-			index_list.append(face[0])
-			index_list.append(face[1])
-			index_list.append(face[2])
+		# for face in model.mesh_list[0].faces:
+		# 	print(face)
+		# 	index_list.append(vk.c_uint(face[0]))
+		# 	index_list.append(vk.c_uint(face[1]))
+		# 	index_list.append(vk.c_uint(face[2]))
 
-		v_size = sizeof(Vertex) * len(vertex_list)
-		i_size = sizeof(c_uint) * len(index_list)
+		# v_size = sizeof(Vertex) * len(vertex_list)
+		# i_size = sizeof(c_uint) * len(index_list)
 
-		vertex_array = (Vertex*v_size)()
-		index_array = (c_uint*i_size)()
+		# vertex_array = (Vertex*v_size)()
+		# index_array = (c_uint*len(index_list))()
 
-		for index, vertex in enumerate(vertex_list):
-			vertex_array[index] = vertex
+		# for index, vertex in enumerate(vertex_list):
+		# 	vertex_array[index] = vertex
 
-		for i, index in enumerate(index_list):
-			index_array[i] = index
+		# for i, index in enumerate(index_list):
+		# 	index_array[i] = index
+
+		vertex_array = (Vertex*3)(
+			Vertex(position=(1.0, 1.0, 0.0), color=(1.0, 1.0, 1.0), tex_coord=(0.0, 0.0), normal=(1.0, 0.0, 0.0)),
+			Vertex(position=(-1.0, 1.0, 0.0), color=(1.0, 1.0, 1.0), tex_coord=(0.0, 0.0), normal=(1.0, 0.0, 0.0)),
+			Vertex(position=(0.0, -1.0, 0.0), color=(1.0, 1.0, 1.0), tex_coord=(0.0, 0.0), normal=(1.0, 0.0, 0.0))
+		)
+
+		v_size = sizeof(Vertex)*3
+
+		index_array = (c_uint*3)(0,1,2)
+		i_size = sizeof(index_array)
 
 		self.vertices = Buffer(
 			dk,

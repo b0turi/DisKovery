@@ -4,7 +4,7 @@ from diskovery_descriptor import BindingType, UniformType
 diskovery.init(True)
 
 diskovery.add_mesh("test.obj", "Default")
-diskovery.add_texture("test.png", "Default")
+# diskovery.add_texture("test.png", "Default")
 diskovery.add_shader(
 	"Default",
 	["default.vert", "default.frag"],
@@ -18,6 +18,6 @@ re = diskovery.RenderedEntity(
 	mesh="Default"
 )
 
+diskovery.add_entity(re, "Big Boy")
 
-re.cleanup()
 diskovery.run()

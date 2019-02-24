@@ -9,16 +9,26 @@ class BindingType(Enum):
 class UniformType(Enum):
 	MVP_MATRIX = 0
 
-class MVPMatrix(Structure):
-	_fields_ = (
-		('model', Mat4),
-		('view', Mat4),
-		('projection', Mat4)
-	)
+class MVPMatrix(object):
+	def __init__(self):
+		self.model = Mat4()
+		self.view = Mat4()
+		self.projection = Mat4()
+
+	def get_data(self):
+		size = sizeof(Mat4)*3
+
+		matrices = (Mat4*3)(
+			self.model,
+			self.view,
+			self.projection
+		)
+
+		return matrices
 
 def get_uniform_size(u_type):
 	if u_type == UniformType.MVP_MATRIX:
-		return sizeof(MVPMatrix)
+		return vk.DeviceSize(sizeof(Mat4)*3)
 
 def make_set_layout(dk, definition):
 	bindings = (vk.DescriptorSetLayoutBinding*len(definition))()
@@ -63,7 +73,7 @@ class Descriptor(object):
 			s_type=vk.STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
 			pool_size_count=len(sizes),
 			pool_sizes=cast(sizes, POINTER(vk.DescriptorPoolSize)),
-			max_sets=len(sizes)
+			max_sets=self.dk.image_data['count']
 		)
 
 		self.dk.CreateDescriptorPool(
@@ -74,21 +84,30 @@ class Descriptor(object):
 		)
 
 	def fill_uniforms(self, index):
-		info = vk.DescriptorBufferInfo(
-			
-		)
+		infos = (vk.DescriptorBufferInfo*len(self.uniforms))()
+
+		for i, uniform in enumerate(self.uniforms):
+			info = vk.DescriptorBufferInfo(
+				buffer=uniform.buffer(index),
+				offset=0,
+				range=get_uniform_size(uniform.u_type)
+			)
+
+			infos[i] = info
+
+		return infos
 
 	def create_sets(self):
 		layouts = (vk.DescriptorSetLayout*self.dk.image_data['count'])()
 		self.sets = (vk.DescriptorSet * len(layouts))()
-		for layout in layouts:
-			layout = self.layout
+		for i in range(0, len(layouts)):
+			layouts[i] = self.layout
 
 		alloc_info = vk.DescriptorSetAllocateInfo(
 			s_type=vk.STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
 			descriptor_pool=self.pool,
 			descriptor_set_count=len(layouts),
-			set_layouts=cast(layouts, POITNER(vk.DescriptorSetLayout))
+			set_layouts=cast(layouts, POINTER(vk.DescriptorSetLayout))
 		)
 
 		self.dk.AllocateDescriptorSets(
@@ -98,7 +117,34 @@ class Descriptor(object):
 		)
 
 		for i in range(0, len(layouts)):
+			unis = self.fill_uniforms(i)
 
+			u_ptr = 0
+
+			writes = (vk.WriteDescriptorSet*len(self.definition))()
+			for j in range(0, len(writes)):
+				d_set = vk.WriteDescriptorSet(
+					s_type=vk.STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+					dst_set=self.sets[i],
+					dst_binding=j,
+					dst_array_element=0,
+					descriptor_count=1
+				)
+
+				if self.definition[j] == BindingType.UNIFORM_BUFFER:
+					d_set.descriptor_type = vk.DESCRIPTOR_TYPE_UNIFORM_BUFFER
+					d_set.buffer_info = pointer(unis[u_ptr])
+					u_ptr += 1
+
+				writes[j] = d_set
+
+			self.dk.UpdateDescriptorSets(
+				self.dk.device, 
+				len(writes),
+				cast(writes, POINTER(vk.WriteDescriptorSet)),
+				0,
+				None
+			)
 
 
 	def __init__(self, dk, definition, layout, uniforms, textures):
@@ -108,10 +154,13 @@ class Descriptor(object):
 		self.sets = None
 		self.definition = definition
 		self.layout = layout
+		self.uniforms = uniforms
 
 		self.create_pool()
+		self.create_sets()
 
-	def set(self, index):
-		pass
+	def get_set(self, index):
+		return self.sets[index]
+
 	def cleanup(self):
 		self.dk.DestroyDescriptorPool(self.dk.device, self.pool, None)

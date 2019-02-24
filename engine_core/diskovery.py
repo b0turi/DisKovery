@@ -3,11 +3,13 @@ from diskovery_buffer import UniformBuffer
 from diskovery_image import Texture
 from diskovery_mesh import Mesh
 from diskovery_pipeline import Shader, Pipeline
-from diskovery_descriptor import make_set_layout, Descriptor
+from diskovery_descriptor import make_set_layout, Descriptor, MVPMatrix
+from diskovery_entity_manager import EntityManager
 import pygame
 from xmath import *
 
 _dk = None
+_scene = None
 
 _meshes = { }
 _textures = { }
@@ -60,6 +62,8 @@ class RenderedEntity(Entity):
 		self.rotation = rotation if rotation != None else (0, 0, 0)
 		self.scale = scale if scale != None else (1, 1, 1)
 
+		self.rot = -3.0
+
 		self.pipeline = shader(shade).definition if shade != None else shader("Default").definition
 		self.textures = textures if textures != None else ["Default"]
 		self.mesh = mesh if mesh != None else None
@@ -82,19 +86,28 @@ class RenderedEntity(Entity):
 
 	def update(self, ind):
 		m = MVPMatrix()
-		m.model = glm.translate(glm.mat4(1.), self.position)
-		m.view = glm.lookAt(glm.vec3(2, 2, 2), glm.vec3(), glm.vec3(0, 0, 1))
-		m.projection = glm.perspective(
-			glm.radians(45.), 
-			extent().width/extent().height, 
+		m.view.set_data(translate(mat=None, vec=(0.0, 0.0, -3.0)))
+		m.model.set_data(translate(mat=None, vec=(0.0, 0.0, self.rot)))
+		m.projection.set_data(perspective(
+			60.0, 
+			_dk.image_data['extent'].width/_dk.image_data['extent'].height, 
 			0.1, 
-			10.
-		)
-		m.projection[1][1] *= -1
+			5000
+		))
 
 		for uniform in self.uniforms:
-			uniform.update(m, ind)
+			uniform.update(m.get_data(), ind)
 
+		self.rot += 0.001
+
+	def get_pipeline(self):
+		return pipeline(self.pipeline)
+
+	def get_mesh(self):
+		return mesh(self.mesh)
+
+	def get_texture(self, index):
+		return texture(self.textures[index])
 
 	def cleanup(self):
 		for u in self.uniforms:
@@ -134,6 +147,18 @@ def add_shader(name, files, definition, uniforms):
 
 	_pipelines[s.definition] = Pipeline(_dk, s, _descriptors[s.definition])
 
+def add_entity(entity, name):
+	global _scene
+	_scene.add_entity(entity, name)
+
+def mesh(name):
+	global _meshes
+	return _meshes[name]
+
+def texture(name):
+	global _textures
+	return _textures[name]
+
 def shader(name):
 	global _shaders
 	return _shaders[name]
@@ -142,15 +167,22 @@ def descriptor(definition):
 	global _descriptors
 	return _descriptors[definition]
 
+def pipeline(definition):
+	global _pipelines
+	return _pipelines[definition]
+
 def init(debug_mode=False):
-	global _dk
+	global _dk, _scene
 	_dk = DkInstance(debug_mode)
+	_scene = EntityManager(_dk)
 
 def run():
 	global _dk
 
 	running = True
 	while running:
+
+		_scene.draw()
 
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
@@ -159,7 +191,9 @@ def run():
 				break
 
 def quit():
-	global _dk, _meshes, _textures, _pipelines, _descriptors
+	global _dk, _meshes, _textures, _pipelines, _descriptors, _scene
+
+	_scene.cleanup()
 
 	for mesh in _meshes.values():
 		mesh.cleanup()

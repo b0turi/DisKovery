@@ -386,7 +386,7 @@ class DkInstance(object):
 		color.stencil_load_op = vk.ATTACHMENT_LOAD_OP_DONT_CARE
 		color.stencil_store_op = vk.ATTACHMENT_STORE_OP_DONT_CARE
 		color.initial_layout = vk.IMAGE_LAYOUT_UNDEFINED
-		color.final_layout = vk.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+		color.final_layout = vk.IMAGE_LAYOUT_PRESENT_SRC_KHR
 
 		depth.format = self.image_data['depth_format']
 		depth.samples = vk.SAMPLE_COUNT_1_BIT

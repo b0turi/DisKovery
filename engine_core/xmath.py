@@ -3,7 +3,7 @@
 # Some math functions
 # Tuple are returned because list can't be hashed (and so lrucache fails)
 
-from math import tan, radians, sin, cos
+from math import tan, radians, sin, cos, sqrt
 from functools import lru_cache
 from itertools import accumulate
 from copy import deepcopy
@@ -34,6 +34,7 @@ class Mat4(Structure):
 identity = [[1,0,0,0], [0,1,0,0], [0,0,1,0], [0,0,0,1]]
 vec_scalar_mult = lambda v, s: [i*s for i in v]
 vec_add = lambda v1, v2: [ i+j for i,j in zip(v1, v2) ]
+vec_sub = lambda v1, v2: [ i-j for i,j in zip(v1, v2) ]
 tupleize = lambda l: tuple([tuple(i) for i in l])
 
 @lru_cache(maxsize=16)
@@ -108,3 +109,14 @@ def rotate(mat=None, angle=0, vec=(0.0, 0.0, 0.0)):
     )
 
     return tupleize(result) 
+
+def normalize(vec):
+    magnitude = sqrt(vec[0]**2 + vec[1]**2 + vec[2]**2)
+    return (vec[0]/magnitude, vec[1]/magnitude, vec[2]/magnitude)
+
+def cross(a, b):
+    c = [a[1]*b[2] - a[2]*b[1],
+         a[2]*b[0] - a[0]*b[2],
+         a[0]*b[1] - a[1]*b[0]]
+
+    return c

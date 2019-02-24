@@ -222,6 +222,7 @@ class Texture(Image):
 		size = vk.DeviceSize(extent.width * extent.height * 4)
 		pixel_data = img.get_buffer().raw
 
+
 		Image.__init__(
 			self,
 			dk,
@@ -237,6 +238,6 @@ class Texture(Image):
 			vk.IMAGE_ASPECT_COLOR_BIT
 		)
 
-		staging_buffer = Buffer(dk, size, pixel_data)
+		staging_buffer = Buffer(dk, size, byref(pixel_data))
 		buffer_to_image(dk, staging_buffer.buffer, self.image, extent.width, extent.height)
 		staging_buffer.cleanup()
