@@ -1,4 +1,16 @@
 /*************************
+           Week 3
+**************************/
+2/25/2019 - 3/1/2019
+Progress has become even slower, and I fear I will not be able to make much progress for next week either.
+As a result, Kyle Thompson has agreed to handle user input system that I was supposed to do this week.
+
+The changes can be summed this week as editing the UI to better resemble our intended design, with Listboxes
+to act as directories and menus for assets in the environment (top leftmost), assets in object folders 
+(bottom leftmost), and property menus for existing assets in the environment (rightmost). The placeholder
+Buttons were all removed. All of this was done by editing diskovery_gui.py.
+
+/*************************
            Week 2
 **************************/
 2/18/2019 - 2/22/2019
