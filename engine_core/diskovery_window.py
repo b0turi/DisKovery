@@ -1,35 +1,29 @@
-import pygame, platform, vk
+#!/bin/env/python
+
 from ctypes import byref
+import pygame, platform, vk
 
 def surface_xlib(wm_info, dk):
     surface_create = vk.XlibSurfaceCreateInfoKHR(
         s_type=vk.STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR,
         dpy=wm_info['display'],
-        window=wm_info['window'],
-        flags=0
+        window=wm_info['window']
     )
 
     surface = vk.SurfaceKHR(0)
-    result = dk.CreateXlibSurfaceKHR(dk.instance, byref(surface_create), None, byref(surface))
-    if result == vk.SUCCESS:
-    	return surface
-    else:
-    	raise RuntimeError("Unable to create XLib surface")
+    assert(dk.CreateXlibSurfaceKHR(dk.instance, byref(surface_create), None, byref(surface)) == vk.SUCCESS)
+    return surface
 
 def surface_wayland(wm_info, dk):
     surface_create = vk.WaylandSurfaceCreateInfoKHR(
         s_type=vk.STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR,
         display=wm_info['display'],
-        surface=wm_info['window'],
-        flags=0
+        surface=wm_info['window']
     )
 
     surface = vk.SurfaceKHR(0)
-    result = dk.CreateWaylandSurfaceKHR(dk.instance, byref(surface_create), None, byref(surface))
-    if result == vk.SUCCESS:
-    	return surface
-    else:
-    	raise RuntimeError("Unable to create Wayland surface")
+    assert(dk.CreateWaylandSurfaceKHR(dk.instance, byref(surface_create), None, byref(surface)) == vk.SUCCESS)
+    return surface
 
 def surface_win32(wm_info, dk):
     def get_instance(hWnd):
@@ -42,16 +36,12 @@ def surface_win32(wm_info, dk):
     surface_create = vk.Win32SurfaceCreateInfoKHR(
         s_type=vk.STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
         hinstance=get_instance(wm_info['window']),
-        hwnd=wm_info['window'],
-        flags=0
+        hwnd=wm_info['window']
     )
 
     surface = vk.SurfaceKHR(0)
-    result = dk.CreateWin32SurfaceKHR(dk.instance, byref(surface_create), None, byref(surface))
-    if result == vk.SUCCESS:
-    	return surface
-    else:
-    	raise RuntimeError("Unable to create Win32 surface")
+    assert(dk.CreateWin32SurfaceKHR(dk.instance, byref(surface_create), None, byref(surface)) == vk.SUCCESS)
+    return surface
 
 class Window:
 	def __init__(self, dk, config):

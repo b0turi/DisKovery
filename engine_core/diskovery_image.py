@@ -1,3 +1,5 @@
+#!/bin/env/python
+
 import vk
 import pygame
 from ctypes import *
@@ -168,7 +170,7 @@ def make_texture_sampler(dk, mip):
 		address_mode_U=vk.SAMPLER_ADDRESS_MODE_REPEAT,
 		address_mode_V=vk.SAMPLER_ADDRESS_MODE_REPEAT,
 		address_mode_W=vk.SAMPLER_ADDRESS_MODE_REPEAT,
-		anisotropy_enable=vk.TRUE,
+		anisotropy_enable=vk.FALSE,
 		max_anisotropy=16,
 		border_color=vk.BORDER_COLOR_INT_OPAQUE_BLACK,
 		unnormalized_coordinates=vk.FALSE,
@@ -194,9 +196,6 @@ def buffer_to_image(dk, buff, image, width, height):
 	)
 
 	region = vk.BufferImageCopy(
-		buffer_offset=0,
-		buffer_row_length=0,
-		buffer_image_height=0,
 		image_subresource=sub,
 		image_offset=vk.Offset3D(0, 0, 0),
 		image_extent=vk.Extent3D(width, height, 1)
@@ -216,12 +215,24 @@ def buffer_to_image(dk, buff, image, width, height):
 
 class Texture(Image):
 	def __init__(self, dk, filename):
-		img = pygame.image.load(filename)
+		img = pygame.image.load(filename).convert_alpha()
 
 		extent = vk.Extent2D(width=img.get_width(), height=img.get_height())
-		size = vk.DeviceSize(extent.width * extent.height * 4)
-		pixel_data = img.get_buffer().raw
+		size = extent.width * extent.height * 4
+		arr = pygame.PixelArray(img) 
 
+		self.mip = 1
+
+		data = (c_ubyte*size)()
+
+		for i in range(0, extent.height):
+			for j in range(0, extent.width):
+				channels = img.unmap_rgb(arr[j, i])
+				ind = i * extent.width * 4 + j * 4
+				data[ind] = channels[0]
+				data[ind + 1] = channels[1]
+				data[ind + 2] = channels[2]
+				data[ind + 3] = channels[3]
 
 		Image.__init__(
 			self,
@@ -238,6 +249,14 @@ class Texture(Image):
 			vk.IMAGE_ASPECT_COLOR_BIT
 		)
 
-		staging_buffer = Buffer(dk, size, byref(pixel_data))
+		staging_buffer = Buffer(dk, size, data)
 		buffer_to_image(dk, staging_buffer.buffer, self.image, extent.width, extent.height)
+		
+		self.set_layout(
+			self.image, 
+			vk.FORMAT_R8G8B8A8_UNORM, 
+			vk.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
+			vk.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			self.mip
+		)
 		staging_buffer.cleanup()

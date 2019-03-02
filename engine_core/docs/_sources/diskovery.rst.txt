@@ -1,0 +1,7 @@
+diskovery module
+================
+
+.. automodule:: diskovery
+    :members:
+    :undoc-members:
+    :show-inheritance:

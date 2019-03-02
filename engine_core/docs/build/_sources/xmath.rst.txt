@@ -1,0 +1,7 @@
+xmath module
+============
+
+.. automodule:: xmath
+    :members:
+    :undoc-members:
+    :show-inheritance:

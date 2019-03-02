@@ -1,0 +1,478 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>diskovery_descriptor module &mdash; DisKovery 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> DisKovery
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">diskovery_descriptor module</a></li>
+</ul>
+</div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DisKovery</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>diskovery_descriptor module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/diskovery_descriptor.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-diskovery_descriptor">
+<span id="diskovery-descriptor-module"></span><h1>diskovery_descriptor module<a class="headerlink" href="#module-diskovery_descriptor" title="Permalink to this headline">¶</a></h1>
+<p>The <a class="reference internal" href="#module-diskovery_descriptor" title="diskovery_descriptor"><code class="xref py py-mod docutils literal notranslate"><span class="pre">diskovery_descriptor</span></code></a> module handles the passing of uniform
+data into shader programs. A shader written in GLSL will have 
+a <code class="docutils literal notranslate"><span class="pre">layout()</span></code> tag before every uniform variable it declares,
+and those tags can contain information on which bindings and which
+sets that uniform is referenced through in the Vulkan code.</p>
+<p>For example, a uniform in a vertex shader might contain the model,
+view, and projection matrices for a given entity in the world space.
+This would be defined in the shader code as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">layout</span><span class="p">(</span><span class="nb">set</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">binding</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="n">uniform</span> <span class="n">UniformBufferObject</span> <span class="p">{</span>
+    <span class="n">mat4</span> <span class="n">model</span><span class="p">;</span>
+    <span class="n">mat4</span> <span class="n">view</span><span class="p">;</span>
+    <span class="n">mat4</span> <span class="n">proj</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">ubo</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">layout()</span></code> tag tells Vulkan that this uniform is expecting 
+data in the first binding of the first <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSet.html">VkDescriptorSet</a> it will
+be passed. Each <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSet.html">VkDescriptorSet</a> has a <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSetLayout.html">VkDescriptorSetLayout</a> which
+defines what kind of binding will be at each location within the set,
+how many there will be, and which stages of the shader (vertex or fragment)
+can access this binding.</p>
+<p>In DisKovery, a dicitionary of <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSetLayout.html">VkDescriptorSetLayout</a> objects is stored
+at the top level in the <a class="reference internal" href="diskovery.html#module-diskovery" title="diskovery"><code class="xref py py-mod docutils literal notranslate"><span class="pre">diskovery</span></code></a> module. Whenever a 
+<a class="reference internal" href="diskovery_pipeline.html#diskovery_pipeline.Shader" title="diskovery_pipeline.Shader"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shader</span></code></a> is added to the environment (via
+<a class="reference internal" href="diskovery.html#diskovery.add_shader" title="diskovery.add_shader"><code class="xref py py-func docutils literal notranslate"><span class="pre">add_shader()</span></code></a>), its definition is extracted and used to 
+create a <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSetLayout.html">VkDescriptorSetLayout</a> using the 
+<a class="reference internal" href="#diskovery_descriptor.make_set_layout" title="diskovery_descriptor.make_set_layout"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_set_layout()</span></code></a> function defined below.</p>
+<p><a class="reference internal" href="#module-diskovery_descriptor" title="diskovery_descriptor"><code class="xref py py-mod docutils literal notranslate"><span class="pre">diskovery_descriptor</span></code></a> handles the passing of uniform data from
+<a class="reference internal" href="diskovery_buffer.html#diskovery_buffer.UniformBuffer" title="diskovery_buffer.UniformBuffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">UniformBuffer</span></code></a> objects, which each contain a 
+list of <a class="reference internal" href="diskovery_buffer.html#diskovery_buffer.Buffer" title="diskovery_buffer.Buffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Buffer</span></code></a> objects with the same length
+as the number of <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkFramebuffer.html">VkFramebuffer</a> objects the pipeline is using.
+Because of this, each <a class="reference internal" href="#diskovery_descriptor.Descriptor" title="diskovery_descriptor.Descriptor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Descriptor</span></code></a> will 
+have a list of <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSet.html">VkDescriptorSet</a> objects for each binding in its given
+<a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSetLayout.html">VkDescriptorSetLayout</a>. Each <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSet.html">VkDescriptorSet</a> must also be stored in a
+related <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorPool.html">VkDescriptorPool</a> so Vulkan knows where to pull the descriptor 
+set from when the call to <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkCmdBindDescriptorSets.html">vkCmdBindDescriptorSets</a> happens during the
+draw calls (handled in <a class="reference internal" href="diskovery_entity_manager.html#diskovery_entity_manager.EntityManager" title="diskovery_entity_manager.EntityManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">EntityManager</span></code></a>).</p>
+<p>There are a number of classes stored in <a class="reference internal" href="#module-diskovery_descriptor" title="diskovery_descriptor"><code class="xref py py-mod docutils literal notranslate"><span class="pre">diskovery_descriptor</span></code></a> to
+increase readability when handling binding and uniform data:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#diskovery_descriptor.BindingType" title="diskovery_descriptor.BindingType"><code class="xref py py-class docutils literal notranslate"><span class="pre">BindingType</span></code></a> - Shorthand for equivalent <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorType.html">VkDescriptorType</a></li>
+<li><dl class="first docutils">
+<dt><a class="reference internal" href="#diskovery_descriptor.UniformType" title="diskovery_descriptor.UniformType"><code class="xref py py-class docutils literal notranslate"><span class="pre">UniformType</span></code></a> - Which user-defined class this uniform </dt>
+<dd>buffer will hold the data for</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><a class="reference internal" href="#diskovery_descriptor.MVPMatrix" title="diskovery_descriptor.MVPMatrix"><code class="xref py py-class docutils literal notranslate"><span class="pre">MVPMatrix</span></code></a> - An object that can fill a </dt>
+<dd><a class="reference internal" href="diskovery_buffer.html#diskovery_buffer.UniformBuffer" title="diskovery_buffer.UniformBuffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">UniformBuffer</span></code></a> that stores matrix data for rendering 
+a <a class="reference internal" href="diskovery.html#diskovery.RenderedEntity" title="diskovery.RenderedEntity"><code class="xref py py-class docutils literal notranslate"><span class="pre">RenderedEntity</span></code></a></dd>
+</dl>
+</li>
+</ul>
+<dl class="class">
+<dt id="diskovery_descriptor.BindingType">
+<em class="property">class </em><code class="descclassname">diskovery_descriptor.</code><code class="descname">BindingType</code><a class="headerlink" href="#diskovery_descriptor.BindingType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></p>
+<p>A mapping of all types of bindings for descriptors used in DisKovery.</p>
+<p>For now, only Uniform Buffers and Texture Samplers are being used.</p>
+<dl class="attribute">
+<dt id="diskovery_descriptor.BindingType.TEXTURE_SAMPLER">
+<code class="descname">TEXTURE_SAMPLER</code><em class="property"> = 1</em><a class="headerlink" href="#diskovery_descriptor.BindingType.TEXTURE_SAMPLER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery_descriptor.BindingType.UNIFORM_BUFFER">
+<code class="descname">UNIFORM_BUFFER</code><em class="property"> = 0</em><a class="headerlink" href="#diskovery_descriptor.BindingType.UNIFORM_BUFFER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="diskovery_descriptor.Descriptor">
+<em class="property">class </em><code class="descclassname">diskovery_descriptor.</code><code class="descname">Descriptor</code><span class="sig-paren">(</span><em>dk</em>, <em>definition</em>, <em>layout</em>, <em>uniforms</em>, <em>textures</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery_descriptor.Descriptor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The <a class="reference internal" href="#diskovery_descriptor.Descriptor" title="diskovery_descriptor.Descriptor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Descriptor</span></code></a> class wraps the creation
+of a <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorPool.html">VkDescriptorPool</a> and an array of <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSet.html">VkDescriptorSet</a> objects, one for each
+<a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkFramebuffer.html">VkFramebuffer</a>. It stores data passed from a <a class="reference internal" href="diskovery.html#diskovery.RenderedEntity" title="diskovery.RenderedEntity"><code class="xref py py-class docutils literal notranslate"><span class="pre">RenderedEntity</span></code></a>
+and builds Vulkan descriptor objects around this data.</p>
+<p>The implementation of some more advanced graphics programming concepts may 
+require that multiple descriptor sets are bound for each render pass, but for
+simplicity’s sake and because the scope of this project does not extend that far,
+<a class="reference internal" href="#diskovery_descriptor.Descriptor" title="diskovery_descriptor.Descriptor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Descriptor</span></code></a> objects only store 1 set, mirrored
+in each element of the array of <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSet.html">VkDescriptorSet</a> objects.</p>
+<p><strong>Attributes of the Descriptor class:</strong></p>
+<dl class="attribute">
+<dt id="diskovery_descriptor.Descriptor.dk">
+<code class="descname">dk</code><a class="headerlink" href="#diskovery_descriptor.Descriptor.dk" title="Permalink to this definition">¶</a></dt>
+<dd><p>A reference to the <a class="reference internal" href="diskovery_instance.html#diskovery_instance.DkInstance" title="diskovery_instance.DkInstance"><code class="xref py py-class docutils literal notranslate"><span class="pre">DkInstance</span></code></a> 
+that stores all the relevant fields for the Vulkan instance
+and handles all Vulkan commands</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery_descriptor.Descriptor.pool">
+<code class="descname">pool</code><a class="headerlink" href="#diskovery_descriptor.Descriptor.pool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores the <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorPool.html">VkDescriptorPool</a> handle needed to create the
+<a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSet.html">VkDescriptorSet</a> array.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery_descriptor.Descriptor.sets">
+<code class="descname">sets</code><a class="headerlink" href="#diskovery_descriptor.Descriptor.sets" title="Permalink to this definition">¶</a></dt>
+<dd><p>An array of <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSet.html">VkDescriptorSet</a> handles, with length equal to the 
+number of <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkFramebuffer.html">VkFramebuffer</a> objects the pipeline renders to.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery_descriptor.Descriptor.definition">
+<code class="descname">definition</code><a class="headerlink" href="#diskovery_descriptor.Descriptor.definition" title="Permalink to this definition">¶</a></dt>
+<dd><p>A tuple of <a class="reference internal" href="#diskovery_descriptor.BindingType" title="diskovery_descriptor.BindingType"><code class="xref py py-class docutils literal notranslate"><span class="pre">BindingType</span></code></a> objects 
+that defines the order in which items are bound within a shader
+program.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery_descriptor.Descriptor.layout">
+<code class="descname">layout</code><a class="headerlink" href="#diskovery_descriptor.Descriptor.layout" title="Permalink to this definition">¶</a></dt>
+<dd><p>A reference to the <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSetLayout.html">VkDescriptorSetLayout</a> already created 
+and stored at the top level of the <a class="reference internal" href="diskovery.html#module-diskovery" title="diskovery"><code class="xref py py-mod docutils literal notranslate"><span class="pre">diskovery</span></code></a> module.
+It is used to crerate the array of <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSet.html">VkDescriptorSet</a> objects.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery_descriptor.Descriptor.uniforms">
+<code class="descname">uniforms</code><a class="headerlink" href="#diskovery_descriptor.Descriptor.uniforms" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of uniforms that will be used to fill all sets in the
+layout that store a <code class="docutils literal notranslate"><span class="pre">DESCRIPTOR_TYPE_UNIFORM_BUFFER</span></code> binding.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery_descriptor.Descriptor.textures">
+<code class="descname">textures</code><a class="headerlink" href="#diskovery_descriptor.Descriptor.textures" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of the textures that will be used to fill all sets
+in the layout that store a <code class="docutils literal notranslate"><span class="pre">DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER</span></code>
+binding.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="diskovery_descriptor.Descriptor.cleanup">
+<code class="descname">cleanup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#diskovery_descriptor.Descriptor.cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles necessary Destroy methods for all the Vulkan components 
+contained inside the <a class="reference internal" href="diskovery_buffer.html#diskovery_buffer.Buffer" title="diskovery_buffer.Buffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Buffer</span></code></a></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="diskovery_descriptor.Descriptor.create_pool">
+<code class="descname">create_pool</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#diskovery_descriptor.Descriptor.create_pool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorPool.html">VkDescriptorPool</a> object and stores it in the
+<a class="reference internal" href="#diskovery_descriptor.Descriptor.pool" title="diskovery_descriptor.Descriptor.pool"><code class="xref py py-attr docutils literal notranslate"><span class="pre">pool</span></code></a> attribute.</p>
+<p>Uses the <a class="reference internal" href="#diskovery_descriptor.Descriptor.definition" title="diskovery_descriptor.Descriptor.definition"><code class="xref py py-attr docutils literal notranslate"><span class="pre">definition</span></code></a> to
+determine the sizes of each individual pool the <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorPool.html">VkDescriptorPool</a>
+will handle.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="diskovery_descriptor.Descriptor.create_sets">
+<code class="descname">create_sets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#diskovery_descriptor.Descriptor.create_sets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates and fills an array of <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSet.html">VkDescriptorSet</a> objects of length
+equal to the number of <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkFramebuffer.html">VkFramebuffer</a> objects being rendered by
+the pipeline. Retrieves information relevant to each uniform
+and texture passed in and assigns each to a <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkWriteDescriptorSet.html">VkWriteDescriptorSet</a>
+object, an array of which is passed to update the descriptor sets
+after they are allocated within the <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorPool.html">VkDescriptorPool</a></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="diskovery_descriptor.Descriptor.get_set">
+<code class="descname">get_set</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery_descriptor.Descriptor.get_set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSet.html">VkDescriptorSet</a> at the given index</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>index</strong> – The index from which the <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSet.html">VkDescriptorSet</a> should be retrieved</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSet.html">VkDescriptorSet</a> at the given index</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="diskovery_descriptor.MVPMatrix">
+<em class="property">class </em><code class="descclassname">diskovery_descriptor.</code><code class="descname">MVPMatrix</code><a class="headerlink" href="#diskovery_descriptor.MVPMatrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A uniform filler that holds data for the model (aka world), view, and 
+projection matrices to be used when positioning an entity in world space.</p>
+<p><strong>Attributes of the MVPMatrix class:</strong></p>
+<dl class="attribute">
+<dt id="diskovery_descriptor.MVPMatrix.model">
+<code class="descname">model</code><a class="headerlink" href="#diskovery_descriptor.MVPMatrix.model" title="Permalink to this definition">¶</a></dt>
+<dd><p>A 4x4 Matrix that stores the position, rotation, and scale of an Entity
+within the game world.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery_descriptor.MVPMatrix.view">
+<code class="descname">view</code><a class="headerlink" href="#diskovery_descriptor.MVPMatrix.view" title="Permalink to this definition">¶</a></dt>
+<dd><p>A 4x4 Matrix that stores information about the position and rotation of
+the Camera. The model matrix is shown relative to the view matrix, and the
+two are multiplied together in the vertex shader to achieve this.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery_descriptor.MVPMatrix.projection">
+<code class="descname">projection</code><a class="headerlink" href="#diskovery_descriptor.MVPMatrix.projection" title="Permalink to this definition">¶</a></dt>
+<dd><p>A 4x4 Matrix that establishes the perspective and depth of the 3D scene.
+Actually maps the positions given by the model and view matrices so they
+are shown in 3D and not native Vulkan coordinates. It is multiplied by the
+previous two matrices in the vertex shader to achieve this.</p>
+</dd></dl>
+
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">To learn more about how these matrices are used, check out <a class="reference external" href="http://www.codinglabs.net/article_world_view_projection_matrix.aspx">this</a>
+article on CodingLabs.net that includes descriptions of how translations,
+rotations, and scaling operations are applied via matrices, as well as
+how the view matrix acts as the Camera, and the projection determines
+how the scene will actually look.</p>
+</div>
+<p><strong>Methods of the MVPMatrix class:</strong></p>
+<dl class="method">
+<dt id="diskovery_descriptor.MVPMatrix.get_data">
+<code class="descname">get_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#diskovery_descriptor.MVPMatrix.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes the information stored in the matrices of this class and 
+condenses them into a <code class="docutils literal notranslate"><span class="pre">ctypes</span></code> array for passing through a
+<a class="reference internal" href="diskovery_buffer.html#diskovery_buffer.UniformBuffer" title="diskovery_buffer.UniformBuffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">UniformBuffer</span></code></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The data stored in the matrices of this class as a <code class="docutils literal notranslate"><span class="pre">Mat4_Array_3</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="diskovery_descriptor.UniformType">
+<em class="property">class </em><code class="descclassname">diskovery_descriptor.</code><code class="descname">UniformType</code><a class="headerlink" href="#diskovery_descriptor.UniformType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></p>
+<p>A mapping of all user-defined classes that can be stored in a Uniform
+Buffer. To use a custom uniform type, it must be added to this enum
+and also have handling in <a class="reference internal" href="#diskovery_descriptor.get_uniform_size" title="diskovery_descriptor.get_uniform_size"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_uniform_size()</span></code></a>.</p>
+<dl class="attribute">
+<dt id="diskovery_descriptor.UniformType.MVP_MATRIX">
+<code class="descname">MVP_MATRIX</code><em class="property"> = 0</em><a class="headerlink" href="#diskovery_descriptor.UniformType.MVP_MATRIX" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="diskovery_descriptor.get_uniform_size">
+<code class="descclassname">diskovery_descriptor.</code><code class="descname">get_uniform_size</code><span class="sig-paren">(</span><em>u_type</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery_descriptor.get_uniform_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a <a class="reference internal" href="#diskovery_descriptor.UniformType" title="diskovery_descriptor.UniformType"><code class="xref py py-class docutils literal notranslate"><span class="pre">UniformType</span></code></a>, retrieve the size,
+in bytes, of the data that will be passed when a uniform of that type
+is updated.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>u_type</strong> – The <a class="reference internal" href="#diskovery_descriptor.UniformType" title="diskovery_descriptor.UniformType"><code class="xref py py-class docutils literal notranslate"><span class="pre">UniformType</span></code></a> to get the size of</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The size, in bytes, of the data passed by the given UniformType.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="diskovery_descriptor.make_set_layout">
+<code class="descclassname">diskovery_descriptor.</code><code class="descname">make_set_layout</code><span class="sig-paren">(</span><em>dk</em>, <em>definition</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery_descriptor.make_set_layout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a definition, create a <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSetLayout.html">VkDescriptorSetLayout</a> using a provided
+<a class="reference internal" href="diskovery_instance.html#diskovery_instance.DkInstance" title="diskovery_instance.DkInstance"><code class="xref py py-class docutils literal notranslate"><span class="pre">DkInstance</span></code></a>.</p>
+<p>This function determines the types of values that will be passed in
+<a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSet.html">VkDescriptorSet</a> objects later and defines where each value, or binding,
+is allowed to be referenced by <code class="docutils literal notranslate"><span class="pre">layout()</span></code> tags in the shader programs.</p>
+<p>Uniform Buffers can be accessed in the vertex shader, and texture samplers
+can be accessed in the fragment shader.</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Kyle Thompson, Oliver Zhang, Jaafar Bennani
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

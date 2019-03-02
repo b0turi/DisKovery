@@ -1,19 +1,10 @@
-import vk
-import pygame
-import platform
+#!/bin/env/python
+
+import vk, pygame, platform
 from ctypes import *
 from itertools import chain
-from diskovery_image import Image
+from diskovery_image import Image, make_texture_sampler
 from diskovery_window import Window
-
-def debug_function(flags, object_type, object, location, message_code, layer, message, user_data):
-	if flags & vk.DEBUG_REPORT_ERROR_BIT_EXT:
-		_type = 'ERROR'
-	elif flags & vk.DEBUG_REPORT_WARNING_BIT_EXT:
-		_type = 'WARNING'
-
-	print("DisKovery: VULKAN {}: {}\n".format(_type, message[::].decode()))
-	return 0
 
 class DkInstance(object):
 	def create_instance(self, debug):
@@ -51,8 +42,6 @@ class DkInstance(object):
 
 		create_info = vk.InstanceCreateInfo(
 			s_type=vk.STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-			next=None,
-			flags=0,
 			appilcation_info=pointer(app_info),
 			enabled_layer_count=len(layers),
 			enabled_layer_names=_layers,
@@ -60,38 +49,26 @@ class DkInstance(object):
 			enabled_extension_names=_extensions
 		)
 
-		instance = vk.Instance(0)
-		result = vk.CreateInstance(byref(create_info), None, byref(instance))
-		if result == vk.SUCCESS:
-			functions = chain(vk.load_functions(instance, vk.InstanceFunctions, vk.GetInstanceProcAddr),
-							  vk.load_functions(instance, vk.PhysicalDeviceFunctions, vk.GetInstanceProcAddr))
-			for name, function in functions:
-				setattr(self, name, function)
-
-			self.instance = instance
-		else:
-			raise RuntimeError('Instance creation failed. Error code: {}'.format(result))
+		assert(vk.CreateInstance(byref(create_info), None, byref(self.instance)) == vk.SUCCESS)
+		functions = chain(vk.load_functions(self.instance, vk.InstanceFunctions, vk.GetInstanceProcAddr),
+						  vk.load_functions(self.instance, vk.PhysicalDeviceFunctions, vk.GetInstanceProcAddr))
+		for name, function in functions:
+			setattr(self, name, function)
 
 	def create_debugger(self):
 		callback_fn = vk.fn_DebugReportCallbackEXT(debug_function)
 		create_info = vk.DebugReportCallbackCreateInfoEXT(
 			s_type=vk.STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT,
-			next=None, 
 			flags=vk.DEBUG_REPORT_ERROR_BIT_EXT | vk.DEBUG_REPORT_WARNING_BIT_EXT,
-			callback=callback_fn,
-			user_data=None
+			callback=callback_fn
 		)
 
-		debugger = vk.DebugReportCallbackEXT(0)
-		result = self.CreateDebugReportCallbackEXT(
+		self.CreateDebugReportCallbackEXT(
 			self.instance, 
 			byref(create_info), 
 			None, 
-			byref(debugger)
+			byref(self.debugger)
 		)
-
-		self.callback_fn = callback_fn
-		self.debugger = debugger
 
 	def pick_gpu(self):
 		gpu_count = c_uint(0)
@@ -122,13 +99,13 @@ class DkInstance(object):
 		supported = vk.c_uint(0)
 		for index, queue in enumerate(queue_families):
 			if queue.queue_count > 0 and queue.queue_flags & vk.QUEUE_GRAPHICS_BIT != 0:
-				self.graphics_q['index'] = index
+				self.graphics['index'] = index
 
 			self.GetPhysicalDeviceSurfaceSupportKHR(self.gpu, index, self.window.surface, byref(supported))
 			if queue.queue_count > 0 and supported.value == 1:
-				self.present_q['index'] = index
+				self.present['index'] = index
 
-			if self.graphics_q['index'] != None and self.present_q['index'] != None:
+			if self.graphics['index'] != None and self.present['index'] != None:
 				break
 
 		self.image_data['depth_format'] = self.find_depth_format()
@@ -138,16 +115,14 @@ class DkInstance(object):
 		priorities = (c_float*1)(1.0)
 		g_q_create_info = vk.DeviceQueueCreateInfo(
 			s_type=vk.STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-			next=None,
-			flags=0,
-			queue_family_index=int(self.graphics_q['index']),
+			queue_family_index=int(self.graphics['index']),
 			queue_count=1,
 			queue_priorities=priorities
 		)
 
 		p_q_create_info = vk.DeviceQueueCreateInfo(
 			s_type=vk.STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-			queue_family_index=int(self.present_q['index']),
+			queue_family_index=int(self.present['index']),
 			queue_count=1,
 			queue_priorities=priorities
 		)
@@ -166,15 +141,12 @@ class DkInstance(object):
 
 		create_info = vk.DeviceCreateInfo(
 			s_type=vk.STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-			next=None,
-			flags=0,
 			queue_create_info_count=1,
 			queue_create_infos=queue_create_infos,
 			enabled_layer_count=len(layers),
 			enabled_layer_names=_layers,
 			enabled_extension_count=len(extensions),
-			enabled_extension_names=_extensions,
-			enabled_features=None
+			enabled_extension_names=_extensions
 		)
 
 		device = vk.Device(0)
@@ -193,20 +165,20 @@ class DkInstance(object):
 			raise RuntimeError('Could not create device.')
 
 	def fill_queues(self):
-		self.graphics_q['queue'] = vk.Queue(0)
-		self.present_q['queue'] = vk.Queue(0)
+		self.graphics['queue'] = vk.Queue(0)
+		self.present['queue'] = vk.Queue(0)
 
 		self.GetDeviceQueue(
 			self.device, 
-			self.graphics_q['index'], 
+			self.graphics['index'], 
 			0, 
-			byref(self.graphics_q['queue'])
+			byref(self.graphics['queue'])
 		)
 		self.GetDeviceQueue(
 			self.device, 
-			self.present_q['index'], 
+			self.present['index'], 
 			0, 
-			byref(self.present_q['queue'])
+			byref(self.present['queue'])
 		)
 
 	def create_swap_chain(self):
@@ -281,12 +253,10 @@ class DkInstance(object):
 		self.image_data['color_format'] = color_format
 		color_space = formats[0].color_space
 
-		queue_family_indices = (c_uint*2)(self.graphics_q['index'], self.present_q['index'])
+		queue_family_indices = (c_uint*2)(self.graphics['index'], self.present['index'])
 
 		create_info = vk.SwapchainCreateInfoKHR(
 			s_type=vk.STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-			next=None,
-			flags=0,
 			surface=self.surface,
 			min_image_count=self.image_data['count'],
 			image_format=self.image_data['color_format'],
@@ -330,10 +300,10 @@ class DkInstance(object):
 
 		for index, image in enumerate(images):
 			components = vk.ComponentMapping(
-				r=vk.COMPONENT_SWIZZLE_R,
-				g=vk.COMPONENT_SWIZZLE_G,
-				b=vk.COMPONENT_SWIZZLE_B,
-				a=vk.COMPONENT_SWIZZLE_A
+				r=vk.COMPONENT_SWIZZLE_IDENTITY,
+				g=vk.COMPONENT_SWIZZLE_IDENTITY,
+				b=vk.COMPONENT_SWIZZLE_IDENTITY,
+				a=vk.COMPONENT_SWIZZLE_IDENTITY
 			)
 
 			sub_range = vk.ImageSubresourceRange(
@@ -347,7 +317,6 @@ class DkInstance(object):
 			create_info = vk.ImageViewCreateInfo(
 				s_type=vk.STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
 				image=image,
-				flags=0,
 				view_type=vk.IMAGE_VIEW_TYPE_2D,
 				format=self.image_data['color_format'],
 				components=components,
@@ -361,12 +330,28 @@ class DkInstance(object):
 			else:
 				raise RuntimeError("Unable to create swapchain image views")
 
+	def create_pipeline_cache(self):
+		create_info = vk.PipelineCacheCreateInfo(
+			s_type=vk.STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO, 
+			next=None,
+			flags=0, 
+			initial_data_size=0, 
+			initial_data=None
+		)
+
+		pipeline_cache = vk.PipelineCache(0)
+		result = self.CreatePipelineCache(self.device, byref(create_info), None, byref(pipeline_cache))
+		if result != vk.SUCCESS:
+			raise RuntimeError('Failed to create pipeline cache')
+
+		self.pipeline_cache = pipeline_cache
+
+
 	def create_pool(self):
 		create_info = vk.CommandPoolCreateInfo(
 			s_type=vk.STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-			next=None,
 			flags=vk.COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-			queue_family_index=self.graphics_q['index']
+			queue_family_index=self.graphics['index']
 		)
 
 		pool = vk.CommandPool(0)
@@ -408,20 +393,14 @@ class DkInstance(object):
 
 		subpass = vk.SubpassDescription(
 			pipeline_bind_point=vk.PIPELINE_BIND_POINT_GRAPHICS,
-			flags=0, 
-			input_attachment_count=0, 
-			input_attachments=None,
 			color_attachment_count=1, 
 			color_attachments=pointer(color_ref),
 			resolve_attachments=None, 
-			depth_stencil_attachment=pointer(depth_ref),
-			preserve_attachment_count=0, 
-			preserve_attachments=None
+			depth_stencil_attachment=pointer(depth_ref)
 		)
 
 		dependency = vk.SubpassDependency(
 			src_subpass=vk.SUBPASS_EXTERNAL,
-			dst_subpass=0,
 			src_stage_mask=vk.PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			src_access_mask=0,
 			dst_stage_mask=vk.PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -431,8 +410,6 @@ class DkInstance(object):
 		attachments = (vk.AttachmentDescription*2)(color, depth)
 		create_info = vk.RenderPassCreateInfo(
 			s_type=vk.STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-			next=None, 
-			flags=0, 
 			attachment_count=2,
 			attachments=cast(attachments, POINTER(vk.AttachmentDescription)),
 			subpass_count=1, 
@@ -459,8 +436,6 @@ class DkInstance(object):
 
 			create_info = vk.FramebufferCreateInfo(
 				s_type=vk.STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
-				next=None,
-				flags=0,
 				render_pass=self.render_pass,
 				attachment_count=2,
 				attachments=attachments,
@@ -481,10 +456,10 @@ class DkInstance(object):
 
 	def __init__(self, debug):
 		# The Vulkan instance (VkInstance)
-		self.instance = None
+		self.instance = vk.Instance(0)
 		# The Vulkan debugger, which prints errors and warnings 
 		# to the console when enabled (VkDebugReportCallbackEXT)
-		self.debugger = None
+		self.debugger = vk.DebugReportCallbackEXT(0)
 		# The Pygame window, wrapped with a Vulkan surface (VkSurfaceKHR)
 		self.window = None
 		# The surface (VkSurfaceKHR) referenced in Window, for better readabilitiy
@@ -494,9 +469,9 @@ class DkInstance(object):
 		# The logical device that handles virtual memory inside Vulkan (VkDevice)
 		self.device = None
 		# The queue that is filled when draw calls are completed (VkQueue)
-		self.graphics_q = {'index': None, 'queue': None }
+		self.graphics = {'index': None, 'queue': None }
 		# The queue that is filled when images are ready to be presented (VkQueue)
-		self.present_q = {'index': None, 'queue': None }
+		self.present = {'index': None, 'queue': None }
 		# The Swap Chain: the virtual device that "swaps" 
 		# through the data in the queues defined above (VkSwapchainKHR)
 		self.swap_chain = None
@@ -505,6 +480,9 @@ class DkInstance(object):
 						   'count': None, 'extent': None }
 		# A list of image views to interpret the above images (VkImageView[])
 		self.sc_image_views = None
+
+		self.pipeline_cache = None
+
 		# The pool that will store buffers containing draw calls (VkCommandPool)
 		self.pool = None
 		# The Image that will hold color info (Image)
@@ -516,6 +494,8 @@ class DkInstance(object):
 		# The buffers the image views will be stored in to display on screen (VkFramebuffer[])
 		self.framebuffers = None
 
+		self.samplers = { }
+
 		self.create_instance(debug)
 		if debug:
 			self.create_debugger()
@@ -526,6 +506,7 @@ class DkInstance(object):
 		self.fill_queues()
 		self.create_swap_chain()
 		self.create_sc_views()
+		self.create_pipeline_cache()
 		self.create_pool()
 
 		self.color = Image(
@@ -556,6 +537,10 @@ class DkInstance(object):
 		self.create_frame_buffers()
 
 	def cleanup(self):
+
+		for s in self.samplers.values():
+			self.DestroySampler(self.device, s, None)
+
 		for fb in self.framebuffers:
 			self.DestroyFramebuffer(self.device, fb, None)
 		self.DestroyRenderPass(self.device, self.render_pass, None)
@@ -564,6 +549,7 @@ class DkInstance(object):
 		self.depth.cleanup()
 
 		self.DestroyCommandPool(self.device, self.pool, None)
+		self.DestroyPipelineCache(self.device, self.pipeline_cache, None)
 		self.destroy_swap_chain()
 		self.DestroyDevice(self.device, None)
 		self.DestroyDebugReportCallbackEXT(self.instance, self.debugger, None)
@@ -612,10 +598,7 @@ class DkInstance(object):
 		self.AllocateCommandBuffers(self.device, byref(b_allocate_info), byref(buff))
 
 		begin_info = vk.CommandBufferBeginInfo(
-			s_type=vk.STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-			next=0,
-			flags=0,
-			inheritance_info=None
+			s_type=vk.STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO
 		)
 
 		self.BeginCommandBuffer(buff, byref(begin_info))
@@ -627,17 +610,27 @@ class DkInstance(object):
 
 		submit_info = vk.SubmitInfo(
 			s_type=vk.STRUCTURE_TYPE_SUBMIT_INFO,
-			next=None,
-			wait_semaphore_count=0,
-			wait_semaphores=None,
-			wait_dst_stage_mask=None,
-			command_buffer_coount=1,
-			command_buffers=pointer(buff),
-			signal_semaphore_count=0,
-			signal_semaphores=None
+			command_buffer_count=1,
+			command_buffers=pointer(buff)
 		)
 
-		self.QueueSubmit(self.graphics_q['queue'], 1, byref(submit_info), 0)
-		self.QueueWaitIdle(self.graphics_q['queue'])
+		self.QueueSubmit(self.graphics['queue'], 1, byref(submit_info), 0)
+		self.QueueWaitIdle(self.graphics['queue'])
 
 		self.FreeCommandBuffers(self.device, self.pool, 1, byref(buff))
+
+	def get_texture_sampler(self, mip):
+		if mip in self.samplers.keys():
+			return self.samplers[mip]
+		else:
+			self.samplers[mip] = make_texture_sampler(self, mip)
+			return self.samplers[mip]
+
+def debug_function(flags, object_type, object, location, message_code, layer, message, user_data):
+	if flags & vk.DEBUG_REPORT_ERROR_BIT_EXT:
+		_type = 'ERROR'
+	elif flags & vk.DEBUG_REPORT_WARNING_BIT_EXT:
+		_type = 'WARNING'
+
+	print("DisKovery: VULKAN {}: {}\n".format(_type, message[::].decode()))
+	return 0

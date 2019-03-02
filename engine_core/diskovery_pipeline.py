@@ -1,8 +1,10 @@
+#!/bin/env/python
+
 import vk
 import os
 import subprocess
 from ctypes import *
-from diskovery_mesh import Vertex, bindings, attributes
+from diskovery_mesh import Vertex, bindings, attributes, animated_attributes
 
 class Shader(object):
 	def __init__(self, sources, definition, uniforms):
@@ -25,17 +27,16 @@ class Shader(object):
 
 		This functionality requires that the GLSL shaders use file endings that
 		correspond to their stages (e.g. *.vert, *.frag)
-		"""
+		"""	
 		os.chdir("Shaders")
 
 		for src in sources:
-			if not os.path.isfile("{}.spv".format(src)):
-				subprocess.call("glslangValidator.exe -V {} -o {}.spv".format(src, src))
+			if os.path.isfile("{}.spv".format(src)):
+				subprocess.call("rm {}.spv".format(src))
+			subprocess.call("glslangValidator.exe -V {} -o {}.spv".format(src, src))
 			self.filenames[src.split('.')[1]] = "shaders/{}.spv".format(src)
 
 		os.chdir("..")
-
-		
 
 class Pipeline(object):
 	
@@ -75,7 +76,7 @@ class Pipeline(object):
 		)
 		return module
 
-	def make_pipeline(self):
+	def make_pipeline(self, animated):
 		path = os.path.dirname(os.path.abspath(__file__))
 		with open(os.path.join(path, self.shader.filenames['vert']), 'rb') as f:
 			vert_shader_src = f.read()
@@ -89,8 +90,6 @@ class Pipeline(object):
 			s_type=vk.STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
 			stage=vk.SHADER_STAGE_VERTEX_BIT,
 			module=vertex_shader,
-			flags=0,
-			specialization_info=None,
 			name=b'main'
 		)
 
@@ -98,8 +97,6 @@ class Pipeline(object):
 			s_type=vk.STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
 			stage=vk.SHADER_STAGE_FRAGMENT_BIT,
 			module=fragment_shader,
-			flags=0,
-			specialization_info=None,
 			name=b'main'
 		)
 
@@ -107,31 +104,40 @@ class Pipeline(object):
 		    s_type=vk.STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
 		    vertex_binding_description_count=1,
 		    vertex_attribute_description_count=len(attributes()),
-		    vertex_binding_descriptions=cast(bindings(), POINTER(vk.VertexInputBindingDescription)),
-		    vertex_attribute_descriptions=cast(attributes(), POINTER(vk.VertexInputAttributeDescription))
+		    vertex_binding_descriptions=cast(
+		    	bindings(), 
+		    	POINTER(vk.VertexInputBindingDescription)
+		    ),
+		    vertex_attribute_descriptions=cast(
+		    	attributes(), 
+		    	POINTER(vk.VertexInputAttributeDescription)
+		    )
 		)
+
+		if animated:
+			vertex_input_create.vertex_attribute_description_count = len(animated_attributes())
+			vertex_input_create.vertex_attribute_descriptions=cast(
+				animated_attributes(), 
+				POINTER(vk.VertexInputAttributeDescription)
+			)
 
 		input_assembly_create = vk.PipelineInputAssemblyStateCreateInfo(
 		    s_type=vk.STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
-		    flags=0,
 		    topology=vk.PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
 		    primitive_restart_enable=vk.FALSE
 		)
 
 		viewport = vk.Viewport(
-		    x=0., 
-		    y=0., 
 		    width=float(self.dk.image_data['extent'].width), 
 		    height=float(self.dk.image_data['extent'].height),
-		    minDepth=0., 
-		    maxDepth=1.
+		    min_depth=0., 
+		    max_depth=1.
 		)
 
 		scissor_offset = vk.Offset2D(x=0, y=0)
 		scissor = vk.Rect2D(offset=scissor_offset, extent=self.dk.image_data['extent'])
 		viewport_state_create = vk.PipelineViewportStateCreateInfo(
 		    s_type=vk.STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
-		    flags=0,
 		    viewport_count=1,
 		    viewports=pointer(viewport),
 		    scissor_count=1,
@@ -140,28 +146,19 @@ class Pipeline(object):
 
 		rasterizer_create = vk.PipelineRasterizationStateCreateInfo(
 		    s_type=vk.STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
-		    flags=0,
 		    depth_clamp_enable=vk.FALSE,
 		    rasterizer_discard_enable=vk.FALSE,
 		    polygon_mode=vk.POLYGON_MODE_FILL,
 		    line_width=1,
-		    cull_mode=vk.CULL_MODE_NONE,
-		    front_face=vk.FRONT_FACE_COUNTER_CLOCKWISE,
-		    depth_bias_enable=vk.FALSE,
-		    depth_bias_constant_factor=0.,
-		    depth_bias_clamp=0.,
-		    depth_bias_slope_factor=0.
+		    cull_mode=vk.CULL_MODE_BACK_BIT,
+		    front_face=vk.FRONT_FACE_CLOCKWISE
 		)
 
 		multisample_create = vk.PipelineMultisampleStateCreateInfo(
 		    s_type=vk.STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
-		    flags=0,
 		    sample_shading_enable=vk.FALSE,
 		    rasterization_samples=vk.SAMPLE_COUNT_1_BIT,
-		    min_sample_shading=1,
-		    sample_mask=None,
-		    alpha_toCoverage_enable=vk.FALSE,
-		    alpha_toOne_enable=vk.FALSE
+		    min_sample_shading=1
 		)
 
 		depth_stencil_create = vk.PipelineDepthStencilStateCreateInfo(
@@ -178,19 +175,11 @@ class Pipeline(object):
 						    vk.COLOR_COMPONENT_G_BIT | 
 						    vk.COLOR_COMPONENT_B_BIT | 
 						    vk.COLOR_COMPONENT_A_BIT,
-
-		    blend_enable=vk.FALSE,
-		    src_color_blend_factor=vk.BLEND_FACTOR_ONE,
-		    dst_color_blend_factor=vk.BLEND_FACTOR_ZERO,
-		    color_blend_op=vk.BLEND_OP_ADD,
-		    src_alpha_blend_factor=vk.BLEND_FACTOR_ONE,
-		    dst_alpha_blend_factor=vk.BLEND_FACTOR_ZERO,
-		    alpha_blend_op=vk.BLEND_OP_ADD
+		    blend_enable=vk.FALSE
 		)
 
 		color_blend_create = vk.PipelineColorBlendStateCreateInfo(
 		    s_type=vk.STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
-		    flags=0,
 		    logic_op_enable=vk.FALSE,
 		    logic_op=vk.LOGIC_OP_COPY,
 		    attachment_count=1,
@@ -202,12 +191,10 @@ class Pipeline(object):
 
 		pipeline_create = vk.GraphicsPipelineCreateInfo(
 		    s_type=vk.STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-		    flags=0,
 		    stage_count=2,
 		    stages=cast(shader_stages, POINTER(vk.PipelineShaderStageCreateInfo)),
 		    vertex_input_state=pointer(vertex_input_create),
 		    input_assembly_state=pointer(input_assembly_create),
-		    tessellation_state=None,
 		    viewport_state=pointer(viewport_state_create),
 		    rasterization_state=pointer(rasterizer_create),
 		    multisample_state=pointer(multisample_create),
@@ -215,10 +202,7 @@ class Pipeline(object):
 		    color_blend_state=pointer(color_blend_create),
 		    dynamic_state=None,
 		    layout=self.pipeline_layout,
-		    render_pass=self.dk.render_pass,
-		    subpass=0,
-		    base_pipeline_handle=vk.Pipeline(0),
-		    base_pipeline_index=-1
+		    render_pass=self.dk.render_pass
 		)
 
 		pipeline = vk.Pipeline(0)
@@ -237,7 +221,7 @@ class Pipeline(object):
 		self.dk.DestroyShaderModule(self.dk.device, fragment_shader, None)
 
 
-	def __init__(self, dk, shader, set_layout):
+	def __init__(self, dk, shader, set_layout, animated):
 		self.dk = dk
 		# A reference to the Shader (Shader) this pipeline is being built around
 		self.shader = shader
@@ -248,7 +232,7 @@ class Pipeline(object):
 		self.pipeline_ref = vk.Pipeline(0)
 
 		self.make_pipeline_layout(set_layout)
-		self.make_pipeline()
+		self.make_pipeline(animated)
 
 	def cleanup(self):
 		self.dk.DestroyPipelineLayout(self.dk.device, self.pipeline_layout, None)

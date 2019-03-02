@@ -1,0 +1,665 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>diskovery module &mdash; DisKovery 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="diskovery_buffer module" href="diskovery_buffer.html" />
+    <link rel="prev" title="DisKovery" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> DisKovery
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">DisKovery Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">diskovery module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="diskovery_buffer.html">diskovery_buffer module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="diskovery_descriptor.html">diskovery_descriptor module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="diskovery_entity_manager.html">diskovery_entity_manager module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="diskovery_image.html">diskovery_image module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="diskovery_instance.html">diskovery_instance module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="diskovery_mesh.html">diskovery_mesh module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="diskovery_pipeline.html">diskovery_pipeline module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="diskovery_window.html">diskovery_window module</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DisKovery</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>diskovery module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/diskovery.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-diskovery">
+<span id="diskovery-module"></span><h1>diskovery module<a class="headerlink" href="#module-diskovery" title="Permalink to this headline">¶</a></h1>
+<p>The <a class="reference internal" href="#module-diskovery" title="diskovery"><code class="xref py py-mod docutils literal notranslate"><span class="pre">diskovery</span></code></a> module is the primary module that acts as a wrapper
+around the functionality of the other DisKovery submodules. It stores
+dictionaries that handle the memory management of assets and objects
+to be used in the scene, including:</p>
+<ul class="simple">
+<li><a class="reference internal" href="diskovery_mesh.html#diskovery_mesh.Mesh" title="diskovery_mesh.Mesh"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mesh</span></code></a> objects for 3D models</li>
+<li><a class="reference internal" href="diskovery_image.html#diskovery_image.Texture" title="diskovery_image.Texture"><code class="xref py py-class docutils literal notranslate"><span class="pre">Texture</span></code></a> objects for external images</li>
+<li><a class="reference internal" href="diskovery_pipeline.html#diskovery_pipeline.Shader" title="diskovery_pipeline.Shader"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shader</span></code></a> objects for GLSL shader programs</li>
+<li><a class="reference internal" href="diskovery_pipeline.html#diskovery_pipeline.Pipeline" title="diskovery_pipeline.Pipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code></a> objects (associated with <a class="reference internal" href="diskovery_pipeline.html#diskovery_pipeline.Shader" title="diskovery_pipeline.Shader"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shader</span></code></a> objects)</li>
+<li><a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSetLayout.html">VkDescriptorSetLayout</a> objects (associated with <a class="reference internal" href="diskovery_pipeline.html#diskovery_pipeline.Shader" title="diskovery_pipeline.Shader"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shader</span></code></a> objects)</li>
+<li><a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkSampler.html">VkSampler</a> objects (for sampling <a class="reference internal" href="diskovery_image.html#diskovery_image.Texture" title="diskovery_image.Texture"><code class="xref py py-class docutils literal notranslate"><span class="pre">Texture</span></code></a> objects)</li>
+</ul>
+<p>In addition to managing assets, it stores objects of a few other classes:</p>
+<ul class="simple">
+<li>A <a class="reference internal" href="diskovery_instance.html#diskovery_instance.DkInstance" title="diskovery_instance.DkInstance"><code class="xref py py-class docutils literal notranslate"><span class="pre">DkInstance</span></code></a> that is used by all DisKovery objects that interface with Vulkan</li>
+<li>A <a class="reference internal" href="diskovery_entity_manager.html#diskovery_entity_manager.EntityManager" title="diskovery_entity_manager.EntityManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">EntityManager</span></code></a> that stores all <a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></a> objects in the scene</li>
+</ul>
+<p>The <a class="reference internal" href="#module-diskovery" title="diskovery"><code class="xref py py-mod docutils literal notranslate"><span class="pre">diskovery</span></code></a> module also holds the definitions for the three basic
+entity types, from which DisKovery users can extend their own custom object definitions:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></a> - a basic Entity that has a position in the 3D world</li>
+<li><a class="reference internal" href="#diskovery.RenderedEntity" title="diskovery.RenderedEntity"><code class="xref py py-class docutils literal notranslate"><span class="pre">RenderedEntity</span></code></a> - an <a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></a> with a <code class="xref py py-class docutils literal notranslate"><span class="pre">Mesh</span></code> that is rendered to the scene</li>
+<li><code class="xref py py-class docutils literal notranslate"><span class="pre">AnimatedEntity</span></code> - a <a class="reference internal" href="#diskovery.RenderedEntity" title="diskovery.RenderedEntity"><code class="xref py py-class docutils literal notranslate"><span class="pre">RenderedEntity</span></code></a> with an <code class="xref py py-class docutils literal notranslate"><span class="pre">Animator</span></code> to handle skeletal animation</li>
+</ul>
+<dl class="class">
+<dt id="diskovery.Entity">
+<em class="property">class </em><code class="descclassname">diskovery.</code><code class="descname">Entity</code><span class="sig-paren">(</span><em>position=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.Entity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The <a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></a> class is the simplest object that can be added to the game world.
+An <a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></a> exists in 3D space, but will not have any visual representation in
+the game world.</p>
+<p>Multiple default extensions of the <a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></a> class are included in DisKovery, namely:
+- <code class="xref py py-class docutils literal notranslate"><span class="pre">Light</span></code> for handling the lighting of a scene
+- <code class="xref py py-class docutils literal notranslate"><span class="pre">Camera</span></code> for setting the view of the scene</p>
+<p><strong>Attributes of the Entity class:</strong></p>
+<dl class="attribute">
+<dt id="diskovery.Entity.position">
+<code class="descname">position</code><a class="headerlink" href="#diskovery.Entity.position" title="Permalink to this definition">¶</a></dt>
+<dd><p>The position of the <a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></a> as a 3D vector, stored as a tuple.
+Stores the value of <a class="reference internal" href="#diskovery.Entity.position" title="diskovery.Entity.position"><code class="xref py py-attr docutils literal notranslate"><span class="pre">diskovery.Entity.position</span></code></a> if one was provided.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery.Entity.parent">
+<code class="descname">parent</code><a class="headerlink" href="#diskovery.Entity.parent" title="Permalink to this definition">¶</a></dt>
+<dd><p>A reference to another <a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></a> that, when not set to <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+gives a parent position from which the position of this <a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></a>
+is translated so that the position of this Entity is relative to its parent</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery.Entity.children">
+<code class="descname">children</code><a class="headerlink" href="#diskovery.Entity.children" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of references to other <a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></a> objects, for use as
+described in the parent attribute’s description.</p>
+</dd></dl>
+
+<p><strong>Methods of the Entity class:</strong></p>
+<dl class="method">
+<dt id="diskovery.Entity.detach">
+<code class="descname">detach</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.Entity.detach" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes the reference to the parent of the <a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></a> cleanly</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="diskovery.Entity.set_parent">
+<code class="descname">set_parent</code><span class="sig-paren">(</span><em>parent</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.Entity.set_parent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the parent of the <a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></a> to be the given <a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>parent</strong> – the <a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></a> to set the parent as</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="diskovery.Entity.world_position">
+<code class="descname">world_position</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.Entity.world_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the position of the <a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></a> relative to world coordinates
+rather than the default, which is relative to its parent’s coordinates</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a tuple describing the x, y, and z coordinates of the <a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></a> in world space</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="diskovery.RenderedEntity">
+<em class="property">class </em><code class="descclassname">diskovery.</code><code class="descname">RenderedEntity</code><span class="sig-paren">(</span><em>position=None</em>, <em>rotation=None</em>, <em>scale=None</em>, <em>shade=None</em>, <em>textures=None</em>, <em>mesh=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.RenderedEntity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">diskovery.Entity</span></code></a></p>
+<p>Extends <a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></a> to include references to the necessary objects 
+to present an object on the screen. All parameters are optional, as default values
+for each are either preloaded into the environment or simple tuples:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">parameter</th>
+<th class="head">default value</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>position</td>
+<td>(0, 0, 0)</td>
+</tr>
+<tr class="row-odd"><td>rotation</td>
+<td>(0, 0, 0)</td>
+</tr>
+<tr class="row-even"><td>scale</td>
+<td>(1, 1, 1)</td>
+</tr>
+<tr class="row-odd"><td>shade</td>
+<td>“Default”</td>
+</tr>
+<tr class="row-even"><td>textures</td>
+<td>[“Default”]</td>
+</tr>
+<tr class="row-odd"><td>mesh</td>
+<td>“Default”</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Attributes of the RenderedEntity class:</strong></p>
+<dl class="attribute">
+<dt id="diskovery.RenderedEntity.rotation">
+<code class="descname">rotation</code><a class="headerlink" href="#diskovery.RenderedEntity.rotation" title="Permalink to this definition">¶</a></dt>
+<dd><p>The rotation of the <a class="reference internal" href="#diskovery.RenderedEntity" title="diskovery.RenderedEntity"><code class="xref py py-class docutils literal notranslate"><span class="pre">RenderedEntity</span></code></a> as a 
+set of Euler angles, stored as a tuple.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery.RenderedEntity.scale">
+<code class="descname">scale</code><a class="headerlink" href="#diskovery.RenderedEntity.scale" title="Permalink to this definition">¶</a></dt>
+<dd><p>The x, y, and z scale of the <a class="reference internal" href="#diskovery.RenderedEntity" title="diskovery.RenderedEntity"><code class="xref py py-class docutils literal notranslate"><span class="pre">RenderedEntity</span></code></a>, stored as a tuple</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery.RenderedEntity.textures">
+<code class="descname">textures</code><a class="headerlink" href="#diskovery.RenderedEntity.textures" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of strings containing keys to the dictionary of 
+<a class="reference internal" href="diskovery_image.html#diskovery_image.Texture" title="diskovery_image.Texture"><code class="xref py py-class docutils literal notranslate"><span class="pre">Texture</span></code></a> objects stored in this module</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery.RenderedEntity.mesh">
+<code class="descname">mesh</code><a class="headerlink" href="#diskovery.RenderedEntity.mesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>A string containing a key to the dictionary of 
+<a class="reference internal" href="diskovery_mesh.html#diskovery_mesh.Mesh" title="diskovery_mesh.Mesh"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mesh</span></code></a> objects stored in this module</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery.RenderedEntity.definition">
+<code class="descname">definition</code><a class="headerlink" href="#diskovery.RenderedEntity.definition" title="Permalink to this definition">¶</a></dt>
+<dd><p>A tuple of <a class="reference internal" href="diskovery_descriptor.html#diskovery_descriptor.BindingType" title="diskovery_descriptor.BindingType"><code class="xref py py-class docutils literal notranslate"><span class="pre">BindingType</span></code></a> s that is used to determine
+which <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSetLayout.html">VkDescriptorSetLayout</a> is needed. Taken from the <a class="reference internal" href="diskovery_pipeline.html#diskovery_pipeline.Shader" title="diskovery_pipeline.Shader"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shader</span></code></a>
+given by the <code class="docutils literal notranslate"><span class="pre">shade</span></code> argument, or the default shader if no value is given.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery.RenderedEntity.uniforms">
+<code class="descname">uniforms</code><a class="headerlink" href="#diskovery.RenderedEntity.uniforms" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of <a class="reference internal" href="diskovery_buffer.html#diskovery_buffer.UniformBuffer" title="diskovery_buffer.UniformBuffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">UniformBuffer</span></code></a> objects filled by 
+iterating over the list of <a class="reference internal" href="diskovery_descriptor.html#diskovery_descriptor.UniformType" title="diskovery_descriptor.UniformType"><code class="xref py py-class docutils literal notranslate"><span class="pre">UniformType</span></code></a> s 
+stored in the <a class="reference internal" href="diskovery_pipeline.html#diskovery_pipeline.Shader" title="diskovery_pipeline.Shader"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shader</span></code></a> object</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery.RenderedEntity.descriptor">
+<code class="descname">descriptor</code><a class="headerlink" href="#diskovery.RenderedEntity.descriptor" title="Permalink to this definition">¶</a></dt>
+<dd><p>A <a class="reference internal" href="diskovery_descriptor.html#diskovery_descriptor.Descriptor" title="diskovery_descriptor.Descriptor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Descriptor</span></code></a> defined by the definition described above,
+the <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSetLayout.html">VkDescriptorSetLayout</a> associated with that definition (in this module’s dictionary
+of descriptor set layouts, using the definition tuple as a key)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="diskovery.RenderedEntity.cleanup">
+<code class="descname">cleanup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.RenderedEntity.cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles necessary Destroy methods for all the Vulkan components 
+contained inside the <a class="reference internal" href="#diskovery.RenderedEntity" title="diskovery.RenderedEntity"><code class="xref py py-class docutils literal notranslate"><span class="pre">RenderedEntity</span></code></a></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="diskovery.RenderedEntity.get_mesh">
+<code class="descname">get_mesh</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.RenderedEntity.get_mesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>References the dictionary of meshes in this module to retrieve 
+this <a class="reference internal" href="#diskovery.RenderedEntity" title="diskovery.RenderedEntity"><code class="xref py py-class docutils literal notranslate"><span class="pre">RenderedEntity</span></code></a>’s mesh</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The <a class="reference internal" href="diskovery_mesh.html#diskovery_mesh.Mesh" title="diskovery_mesh.Mesh"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mesh</span></code></a> with this <a class="reference internal" href="#diskovery.RenderedEntity" title="diskovery.RenderedEntity"><code class="xref py py-class docutils literal notranslate"><span class="pre">RenderedEntity</span></code></a>’s key</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="diskovery.RenderedEntity.get_pipeline">
+<code class="descname">get_pipeline</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.RenderedEntity.get_pipeline" title="Permalink to this definition">¶</a></dt>
+<dd><p>References the dictionary of pipelines in this module to retrieve 
+this <a class="reference internal" href="#diskovery.RenderedEntity" title="diskovery.RenderedEntity"><code class="xref py py-class docutils literal notranslate"><span class="pre">RenderedEntity</span></code></a>’s pipeline</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The <a class="reference internal" href="diskovery_pipeline.html#diskovery_pipeline.Pipeline" title="diskovery_pipeline.Pipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code></a> with this <a class="reference internal" href="#diskovery.RenderedEntity" title="diskovery.RenderedEntity"><code class="xref py py-class docutils literal notranslate"><span class="pre">RenderedEntity</span></code></a>’s definition</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="diskovery.RenderedEntity.get_texture">
+<code class="descname">get_texture</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.RenderedEntity.get_texture" title="Permalink to this definition">¶</a></dt>
+<dd><p>References the dictionary of textures in this module to retrieve 
+this <a class="reference internal" href="#diskovery.RenderedEntity" title="diskovery.RenderedEntity"><code class="xref py py-class docutils literal notranslate"><span class="pre">RenderedEntity</span></code></a>’s texture at a given index 
+in its list of textures</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>index</strong> – The index in the list of textures to reference when retrieving a texture</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The <a class="reference internal" href="diskovery_image.html#diskovery_image.Texture" title="diskovery_image.Texture"><code class="xref py py-class docutils literal notranslate"><span class="pre">Texture</span></code></a> with the key at the given index of this <a class="reference internal" href="#diskovery.RenderedEntity" title="diskovery.RenderedEntity"><code class="xref py py-class docutils literal notranslate"><span class="pre">RenderedEntity</span></code></a>’s key list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="diskovery.RenderedEntity.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>ind</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.RenderedEntity.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates every <a class="reference internal" href="diskovery_buffer.html#diskovery_buffer.UniformBuffer" title="diskovery_buffer.UniformBuffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">UniformBuffer</span></code></a> stored in 
+<code class="docutils literal notranslate"><span class="pre">uniforms</span></code> with new data</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ind</strong> – the index indicating which <a class="reference internal" href="diskovery_buffer.html#diskovery_buffer.Buffer" title="diskovery_buffer.Buffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Buffer</span></code></a> in each <a class="reference internal" href="diskovery_buffer.html#diskovery_buffer.UniformBuffer" title="diskovery_buffer.UniformBuffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">UniformBuffer</span></code></a> should be filled with new data</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="diskovery.add_entity">
+<code class="descclassname">diskovery.</code><code class="descname">add_entity</code><span class="sig-paren">(</span><em>entity</em>, <em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.add_entity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds an entity to the <a class="reference internal" href="diskovery_entity_manager.html#diskovery_entity_manager.EntityManager" title="diskovery_entity_manager.EntityManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">EntityManager</span></code></a> stored in this module.</p>
+<p>More details can be found in the <a class="reference internal" href="diskovery_entity_manager.html#diskovery_entity_manager.EntityManager.add_entity" title="diskovery_entity_manager.EntityManager.add_entity"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add_entity()</span></code></a> method.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>entity</strong> – The <a class="reference internal" href="#diskovery.Entity" title="diskovery.Entity"><code class="xref py py-class docutils literal notranslate"><span class="pre">Entity</span></code></a> to add</li>
+<li><strong>name</strong> – A given name to be used as the key for the entity in the <a class="reference internal" href="diskovery_entity_manager.html#diskovery_entity_manager.EntityManager" title="diskovery_entity_manager.EntityManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">EntityManager</span></code></a></li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="diskovery.add_mesh">
+<code class="descclassname">diskovery.</code><code class="descname">add_mesh</code><span class="sig-paren">(</span><em>filename</em>, <em>name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.add_mesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates and adds a <a class="reference internal" href="diskovery_mesh.html#diskovery_mesh.Mesh" title="diskovery_mesh.Mesh"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mesh</span></code></a> to the dictionary
+of Meshes stored in this module. Has some basic wrapping to ensure
+keys are not duplicated and the filename provided links to a valid
+3D object data file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>filename</strong> – A str of the name of a file stored locally that contains 3D object data (either .obj or .dae format)</li>
+<li><strong>name</strong> – A given name for the newly created mesh. If not defined, the filename without its extension will be the key used in the dictionary</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="diskovery.add_shader">
+<code class="descclassname">diskovery.</code><code class="descname">add_shader</code><span class="sig-paren">(</span><em>name</em>, <em>files</em>, <em>definition</em>, <em>uniforms</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.add_shader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates and adds a <a class="reference internal" href="diskovery_pipeline.html#diskovery_pipeline.Shader" title="diskovery_pipeline.Shader"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shader</span></code></a> to the dictionary
+of Shaders stored in this module. Also creates a <a class="reference internal" href="diskovery_pipeline.html#diskovery_pipeline.Pipeline" title="diskovery_pipeline.Pipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code></a>
+and <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSetLayout.html">VkDescriptorSetLayout</a> based on the definition given and adds them to their
+respective dictionaries.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> – A given name for the newly created shader</li>
+<li><strong>files</strong> – A list containing the filenames of all stages of the shader (for now, just vertex and fragment shaders)</li>
+<li><strong>definition</strong> – A tuple of <a class="reference internal" href="diskovery_descriptor.html#diskovery_descriptor.BindingType" title="diskovery_descriptor.BindingType"><code class="xref py py-class docutils literal notranslate"><span class="pre">BindingType</span></code></a> objects that reflect the bindings used in the shader</li>
+<li><strong>uniforms</strong> – A list of <a class="reference internal" href="diskovery_descriptor.html#diskovery_descriptor.UniformType" title="diskovery_descriptor.UniformType"><code class="xref py py-class docutils literal notranslate"><span class="pre">UniformType</span></code></a> objects that reflect the content of each of the above bindings that binds a uniform</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="diskovery.add_texture">
+<code class="descclassname">diskovery.</code><code class="descname">add_texture</code><span class="sig-paren">(</span><em>filename</em>, <em>name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.add_texture" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates and adds a <a class="reference internal" href="diskovery_image.html#diskovery_image.Texture" title="diskovery_image.Texture"><code class="xref py py-class docutils literal notranslate"><span class="pre">Texture</span></code></a> to the dictionary
+of Textures stored in this module. Has some basic wrapping to ensure
+keys are not duplicated and the filename provided links to a valid
+image file.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>filename</strong> – A str of the name of a file stored locally that contains image data (all common formats accepted)</li>
+<li><strong>name</strong> – A given name for the newly created texture. If not defined, the filename without its extension will be the key used in the dictionary</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="diskovery.descriptor">
+<code class="descclassname">diskovery.</code><code class="descname">descriptor</code><span class="sig-paren">(</span><em>definition</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.descriptor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSetLayout.html">VkDescriptorSetLayout</a> from the dictionary in this module</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>definition</strong> – The definition (key) of the <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSetLayout.html">VkDescriptorSetLayout</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="diskovery.init">
+<code class="descclassname">diskovery.</code><code class="descname">init</code><span class="sig-paren">(</span><em>debug_mode=False</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes the <a class="reference internal" href="diskovery_instance.html#diskovery_instance.DkInstance" title="diskovery_instance.DkInstance"><code class="xref py py-class docutils literal notranslate"><span class="pre">DkInstance</span></code></a> and 
+<a class="reference internal" href="diskovery_entity_manager.html#diskovery_entity_manager.EntityManager" title="diskovery_entity_manager.EntityManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">EntityManager</span></code></a> objects used in 
+this module.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>debug_mode</strong> – Whether or not the <a class="reference internal" href="diskovery_instance.html#diskovery_instance.DkInstance" title="diskovery_instance.DkInstance"><code class="xref py py-class docutils literal notranslate"><span class="pre">DkInstance</span></code></a> should be created with Vulkan Validation Layers</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="diskovery.mesh">
+<code class="descclassname">diskovery.</code><code class="descname">mesh</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.mesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a <a class="reference internal" href="diskovery_mesh.html#diskovery_mesh.Mesh" title="diskovery_mesh.Mesh"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mesh</span></code></a> from the dictionary in this module</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> – The name (key) of the <a class="reference internal" href="diskovery_mesh.html#diskovery_mesh.Mesh" title="diskovery_mesh.Mesh"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mesh</span></code></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="diskovery.pipeline">
+<code class="descclassname">diskovery.</code><code class="descname">pipeline</code><span class="sig-paren">(</span><em>definition</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.pipeline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a <a class="reference internal" href="diskovery_pipeline.html#diskovery_pipeline.Pipeline" title="diskovery_pipeline.Pipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code></a> from the dictionary in this module</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> – The definition (key) of the <a class="reference internal" href="diskovery_pipeline.html#diskovery_pipeline.Pipeline" title="diskovery_pipeline.Pipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pipeline</span></code></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="diskovery.quit">
+<code class="descclassname">diskovery.</code><code class="descname">quit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.quit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles necessary Vulkan Destroy methods for all Vulkan components</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="diskovery.run">
+<code class="descclassname">diskovery.</code><code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Begins the game loop and starts the event handler</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="diskovery.shader">
+<code class="descclassname">diskovery.</code><code class="descname">shader</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.shader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a <a class="reference internal" href="diskovery_pipeline.html#diskovery_pipeline.Shader" title="diskovery_pipeline.Shader"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shader</span></code></a> from the dictionary in this module</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> – The name (key) of the <a class="reference internal" href="diskovery_pipeline.html#diskovery_pipeline.Shader" title="diskovery_pipeline.Shader"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shader</span></code></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="diskovery.texture">
+<code class="descclassname">diskovery.</code><code class="descname">texture</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery.texture" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve a <a class="reference internal" href="diskovery_image.html#diskovery_image.Texture" title="diskovery_image.Texture"><code class="xref py py-class docutils literal notranslate"><span class="pre">Texture</span></code></a> from the dictionary in this module</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> – The name (key) of the <a class="reference internal" href="diskovery_image.html#diskovery_image.Texture" title="diskovery_image.Texture"><code class="xref py py-class docutils literal notranslate"><span class="pre">Texture</span></code></a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Submodules</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="diskovery_buffer.html">diskovery_buffer module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diskovery_descriptor.html">diskovery_descriptor module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diskovery_entity_manager.html">diskovery_entity_manager module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diskovery_image.html">diskovery_image module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diskovery_instance.html">diskovery_instance module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diskovery_mesh.html">diskovery_mesh module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diskovery_pipeline.html">diskovery_pipeline module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diskovery_window.html">diskovery_window module</a></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="diskovery_buffer.html" class="btn btn-neutral float-right" title="diskovery_buffer module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="DisKovery" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Kyle Thompson, Oliver Zhang, Jaafar Bennani
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

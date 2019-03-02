@@ -1,0 +1,450 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>diskovery_buffer module &mdash; DisKovery 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> DisKovery
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">diskovery_buffer module</a></li>
+</ul>
+</div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DisKovery</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>diskovery_buffer module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/diskovery_buffer.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-diskovery_buffer">
+<span id="diskovery-buffer-module"></span><h1>diskovery_buffer module<a class="headerlink" href="#module-diskovery_buffer" title="Permalink to this headline">¶</a></h1>
+<p>The <a class="reference internal" href="#module-diskovery_buffer" title="diskovery_buffer"><code class="xref py py-mod docutils literal notranslate"><span class="pre">diskovery_buffer</span></code></a> module handles all operations involving <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkBuffer.html">VkBuffer</a>
+and <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDeviceMemory.html">VkDeviceMemory</a> objects. These two objects, in conjunction, define
+a region in the device’s memory (VRAM if the <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkPhysicalDevice.html">VkPhysicalDevice</a> being used
+is a discrete GPU, or RAM if the graphics are being handled by an integrated
+graphics card within a CPU). The transferring of data into these regions
+is handled by very low level C commands, which are wrapped by the 
+<a class="reference internal" href="#diskovery_buffer.Buffer" title="diskovery_buffer.Buffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Buffer</span></code></a> class for convenience and readability.</p>
+<p>There are two classes defined within the <a class="reference internal" href="#module-diskovery_buffer" title="diskovery_buffer"><code class="xref py py-mod docutils literal notranslate"><span class="pre">diskovery_buffer</span></code></a> module:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#diskovery_buffer.Buffer" title="diskovery_buffer.Buffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Buffer</span></code></a> - for general purpose buffer and memory operations</li>
+<li><a class="reference internal" href="#diskovery_buffer.UniformBuffer" title="diskovery_buffer.UniformBuffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">UniformBuffer</span></code></a> - for passing data to a <a class="reference internal" href="diskovery_descriptor.html#diskovery_descriptor.Descriptor" title="diskovery_descriptor.Descriptor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Descriptor</span></code></a> with an array of <a class="reference internal" href="#diskovery_buffer.Buffer" title="diskovery_buffer.Buffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Buffer</span></code></a> objects</li>
+</ul>
+<dl class="class">
+<dt id="diskovery_buffer.Buffer">
+<em class="property">class </em><code class="descclassname">diskovery_buffer.</code><code class="descname">Buffer</code><span class="sig-paren">(</span><em>dk</em>, <em>size</em>, <em>info=None</em>, <em>usage=None</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery_buffer.Buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>There are 3 distinct uses of the <a class="reference internal" href="#diskovery_buffer.Buffer" title="diskovery_buffer.Buffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Buffer</span></code></a> class,
+which can be differentiated by how many of the optional arguments are
+given in its constructor:</p>
+<ol class="arabic">
+<li><p class="first">A Uniform Buffer (only size defined)</p>
+<blockquote>
+<div><p>A buffer used for the <a class="reference internal" href="#diskovery_buffer.UniformBuffer" title="diskovery_buffer.UniformBuffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">UniformBuffer</span></code></a> 
+class stores data relating to a uniform variable defined in
+a Shader. The buffer is passed to a <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSet.html">VkDescriptorSet</a> in a
+<a class="reference internal" href="diskovery_descriptor.html#diskovery_descriptor.Descriptor" title="diskovery_descriptor.Descriptor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Descriptor</span></code></a> and then bound when
+performing draw calls for the object it relates to.</p>
+</div></blockquote>
+</li>
+<li><p class="first">A Staging Buffer (size and info defined)</p>
+<blockquote>
+<div><p>A staging buffer is used to move data from one place
+to another more efficiently. It handles the actual 
+transfer of data from one address to another.</p>
+<p>Staging Buffers’ usage flags allow for more efficient copying
+of data from one place to another, making it more efficient
+to load the data into a staging buffer and the copy it 
+from the staging buffer to the other buffer using Vulkan’s
+<a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkCmdCopyBuffer.html">vkCmdCopyBuffer</a> function.</p>
+</div></blockquote>
+</li>
+<li><p class="first">A Standard Buffer (size, info, and usage defined)</p>
+<blockquote>
+<div><p>A standard buffer is the main use case, and can store any
+data in GPU memory. It is wrapped with an additional 
+staging buffer when it is created so that the data is 
+more efficiently loaded into the buffer.</p>
+<p>The primary usage of the standard buffer is to store
+vertex and input data for <a class="reference internal" href="diskovery_mesh.html#diskovery_mesh.Mesh" title="diskovery_mesh.Mesh"><code class="xref py py-class docutils literal notranslate"><span class="pre">Mesh</span></code></a> objects.</p>
+</div></blockquote>
+</li>
+</ol>
+<p>The actual data to be stored in the buffer (passed in the <code class="docutils literal notranslate"><span class="pre">info</span></code>
+argument) must be passed in a <code class="docutils literal notranslate"><span class="pre">ctypes</span></code> array or a <code class="docutils literal notranslate"><span class="pre">Structure</span></code>. 
+Python lists are easily converted to <code class="docutils literal notranslate"><span class="pre">ctypes</span></code> arrays::</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">]</span>
+<span class="n">cdata</span> <span class="o">=</span> <span class="p">(</span><span class="n">c_int</span><span class="o">*</span><span class="mi">4</span><span class="p">)(</span><span class="o">*</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">usage</span></code> argument takes usage flags used by Vulkan to 
+determine what kind of buffer it should create. The 
+<a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkBufferUsageFlagBits.html">VkBufferUsageFlagBits</a> enum defines each flag with a different bit 
+set to 1 so bitwise operations can be used to combine different usages.</p>
+<p><strong>Attributes of the Buffer class:</strong></p>
+<dl class="attribute">
+<dt id="diskovery_buffer.Buffer.dk">
+<code class="descname">dk</code><a class="headerlink" href="#diskovery_buffer.Buffer.dk" title="Permalink to this definition">¶</a></dt>
+<dd><p>A reference to the <a class="reference internal" href="diskovery_instance.html#diskovery_instance.DkInstance" title="diskovery_instance.DkInstance"><code class="xref py py-class docutils literal notranslate"><span class="pre">DkInstance</span></code></a> 
+that stores all the relevant fields for the Vulkan instance
+and handles all Vulkan commands</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery_buffer.Buffer.buffer">
+<code class="descname">buffer</code><a class="headerlink" href="#diskovery_buffer.Buffer.buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores the <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkBuffer.html">VkBuffer</a> handle Vulkan will generate when a new <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkBuffer.html">VkBuffer</a>
+is created</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery_buffer.Buffer.memory">
+<code class="descname">memory</code><a class="headerlink" href="#diskovery_buffer.Buffer.memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stores the <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDeviceMemory.html">VkDeviceMemory</a> handle Vulkan will generate when memory on 
+the Vulkan device is allocated</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery_buffer.Buffer.size">
+<code class="descname">size</code><a class="headerlink" href="#diskovery_buffer.Buffer.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>The size of the buffer to be created, in bytes, stored as an
+integer. If using <code class="docutils literal notranslate"><span class="pre">ctypes</span></code>, the <code class="docutils literal notranslate"><span class="pre">sizeof()</span></code> method would
+give an appropriate value for this field.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="diskovery_buffer.Buffer.cleanup">
+<code class="descname">cleanup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#diskovery_buffer.Buffer.cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles necessary Destroy methods for all the Vulkan components 
+contained inside the <a class="reference internal" href="#diskovery_buffer.Buffer" title="diskovery_buffer.Buffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Buffer</span></code></a></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="diskovery_buffer.Buffer.copy_buffer">
+<code class="descname">copy_buffer</code><span class="sig-paren">(</span><em>src</em>, <em>dst</em>, <em>size</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery_buffer.Buffer.copy_buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wraps the <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkCmdCopyBuffer.html">vkCmdCopyBuffer</a> function with a single use <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkCommandBuffer.html">VkCommandBuffer</a>
+to submit the copy command to the graphics queue. Copies the entire
+contents of one buffer to another, with the offset of both buffers set to <code class="docutils literal notranslate"><span class="pre">0</span></code>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>src</strong> – The <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkBuffer.html">VkBuffer</a> from which data will be transfered</li>
+<li><strong>dst</strong> – The <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkBuffer.html">VkBuffer</a> to which data will be transfered</li>
+<li><strong>size</strong> – The size of the data to transfer (should be the size of both buffers as well)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="diskovery_buffer.Buffer.make_buffer">
+<code class="descname">make_buffer</code><span class="sig-paren">(</span><em>usage</em>, <em>props</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery_buffer.Buffer.make_buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Performs the various Vulkan operations required to initialize
+the <a class="reference internal" href="#diskovery_buffer.Buffer.buffer" title="diskovery_buffer.Buffer.buffer"><code class="xref py py-attr docutils literal notranslate"><span class="pre">buffer</span></code></a> and allocate the 
+<a class="reference internal" href="#diskovery_buffer.Buffer.memory" title="diskovery_buffer.Buffer.memory"><code class="xref py py-attr docutils literal notranslate"><span class="pre">memory</span></code></a>. The final step
+binds the two together as virtual memory inside the Vulkan device.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>usage</strong> – <p>Mirrors the <code class="docutils literal notranslate"><span class="pre">usage</span></code> attribute described above, the constructor 
+will fill the value based on which type of buffer it is:</p>
+<ul>
+<li>Uniform Buffer: <code class="docutils literal notranslate"><span class="pre">VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT</span></code></li>
+<li>Staging Buffer: <code class="docutils literal notranslate"><span class="pre">VK_BUFFER_USAGE_TRANSFER_SRC_BIT</span></code></li>
+<li>Standard Buffer: <code class="docutils literal notranslate"><span class="pre">VK_BUFFER_USAGE_TRANSFER_DST_BIT</span> <span class="pre">|</span> <span class="pre">usage</span></code> (bitwise OR operation)</li>
+</ul>
+</li>
+<li><strong>props</strong> – <p>Similar to <code class="docutils literal notranslate"><span class="pre">usage</span></code>, has a value passed from the constructor
+based on which type of buffer it is:</p>
+<ul>
+<li>Uniform Buffer: <code class="docutils literal notranslate"><span class="pre">VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT</span> <span class="pre">|</span> <span class="pre">VK_MEMORY_PROPERTY_HOST_COHERENT_BIT</span></code></li>
+<li>Staging Buffer: <code class="docutils literal notranslate"><span class="pre">VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT</span></code></li>
+<li>Standard Buffer: <code class="docutils literal notranslate"><span class="pre">VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT</span></code></li>
+</ul>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="diskovery_buffer.UniformBuffer">
+<em class="property">class </em><code class="descclassname">diskovery_buffer.</code><code class="descname">UniformBuffer</code><span class="sig-paren">(</span><em>dk</em>, <em>u_type</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery_buffer.UniformBuffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>The <code class="xref py py-class docutils literal notranslate"><span class="pre">Uniform_Buffer</span></code> class is used to store
+data for transfer to the list of <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSet.html">VkDescriptorSet</a> objects defined in
+a <a class="reference internal" href="diskovery_descriptor.html#diskovery_descriptor.Descriptor" title="diskovery_descriptor.Descriptor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Descriptor</span></code></a>. It is used inside the 
+<a class="reference internal" href="diskovery.html#diskovery.RenderedEntity" title="diskovery.RenderedEntity"><code class="xref py py-class docutils literal notranslate"><span class="pre">RenderedEntity</span></code></a> class, with one 
+<a class="reference internal" href="#diskovery_buffer.UniformBuffer" title="diskovery_buffer.UniformBuffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">UniformBuffer</span></code></a> defined for each uniform
+listed in the definition of that RenderedEntity’s <a class="reference internal" href="diskovery_pipeline.html#diskovery_pipeline.Shader" title="diskovery_pipeline.Shader"><code class="xref py py-class docutils literal notranslate"><span class="pre">Shader</span></code></a>.</p>
+<p>Each <code class="xref py py-class docutils literal notranslate"><span class="pre">Uniform_Buffer</span></code> holds a list of
+<a class="reference internal" href="#diskovery_buffer.Buffer" title="diskovery_buffer.Buffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Buffer</span></code></a> objects with a length that is 
+determined by the number of back buffers the <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkPhysicalDevice.html">VkPhysicalDevice</a> can
+handle, a value that is calculated in the 
+<a class="reference internal" href="diskovery_instance.html#diskovery_instance.DkInstance.create_swap_chain" title="diskovery_instance.DkInstance.create_swap_chain"><code class="xref py py-meth docutils literal notranslate"><span class="pre">create_swap_chain()</span></code></a> method
+of the <a class="reference internal" href="diskovery_instance.html#diskovery_instance.DkInstance" title="diskovery_instance.DkInstance"><code class="xref py py-class docutils literal notranslate"><span class="pre">DkInstance</span></code></a> class.</p>
+<p><strong>Attributes of the UniformBuffer class:</strong></p>
+<dl class="attribute">
+<dt id="diskovery_buffer.UniformBuffer.dk">
+<code class="descname">dk</code><a class="headerlink" href="#diskovery_buffer.UniformBuffer.dk" title="Permalink to this definition">¶</a></dt>
+<dd><p>A reference to the <a class="reference internal" href="diskovery_instance.html#diskovery_instance.DkInstance" title="diskovery_instance.DkInstance"><code class="xref py py-class docutils literal notranslate"><span class="pre">DkInstance</span></code></a> 
+that stores all the relevant fields for the Vulkan instance
+and handles all Vulkan commands</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery_buffer.UniformBuffer.u_type">
+<code class="descname">u_type</code><a class="headerlink" href="#diskovery_buffer.UniformBuffer.u_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>The type of uniform the UniformBuffer will store. This type is given
+as a member of the enum <a class="reference internal" href="diskovery_descriptor.html#diskovery_descriptor.UniformType" title="diskovery_descriptor.UniformType"><code class="xref py py-class docutils literal notranslate"><span class="pre">UniformType</span></code></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery_buffer.UniformBuffer.size">
+<code class="descname">size</code><a class="headerlink" href="#diskovery_buffer.UniformBuffer.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>The size, in bytes, of a uniform with this UniformBuffer’s type.
+<a class="reference internal" href="diskovery_descriptor.html#diskovery_descriptor.get_uniform_size" title="diskovery_descriptor.get_uniform_size"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_uniform_size()</span></code></a> is 
+used to retrieve this value.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="diskovery_buffer.UniformBuffer.buffers">
+<code class="descname">buffers</code><a class="headerlink" href="#diskovery_buffer.UniformBuffer.buffers" title="Permalink to this definition">¶</a></dt>
+<dd><p>The list in which <a class="reference internal" href="#diskovery_buffer.Buffer" title="diskovery_buffer.Buffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Buffer</span></code></a> objects are stored.
+The <a class="reference internal" href="diskovery_instance.html#diskovery_instance.DkInstance" title="diskovery_instance.DkInstance"><code class="xref py py-class docutils literal notranslate"><span class="pre">DkInstance</span></code></a> stores the number of
+back buffers the <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkPhysicalDevice.html">VkPhysicalDevice</a> can handle, and this number is
+used to size this list and append that many <a class="reference internal" href="#diskovery_buffer.Buffer" title="diskovery_buffer.Buffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Buffer</span></code></a>
+objects.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="diskovery_buffer.UniformBuffer.buffer">
+<code class="descname">buffer</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery_buffer.UniformBuffer.buffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves the <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkBuffer.html">VkBuffer</a> stored in the <a class="reference internal" href="#diskovery_buffer.Buffer" title="diskovery_buffer.Buffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Buffer</span></code></a>
+at the given index</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>index</strong> – The index of the element in the list of buffers to retrieve</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The <a class="reference external" href="https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkBuffer.html">VkBuffer</a> stored in the <a class="reference internal" href="#diskovery_buffer.Buffer" title="diskovery_buffer.Buffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Buffer</span></code></a>
+at the given index</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="diskovery_buffer.UniformBuffer.cleanup">
+<code class="descname">cleanup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#diskovery_buffer.UniformBuffer.cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles necessary Destroy methods for all the Vulkan components 
+contained inside the <a class="reference internal" href="#diskovery_buffer.Buffer" title="diskovery_buffer.Buffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Buffer</span></code></a></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="diskovery_buffer.UniformBuffer.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>data</em>, <em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#diskovery_buffer.UniformBuffer.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a given set of data, stored as a <code class="docutils literal notranslate"><span class="pre">ctypes</span></code> array or <code class="docutils literal notranslate"><span class="pre">Structure</span></code>,
+and copies the data into the <a class="reference internal" href="#diskovery_buffer.UniformBuffer" title="diskovery_buffer.UniformBuffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">UniformBuffer</span></code></a> object’s
+list of buffers at the given index. See the description the
+<a class="reference internal" href="#diskovery_buffer.Buffer" title="diskovery_buffer.Buffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Buffer</span></code></a> class for more info on what can be passed
+to a buffer as data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> – The data, stored in a <code class="docutils literal notranslate"><span class="pre">ctypes</span></code> array or <code class="docutils literal notranslate"><span class="pre">Structure</span></code></li>
+<li><strong>index</strong> – The index of the <a class="reference internal" href="#diskovery_buffer.Buffer" title="diskovery_buffer.Buffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">Buffer</span></code></a> the new data will be copied into</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Kyle Thompson, Oliver Zhang, Jaafar Bennani
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

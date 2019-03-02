@@ -1,0 +1,7 @@
+vk module
+=========
+
+.. automodule:: vk
+    :members:
+    :undoc-members:
+    :show-inheritance:
