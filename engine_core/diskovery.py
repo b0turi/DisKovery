@@ -31,7 +31,7 @@ entity types, from which DisKovery users can extend their own custom object defi
 import glm
 import pygame
 
-from diskovery_mesh import Mesh, AnimatedMesh, Animator
+from diskovery_mesh import Mesh, AnimatedMesh, Animator, Rig
 from diskovery_ubos import MVPMatrix
 from diskovery_image import Texture
 from diskovery_buffer import UniformBuffer
@@ -46,6 +46,7 @@ _scene = None
 
 _meshes = { }
 _textures = { }
+_animations = { }
 
 _shaders = { }
 _descriptors = { }
@@ -68,12 +69,22 @@ def add_mesh(filename, name=None, animated=False):
 	if not animated:
 		m = Mesh(_dk, filename)
 	else:
-		m = AnimatedMesh(_dk, filename, True)
+		m = AnimatedMesh(_dk, filename, True, False)
 
 	if name is None:
 		_meshes[filename[:-4]] = m
 	else:
 		_meshes[name] = m
+
+def add_animation(filename, name=None):
+	global _animations
+
+	a = AnimatedMesh(_dk, filename, True, True).anim
+
+	if name is None:
+		_animations[filename[:-4]] = a
+	else:
+		_animations[name] = a
 
 def add_texture(filename, name=None):
 	"""
@@ -103,7 +114,7 @@ def add_shader(name, files, definition, uniforms, animated=False):
 	:param name: A given name for the newly created shader
 	:param files: A list containing the filenames of all stages of the shader (for now, just vertex and fragment shaders)
 	:param definition: A tuple of :class:`~diskovery_descriptor.BindingType` objects that reflect the bindings used in the shader
-	:param uniforms: A list of :class:`~diskovery_descriptor.UniformType` objects that reflect the content of each of the above bindings that binds a uniform 
+	:param uniforms: A list of :class:`~diskovery_descriptor.UniformType` objects that reflect the content of each of the above bindings that binds a uniform
 	"""
 	global _shaders
 
@@ -132,7 +143,7 @@ def mesh(name):
 	"""
 	Retrieve a :class:`~diskovery_mesh.Mesh` from the dictionary in this module
 
-	:param name: The name (key) of the :class:`~diskovery_mesh.Mesh` 
+	:param name: The name (key) of the :class:`~diskovery_mesh.Mesh`
 	"""
 	global _meshes
 	return _meshes[name]
@@ -141,7 +152,7 @@ def texture(name):
 	"""
 	Retrieve a :class:`~diskovery_image.Texture` from the dictionary in this module
 
-	:param name: The name (key) of the :class:`~diskovery_image.Texture` 
+	:param name: The name (key) of the :class:`~diskovery_image.Texture`
 	"""
 	global _textures
 	return _textures[name]
@@ -150,7 +161,7 @@ def shader(name):
 	"""
 	Retrieve a :class:`~diskovery_pipeline.Shader` from the dictionary in this module
 
-	:param name: The name (key) of the :class:`~diskovery_pipeline.Shader` 
+	:param name: The name (key) of the :class:`~diskovery_pipeline.Shader`
 	"""
 	global _shaders
 	return _shaders[name]
@@ -159,7 +170,7 @@ def descriptor(definition):
 	"""
 	Retrieve a VkDescriptorSetLayout_ from the dictionary in this module
 
-	:param definition: The definition (key) of the VkDescriptorSetLayout_ 
+	:param definition: The definition (key) of the VkDescriptorSetLayout_
 	"""
 	global _descriptors
 	return _descriptors[definition]
@@ -168,15 +179,15 @@ def pipeline(definition):
 	"""
 	Retrieve a :class:`~diskovery_pipeline.Pipeline` from the dictionary in this module
 
-	:param name: The definition (key) of the :class:`~diskovery_pipeline.Pipeline` 
+	:param name: The definition (key) of the :class:`~diskovery_pipeline.Pipeline`
 	"""
 	global _pipelines
 	return _pipelines[definition]
 
 def init(debug_mode=False):
 	"""
-	Initializes the :class:`~diskovery_instance.DkInstance` and 
-	:class:`~diskovery_entity_manager.EntityManager` objects used in 
+	Initializes the :class:`~diskovery_instance.DkInstance` and
+	:class:`~diskovery_entity_manager.EntityManager` objects used in
 	this module.
 
 	:param debug_mode: Whether or not the :class:`~diskovery_instance.DkInstance` should be created with Vulkan Validation Layers
@@ -225,15 +236,15 @@ class Entity():
 	"""
 	The :class:`~diskovery.Entity` class is the simplest object that can be added to the game world.
 	An :class:`~diskovery.Entity` exists in 3D space, but will not have any visual representation in
-	the game world. 
+	the game world.
 
 	Multiple default extensions of the :class:`~diskovery.Entity` class are included in DisKovery, namely:
 	- :class:`~diskovery_defaults.Light` for handling the lighting of a scene
 	- :class:`~diskovery_defaults.Camera` for setting the view of the scene
-	
+
 	**Attributes of the Entity class:**
 
-	.. py:attribute:: position 
+	.. py:attribute:: position
 
 		The position of the :class:`~diskovery.Entity` as a 3D vector, stored as a tuple.
 		Stores the value of :attr:`diskovery.Entity.position` if one was provided.
@@ -292,7 +303,7 @@ class Entity():
 
 class RenderedEntity(Entity):
 	"""
-	Extends :class:`~diskovery.Entity` to include references to the necessary objects 
+	Extends :class:`~diskovery.Entity` to include references to the necessary objects
 	to present an object on the screen. All parameters are optional, as default values
 	for each are either preloaded into the environment or simple tuples:
 
@@ -316,7 +327,7 @@ class RenderedEntity(Entity):
 
 	.. py:attribute:: rotation
 
-		The rotation of the :class:`~diskovery.RenderedEntity` as a 
+		The rotation of the :class:`~diskovery.RenderedEntity` as a
 		set of Euler angles, stored as a tuple.
 
 	.. py:attribute:: scale
@@ -325,12 +336,12 @@ class RenderedEntity(Entity):
 
 	.. py:attribute:: textures
 
-		A list of strings containing keys to the dictionary of 
+		A list of strings containing keys to the dictionary of
 		:class:`~diskovery_image.Texture` objects stored in this module
 
 	.. py:attribute:: mesh
 
-		A string containing a key to the dictionary of 
+		A string containing a key to the dictionary of
 		:class:`~diskovery_mesh.Mesh` objects stored in this module
 
 	.. py:attribute:: definition
@@ -341,61 +352,61 @@ class RenderedEntity(Entity):
 
 	.. py:attribute:: uniforms
 
-		A list of :class:`~diskovery_buffer.UniformBuffer` objects filled by 
-		iterating over the list of :class:`~diskovery_descriptor.UniformType` s 
-		stored in the :class:`~diskovery_pipeline.Shader` object 
+		A list of :class:`~diskovery_buffer.UniformBuffer` objects filled by
+		iterating over the list of :class:`~diskovery_descriptor.UniformType` s
+		stored in the :class:`~diskovery_pipeline.Shader` object
 
 	.. py:attribute:: descriptor
 
 		A :class:`~diskovery_descriptor.Descriptor` defined by the definition described above,
 		the VkDescriptorSetLayout_ associated with that definition (in this module's dictionary
-		of descriptor set layouts, using the definition tuple as a key) 
+		of descriptor set layouts, using the definition tuple as a key)
 
 	"""
 	global _dk
 
-	def __init__(self, 
-		position=None, 
-		rotation=None, 
-		scale=None, 
-		shade=None,
-		textures=None,
-		mesh=None):
+	def __init__(self,
+		position=None,
+		rotation=None,
+		scale=None,
+		shader_str=None,
+		textures_str=None,
+		mesh_str=None):
 		Entity.__init__(self, position)
 
 		self.rotation = rotation if rotation != None else (0, 0, 0)
 		self.scale = scale if scale != None else (1, 1, 1)
 
-		self.textures = textures if textures != None else ["Default"]
-		self.mesh = mesh if mesh != None else None
+		self.textures = textures_str if textures_str != None else ["Default"]
+		self.mesh = mesh_str if mesh_str != None else None
 
-		self.definition = shader(shade).definition if shade != None else shader("Default").definition
+		self.definition = shader(shader_str).definition if shader_str != None else shader("Default").definition
 		self.uniforms = []
 
 		self.rot=3.14/4 * 3
 
-		uniform_types = shader(shade).uniforms
+		uniform_types = shader(shader_str).uniforms
 		for u_type in uniform_types:
 			self.uniforms.append(UniformBuffer(_dk, u_type))
 
 		if len(self.definition) > 0:
 			self.descriptor = Descriptor(
-				_dk, 
-				self.definition, 
-				descriptor(self.definition), 
-				self.uniforms, 
+				_dk,
+				self.definition,
+				descriptor(self.definition),
+				self.uniforms,
 				[texture(t) for t in self.textures]
-			)	
+			)
 
 	def update(self, ind):
 		"""
-		Updates every :class:`~diskovery_buffer.UniformBuffer` stored in 
+		Updates every :class:`~diskovery_buffer.UniformBuffer` stored in
 		``uniforms`` with new data
 
 		:param ind: the index indicating which :class:`~diskovery_buffer.Buffer` in each :class:`~diskovery_buffer.UniformBuffer` should be filled with new data
 		"""
 		m = MVPMatrix()
-		
+
 		m.model = glm.rotate(
 			glm.translate(glm.mat4(1.0), glm.vec3(self.position)),
 			self.rot,
@@ -419,7 +430,7 @@ class RenderedEntity(Entity):
 
 	def get_pipeline(self):
 		"""
-		References the dictionary of pipelines in this module to retrieve 
+		References the dictionary of pipelines in this module to retrieve
 		this :class:`~diskovery.RenderedEntity`'s pipeline
 
 		:returns: The :class:`~diskovery_pipeline.Pipeline` with this :class:`~diskovery.RenderedEntity`'s definition
@@ -428,7 +439,7 @@ class RenderedEntity(Entity):
 
 	def get_mesh(self):
 		"""
-		References the dictionary of meshes in this module to retrieve 
+		References the dictionary of meshes in this module to retrieve
 		this :class:`~diskovery.RenderedEntity`'s mesh
 
 		:returns: The :class:`~diskovery_mesh.Mesh` with this :class:`~diskovery.RenderedEntity`'s key
@@ -437,8 +448,8 @@ class RenderedEntity(Entity):
 
 	def get_texture(self, index):
 		"""
-		References the dictionary of textures in this module to retrieve 
-		this :class:`~diskovery.RenderedEntity`'s texture at a given index 
+		References the dictionary of textures in this module to retrieve
+		this :class:`~diskovery.RenderedEntity`'s texture at a given index
 		in its list of textures
 
 		:param index: The index in the list of textures to reference when retrieving a texture
@@ -449,7 +460,7 @@ class RenderedEntity(Entity):
 
 	def cleanup(self):
 		"""
-		Handles necessary Destroy methods for all the Vulkan components 
+		Handles necessary Destroy methods for all the Vulkan components
 		contained inside the :class:`~diskovery.RenderedEntity`
 		"""
 		for u in self.uniforms:
@@ -463,25 +474,30 @@ class AnimatedEntity(RenderedEntity):
 		position=None,
 		rotation=None,
 		scale=None,
-		shade=None,
-		textures=None,
-		mes=None
+		shader_str=None,
+		textures_str=None,
+		mesh_str=None,
+		animations_str=None
 		):
-		RenderedEntity.__init__(self, position, rotation, scale, shade, textures, mes)
-		self.animator = Animator(self, _scene)
-		self.animator.animations['Run'] = mesh(mes).anim
-		self.animator.play('Run')
-		self.rig = mesh(mes).rig
+		RenderedEntity.__init__(self, position, rotation, scale, shader_str, textures_str, mesh_str)
+
+		self.animations = animations_str if animations_str != None else []
+		self.rig = Rig.from_template(mesh(mesh_str).rig)
+
+		self.animator = Animator(_scene, _animations, self, self.animations)
+		if len(self.animations) > 0:
+			self.animator.play(self.animations[0])
+
 
 	def update(self, ind):
 		"""
-		Updates every :class:`~diskovery_buffer.UniformBuffer` stored in 
+		Updates every :class:`~diskovery_buffer.UniformBuffer` stored in
 		``uniforms`` with new data
 
 		:param ind: the index indicating which :class:`~diskovery_buffer.Buffer` in each :class:`~diskovery_buffer.UniformBuffer` should be filled with new data
 		"""
 		m = MVPMatrix()
-		
+
 		m.model = glm.rotate(
 			glm.translate(glm.mat4(1.0), glm.vec3(self.position)),
 			self.rot,

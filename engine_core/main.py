@@ -5,6 +5,7 @@ def main():
 	diskovery.init(True)
 
 	diskovery.add_mesh("model.dae", "Default", True)
+	diskovery.add_animation("model.dae", "Run")
 	diskovery.add_texture("character.png", "Default")
 	diskovery.add_shader(
 			"Default",
@@ -12,23 +13,26 @@ def main():
 			(BindingType.UNIFORM_BUFFER, BindingType.TEXTURE_SAMPLER),
 			[MVPMatrix]
 		)
+
 	diskovery.add_shader(
 			"Animated",
 			["animated.vert", "default.frag"],
-			(BindingType.UNIFORM_BUFFER, 
+			(BindingType.UNIFORM_BUFFER,
 			BindingType.TEXTURE_SAMPLER,
 			BindingType.UNIFORM_BUFFER),
 			[MVPMatrix, JointData],
 			True
 		)
-	re = diskovery.AnimatedEntity(
+
+	ae = diskovery.AnimatedEntity(
 		position=(0, 4, -10),
-		shade="Animated",
-		textures=["Default"],
-		mes="Default"
+		shader_str="Animated",
+		textures_str=["Default"],
+		mesh_str="Default",
+		animations_str=["Run"]
 	)
 
-	diskovery.add_entity(re, "Big Boy")
+	diskovery.add_entity(ae, "Big Boy")
 
 	diskovery.run()
 

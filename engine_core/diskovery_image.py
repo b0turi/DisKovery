@@ -1,6 +1,7 @@
 #!/bin/env/python
 
 import vk
+import math
 import pygame
 from ctypes import *
 from diskovery_buffer import Buffer
@@ -31,7 +32,7 @@ class Image(object):
 			next=None,
 			allocation_size=mem_req.size,
 			memory_type_index=self.dk.get_memory_type(
-				mem_req.memory_type_bits, 
+				mem_req.memory_type_bits,
 				props
 			)
 		)
@@ -104,15 +105,15 @@ class Image(object):
 		)
 
 		self.dk.CmdPipelineBarrier(
-			cmd, 
-			src_stage, 
-			dst_stage, 
-			0, 0, 
-			None, 0, 
-			None, 1, 
+			cmd,
+			src_stage,
+			dst_stage,
+			0, 0,
+			None, 0,
+			None, 1,
 			byref(barrier)
 		)
-		
+
 		self.dk.end_command(cmd)
 
 	def create_image_view(self, form, aspects, mip):
@@ -133,9 +134,9 @@ class Image(object):
 		)
 
 		self.dk.CreateImageView(
-			self.dk.device, 
-			byref(create_info), 
-			None, 
+			self.dk.device,
+			byref(create_info),
+			None,
 			byref(self.image_view)
 		)
 
@@ -202,11 +203,11 @@ def buffer_to_image(dk, buff, image, width, height):
 	)
 
 	dk.CmdCopyBufferToImage(
-		cmd, 
-		buff, 
-		image, 
-		vk.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
-		1, 
+		cmd,
+		buff,
+		image,
+		vk.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		1,
 		byref(region)
 	)
 
@@ -214,12 +215,97 @@ def buffer_to_image(dk, buff, image, width, height):
 
 
 class Texture(Image):
+
+	def _generate_mipmaps(self, wid, hei, mip):
+		props = vk.FormatProperties()
+		self.dk.GetPhysicalDeviceFormatProperties(self.dk.gpu, vk.FORMAT_R8G8B8A8_UNORM, byref(props))
+
+		cmd = self.dk.start_command()
+
+		sub = vk.ImageSubresourceRange(
+			aspect_mask=vk.IMAGE_ASPECT_COLOR_BIT,
+			base_array_layer=0,
+			layer_count=1,
+			level_count=1
+		)
+
+		barrier = vk.ImageMemoryBarrier(
+			s_type=vk.STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+			image=self.image,
+			src_queue_family_index=vk.QUEUE_FAMILY_IGNORED,
+			dst_queue_family_index=vk.QUEUE_FAMILY_IGNORED,
+		)
+
+		for i in range(1, mip):
+			sub.base_mip_level = i - 1
+			barrier.old_layout = vk.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+			barrier.new_layout = vk.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+			barrier.src_access_mask = vk.ACCESS_TRANSFER_WRITE_BIT
+			barrier.dst_access_mask = vk.ACCESS_TRANSFER_READ_BIT
+			barrier.subresource_range = sub
+
+			self.dk.CmdPipelineBarrier(
+				cmd,
+				vk.PIPELINE_STAGE_TRANSFER_BIT,
+				vk.PIPELINE_STAGE_TRANSFER_BIT,
+				0, 0, None,
+				0, None,
+				1, byref(barrier)
+			)
+
+			src_offsets = (vk.Offset3D * 2)(vk.Offset3D(0,0,0), vk.Offset3D(int(wid), int(hei), 1))
+			dst_offsets = (vk.Offset3D * 2)(vk.Offset3D(0,0,0),
+				vk.Offset3D(int(wid/2) if wid > 1 else 1, int(hei/2) if hei > 1 else 1, 1)
+			)
+
+			src_sub = vk.ImageSubresourceLayers(
+				aspect_mask=vk.IMAGE_ASPECT_COLOR_BIT,
+				mip_level=i-1,
+				base_array_layer=0,
+				layer_count=1
+			)
+			dst_sub = vk.ImageSubresourceLayers(
+				aspect_mask=vk.IMAGE_ASPECT_COLOR_BIT,
+				mip_level=i,
+				base_array_layer=0,
+				layer_count=1
+			)
+			blit = vk.ImageBlit(
+				src_offsets=src_offsets,
+				src_subresource=src_sub,
+				dst_offsets=dst_offsets,
+				dst_subresource=dst_sub
+			)
+
+			self.dk.CmdBlitImage(cmd,
+			self.image, vk.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			self.image, vk.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1, byref(blit),
+			vk.FILTER_LINEAR)
+
+			barrier.old_layout = vk.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+			barrier.new_layout = vk.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+			barrier.src_access_mask = vk.ACCESS_TRANSFER_READ_BIT
+			barrier.dst_access_mask = vk.ACCESS_SHADER_READ_BIT
+
+			self.dk.CmdPipelineBarrier(cmd,
+			vk.PIPELINE_STAGE_TRANSFER_BIT, vk.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			0, 0, None, 0, None, 1, byref(barrier))
+
+			if wid > 1: wid /= 2
+			if hei > 1: hei /= 2
+
+		self.dk.end_command(cmd)
+
 	def __init__(self, dk, filename):
+		self.dk = dk
 		img = pygame.image.load(filename).convert_alpha()
 
 		extent = vk.Extent2D(width=img.get_width(), height=img.get_height())
 		size = extent.width * extent.height * 4
-		arr = pygame.PixelArray(img) 
+		mip = math.floor(math.log2(max(extent.width, extent.height))) + 1
+
+		arr = pygame.PixelArray(img)
 
 		self.mip = 1
 
@@ -241,8 +327,8 @@ class Texture(Image):
 			vk.FORMAT_R8G8B8A8_UNORM,
 			1,
 			vk.SAMPLE_COUNT_1_BIT,
-			vk.IMAGE_USAGE_TRANSFER_SRC_BIT | 
-			vk.IMAGE_USAGE_TRANSFER_DST_BIT | 
+			vk.IMAGE_USAGE_TRANSFER_SRC_BIT |
+			vk.IMAGE_USAGE_TRANSFER_DST_BIT |
 			vk.IMAGE_USAGE_SAMPLED_BIT,
 			vk.MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			vk.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -251,12 +337,14 @@ class Texture(Image):
 
 		staging_buffer = Buffer(dk, size, data)
 		buffer_to_image(dk, staging_buffer.buffer, self.image, extent.width, extent.height)
-		
+
 		self.set_layout(
-			self.image, 
-			vk.FORMAT_R8G8B8A8_UNORM, 
-			vk.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
+			self.image,
+			vk.FORMAT_R8G8B8A8_UNORM,
+			vk.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			vk.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			self.mip
 		)
 		staging_buffer.cleanup()
+
+		self._generate_mipmaps(extent.width, extent.height, mip)

@@ -22,24 +22,25 @@ class Shader(object):
 		executable that allows GLSL shaders to be converted into SPIR-V format.
 
 		The following searches the directory where the shaders are located and
-		formats the newly created SPIR-V shaders into a dictionary where they 
-		can be referenced by calling their stage in the shader. 
+		formats the newly created SPIR-V shaders into a dictionary where they
+		can be referenced by calling their stage in the shader.
 
 		This functionality requires that the GLSL shaders use file endings that
 		correspond to their stages (e.g. *.vert, *.frag)
-		"""	
+		"""
 		os.chdir("Shaders")
 
 		for src in sources:
-			if os.path.isfile("{}.spv".format(src)):
-				subprocess.call("rm {}.spv".format(src))
-			subprocess.call("glslangValidator.exe -V {} -o {}.spv".format(src, src))
+			#if os.path.isfile("{}.spv".format(src)):
+			#	subprocess.call("rm {}.spv".format(src))
+			# subprocess.call("glslangValidator.exe -V {} -o {}.spv".format(src, src))
+			# subprocess.call("compile.bat {}".format(src))
 			self.filenames[src.split('.')[1]] = "shaders/{}.spv".format(src)
 
 		os.chdir("..")
 
 class Pipeline(object):
-	
+
 	def make_pipeline_layout(self, set_layout):
 		create_info = vk.PipelineLayoutCreateInfo(
 			s_type=vk.STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -69,9 +70,9 @@ class Pipeline(object):
 
 		module = vk.ShaderModule(0)
 		self.dk.CreateShaderModule(
-			self.dk.device, 
-			byref(module_create), 
-			None, 
+			self.dk.device,
+			byref(module_create),
+			None,
 			byref(module)
 		)
 		return module
@@ -105,11 +106,11 @@ class Pipeline(object):
 		    vertex_binding_description_count=1,
 		    vertex_attribute_description_count=len(attributes()),
 		    vertex_binding_descriptions=cast(
-		    	bindings(), 
+		    	bindings(),
 		    	POINTER(vk.VertexInputBindingDescription)
 		    ),
 		    vertex_attribute_descriptions=cast(
-		    	attributes(), 
+		    	attributes(),
 		    	POINTER(vk.VertexInputAttributeDescription)
 		    )
 		)
@@ -117,7 +118,7 @@ class Pipeline(object):
 		if animated:
 			vertex_input_create.vertex_attribute_description_count = len(animated_attributes())
 			vertex_input_create.vertex_attribute_descriptions=cast(
-				animated_attributes(), 
+				animated_attributes(),
 				POINTER(vk.VertexInputAttributeDescription)
 			)
 
@@ -128,9 +129,9 @@ class Pipeline(object):
 		)
 
 		viewport = vk.Viewport(
-		    width=float(self.dk.image_data['extent'].width), 
+		    width=float(self.dk.image_data['extent'].width),
 		    height=float(self.dk.image_data['extent'].height),
-		    min_depth=0., 
+		    min_depth=0.,
 		    max_depth=1.
 		)
 
@@ -171,9 +172,9 @@ class Pipeline(object):
 		)
 
 		color_blend_attachment = vk.PipelineColorBlendAttachmentState(
-		    color_write_mask=vk.COLOR_COMPONENT_R_BIT | 
-						    vk.COLOR_COMPONENT_G_BIT | 
-						    vk.COLOR_COMPONENT_B_BIT | 
+		    color_write_mask=vk.COLOR_COMPONENT_R_BIT |
+						    vk.COLOR_COMPONENT_G_BIT |
+						    vk.COLOR_COMPONENT_B_BIT |
 						    vk.COLOR_COMPONENT_A_BIT,
 		    blend_enable=vk.FALSE
 		)
@@ -225,7 +226,7 @@ class Pipeline(object):
 		self.dk = dk
 		# A reference to the Shader (Shader) this pipeline is being built around
 		self.shader = shader
-		# A restructuring of the definition of the above shader for 
+		# A restructuring of the definition of the above shader for
 		# compatibility with Vulkan's Descriptor sets (VkPipelineLayout)
 		self.pipeline_layout = vk.PipelineLayout(0)
 		# A reference to the Vulkan pipeline (VkPipeline) itself
@@ -237,4 +238,3 @@ class Pipeline(object):
 	def cleanup(self):
 		self.dk.DestroyPipelineLayout(self.dk.device, self.pipeline_layout, None)
 		self.dk.DestroyPipeline(self.dk.device, self.pipeline_ref, None)
-

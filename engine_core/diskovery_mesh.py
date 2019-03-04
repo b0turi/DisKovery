@@ -29,7 +29,7 @@ def attributes():
 	a[0].binding = 0
 	a[0].location = 0
 	# GLSL vectors are handled as colors, each channel (RGBA) maps to (x, y, z, w)
-	a[0].format = vk.FORMAT_R32G32B32_SFLOAT 
+	a[0].format = vk.FORMAT_R32G32B32_SFLOAT
 	a[0].offset = 0
 
 	# (location = 1): Color (the tint of a given Vertex for interpolated color)
@@ -108,15 +108,15 @@ class Parser(object):
 				if line[:2] == 'v ':
 					positions.append(
 						(float(contents[1]),
-					 	 float(contents[2]), 
+					 	 float(contents[2]),
 						 float(contents[3]))
 					)
 				elif line[:3] == 'vt ':
 					textures.append((float(contents[1]), float(contents[2])))
 				elif line[:3] == 'vn ':
 					normals.append(
-						(float(contents[1]), 
-						 float(contents[2]), 
+						(float(contents[1]),
+						 float(contents[2]),
 						 float(contents[3]))
 					)
 				elif line[:2] == 'f ':
@@ -129,27 +129,27 @@ class Parser(object):
 					v3 = contents[3].split('/')
 
 					self.process_vertex(
-						v1, 
-						index_list, 
-						textures, 
-						normals, 
-						new_norm, 
+						v1,
+						index_list,
+						textures,
+						normals,
+						new_norm,
 						new_tex
 					)
 					self.process_vertex(
-						v2, 
-						index_list, 
-						textures, 
-						normals, 
-						new_norm, 
+						v2,
+						index_list,
+						textures,
+						normals,
+						new_norm,
 						new_tex
 					)
 					self.process_vertex(
-						v3, 
-						index_list, 
-						textures, 
-						normals, 
-						new_norm, 
+						v3,
+						index_list,
+						textures,
+						normals,
+						new_norm,
 						new_tex
 					)
 
@@ -311,7 +311,7 @@ class Parser(object):
 
 			if rigged:
 				v = VertexLoader(
-					len(vertex_loader_list), 
+					len(vertex_loader_list),
 					(c_float*3)(vec.x, vec.y, vec.z),
 					(c_float*MAX_JOINTS)(*skin_values[len(vertex_loader_list)].joints),
 					(c_float*MAX_JOINTS)(*skin_values[len(vertex_loader_list)].weights)
@@ -347,7 +347,7 @@ class Parser(object):
 			pos_ind = int(full_data[i * type_count])
 			norm_ind = int(full_data[i * type_count + 1])
 			tex_ind = int(full_data[i * type_count + 2])
-			
+
 			vert = vertex_loader_list[pos_ind]
 			if vert.norm_ind == None:
 				vert.tex_ind = tex_ind
@@ -426,13 +426,13 @@ class Parser(object):
 
 		times = [float(x) for x in anim.find('source').find('float_array').text.split(' ')]
 		duration = times[len(times) - 1]
-		
+
 		keyframes = []
 		for time in times:
 			keyframes.append(KeyFrame(time))
 
 		for joint_node in root.find('library_animations').findall('animation'):
-			
+
 			joint_name_id = joint_node.find('channel').attrib['target'].split('/')[0]
 
 			data_id = self.get_child_with_attribute(
@@ -500,15 +500,15 @@ class Mesh():
 
 		self.vertices = Buffer(
 			dk,
-			v_size, 
-			vertex_array, 
+			v_size,
+			vertex_array,
 			vk.BUFFER_USAGE_VERTEX_BUFFER_BIT
 		)
 
 		self.indices = Buffer(
 			dk,
-			i_size, 
-			index_array, 
+			i_size,
+			index_array,
 			vk.BUFFER_USAGE_INDEX_BUFFER_BIT
 		)
 
@@ -530,7 +530,7 @@ class VertexLoader:
 
 class Vertex(Structure):
 	_fields_ = (
-		('position', (c_float*3)), 
+		('position', (c_float*3)),
 		('color', (c_float*3)),
 		('tex_coord', (c_float*2)),
 		('normal', (c_float*3)),
@@ -593,7 +593,7 @@ class Joint:
 		self.inverse_transform = glm.mat4(1.0)
 
 class AnimatedMesh(Mesh):
-	def __init__(self, dk, file, correction=False):
+	def __init__(self, dk, file, correction=False, extract_anim=False):
 
 		if file.split('.')[1] == 'obj':
 			raise RuntimeError("`AnimatedMesh` cannot accept data from a .obj file." \
@@ -602,7 +602,9 @@ class AnimatedMesh(Mesh):
 			vertex_list, index_list, joint_list = Parser(file, ParseType.DAE_RIGGED_MODEL, correction).data
 			self.rig = Parser(file, ParseType.DAE_RIG, correction, joint_list).data
 
-			self.anim = Parser(file, ParseType.DAE_ANIMATIONS, correction).data
+			if extract_anim:
+				self.anim = Parser(file, ParseType.DAE_ANIMATIONS, correction).data
+				return
 		else:
 			raise RuntimeError("Unsupported file type for 3D model and animation data")
 
@@ -614,21 +616,36 @@ class AnimatedMesh(Mesh):
 
 		self.vertices = Buffer(
 			dk,
-			v_size, 
-			vertex_array, 
+			v_size,
+			vertex_array,
 			vk.BUFFER_USAGE_VERTEX_BUFFER_BIT
 		)
 
 		self.indices = Buffer(
 			dk,
-			i_size, 
-			index_array, 
+			i_size,
+			index_array,
 			vk.BUFFER_USAGE_INDEX_BUFFER_BIT
 		)
 
 		self.count = len(index_array)
 
 class Rig(object):
+
+	@staticmethod
+	def _fill_new_joint(joint):
+		j = Joint(joint.index, joint.name, joint.local_transform)
+		for child in joint.children:
+			j.children.append(Rig._fill_new_joint(child))
+		return j
+
+	@staticmethod
+	def from_template(template):
+		count = template.joint_count
+		root = Rig._fill_new_joint(template.root)
+
+		return Rig(root, count)
+
 	def __init__(self, root, joint_count):
 		# The root of the Joint hierarchy
 		self.root = root
@@ -688,10 +705,10 @@ class Animator(object):
 		self.anim_time = 0
 
 	def prev_and_next(self):
-		for index, frame in enumerate(self.animations[self.current_anim].keys):
+		for index, frame in enumerate(self.anim_dict[self.current_anim].keys):
 			if frame.timestamp > self.anim_time:
 				next_frame = frame
-				prev_frame = self.animations[self.current_anim].keys[index - 1]
+				prev_frame = self.anim_dict[self.current_anim].keys[index - 1]
 				return (next_frame, prev_frame,)
 
 	def get_prog(self, a, b):
@@ -724,21 +741,25 @@ class Animator(object):
 
 
 	def update(self):
-		if self.current_anim not in self.animations.keys():
+		if self.current_anim not in self.animations:
 			return
 
-		self.anim_time += self.dk.get_frame_time()
-		if self.anim_time > self.animations[self.current_anim].length:
-			self.anim_time %= self.animations[self.current_anim].length
+		self.anim_time += self.em.get_frame_time()
+		if self.anim_time > self.anim_dict[self.current_anim].length:
+			self.anim_time %= self.anim_dict[self.current_anim].length
 
 		pose = self.get_pose()
 		self.fill_rig(pose, self.entity.rig.root, glm.mat4(1.0))
 
-	def __init__(self, entity, dk):
-		self.dk = dk
+	def __init__(self, em, anim_dict, entity, anims):
+		self.em = em
+		self.anim_dict = anim_dict
 		self.entity = entity
 
-		self.current_anim = None
-		self.anim_time = 0
+		self.animations = []
 
-		self.animations = {}
+		for anim in anims:
+			self.animations.append(anim)
+
+		self.current_anim = self.animations[0]
+		self.anim_time = 0
