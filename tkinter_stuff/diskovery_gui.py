@@ -6,10 +6,8 @@ Created on Mon Feb 11 15:49:35 2019
 @author: olive
 """
 import tkinter as tk
-from tkinter import LEFT,RIGHT,TOP,BOTH,CENTER
+from tkinter import LEFT,RIGHT,TOP,BOTH,CENTER,X,Y,N
 from PIL import Image, ImageTk
-#import diskovery_grid.py as dg
-#from PIL import Image, ImageTk
 
 
 
@@ -59,26 +57,36 @@ menubar.add_cascade(label="Help", menu=m_help)
 
 root.config(menu=menubar)
 
-#Set up frames on the sides of the UI for widgets
-w1 = tk.Frame(root)
-#Assign names to buttons
-for r in range(20):
-    for c in range(5):
-        tk.Button(w1, text = 'Button', borderwidth = 5).grid(row=r,column=c)
+w = tk.Frame(root)
 
-w2 = tk.Frame(root)
-for r in range(20):
-    for c in range(5):
-        tk.Button(w2, text = 'Button', borderwidth = 5).grid(row=r,column=c)
+#Set up frames on the sides of the UI for widgets
+w1 = tk.Frame(w, height = 50, width = 50)
+#Assign
+env = tk.Listbox(w1, justify = CENTER, width = 50)
+env.grid(row=0,column=0)
+env.insert(25, "Environment")
+
+w2 = tk.Frame(w, height = 50, width = 50)
+direct = tk.Listbox(w2, justify = CENTER, width = 50)
+direct.grid(row=0,column=0)
+direct.insert(25, "Asset Directories")
+direct.insert(25, " ")
 
 projection = Image.open("./vulkan_graphic.gif")
 display = ImageTk.PhotoImage(projection)
-w3 = tk.Canvas(root, bg="white")
+w3 = tk.Canvas(root, bg="white", width = "15c")
 
-w1.pack(side = LEFT)
-w2.pack(side = RIGHT)
-w3.pack(side = TOP, fill = BOTH, expand = True)
-w3.create_image(f_w/3, f_h/2,anchor=CENTER, image=display)
+w4 = tk.Frame(root, height = 50, width = 50)
+pro = tk.Listbox(w4, justify = CENTER, width = 50)
+pro.grid(row=0, column=0)
+pro.insert(25, "Properties")
+
+w1.pack(fill = BOTH, expand = True)
+w2.pack(fill = BOTH, expand = True)
+w.pack(side = LEFT, fill=BOTH)
+w3.pack(side=LEFT, fill=BOTH, expand = True)
+w3.create_image(f_w/3, f_h/3,anchor=CENTER, image=display)
+w4.pack(side = RIGHT, fill = Y, expand = True)
 
 root.mainloop()
 
