@@ -21,11 +21,11 @@ def main():
 			[MVPMatrix, JointData],
 			True
 		)
-	re = diskovery.RenderedEntity(
-		position=(0, 4, -5),
-		shade="Default",
+	re = diskovery.AnimatedEntity(
+		position=(0, 4, -10),
+		shade="Animated",
 		textures=["Default"],
-		mesh="Default"
+		mes="Default"
 	)
 
 	diskovery.add_entity(re, "Big Boy")

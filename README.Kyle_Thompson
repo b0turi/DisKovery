@@ -1,4 +1,52 @@
 #################################################################################
+									Week 3
+#################################################################################
+
+Pretty good week! Got started on a lot of different things, namely, resolved all 
+the issues from last week and I was able to have an external 3D model with an 
+external texture mapped to it. I added the EntityManager class I mentioned in a
+new module called diskovery_entity_manager.py. I started working on our 
+documentation using Sphinx, which we're using primarily with the autodoc 
+extension so it can read docstrings directly from our python modules. Some of the 
+basic documentation we have so far can be found in 
+	
+	./engine_core/docs/build/index.html
+
+and the other .html files in that directory. Additionally, I cleaned up a lot of 
+the code from weeks prior, removing all unnecessary parameters in Vulkan calls 
+that were included in the tutorials for educational purposes (mostly in 
+diskovery_instance.py and diskovery_entity_manager.py). The tutorial code used 
+some primitive math functions the author had written to handle vector and matrix
+operations, so I swapped that out for PyGLM, a Python wrapper for the standard
+math library that accompanies OpenGL/Vulkan, so that we could use Quaternions for
+the rotation values of animated models. I added some wrapping tweaks of my
+own so that the data could be passed to buffers as C types not Python values.
+
+As of when I was writing this, I don't quite have animations handled yet. I have
+a lot of the architecture in place for it (all located in diskovery_mesh.py), 
+but I haven't gotten to the point where the animations can be loaded externally 
+and played on the model. I have written a new shader to handle the animations
+(animated.vert), reworked the way that uniform data objects are stored (new class
+UniformBufferObject that MVPMatrix and JointData extend, all located in new file
+diskovery_ubos.py). 
+
+I was able to finish the Collada parser for 3D models, and am still working on
+getting them done for animations and rigs. Hopefully by midnight tonight I'll 
+have that working. In terms of for next week, Oliver and I are going to start
+merging our work and my portion will exist as the center of the GUI window he's
+been working on. I'm going to try to get mouse picking working on a 3D window
+using a color based picking model that requires rendering to another framebuffer.
+Hopefully it'll work, but I'm not sure because I've only done things like this 
+in OpenGL, not Vulkan. I might need to change the way I'm planning on
+implementing it but that'll probably be for over spring break.
+
+Side note: I know right now I have a lot more work in than Oliver does, but it's
+not a case of Oliver not pulling his weight, please don't mark him down because
+he's not matching the huge amount I'm doing. I'm basically doubling up doing the
+portions that Jaafar would be doing because Oliver is a lot less familiar with
+this kind of stuff so we can't even really go 50/50 on this extra stuff. 
+
+#################################################################################
 									Week 2
 #################################################################################
 

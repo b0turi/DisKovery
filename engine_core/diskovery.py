@@ -31,7 +31,7 @@ entity types, from which DisKovery users can extend their own custom object defi
 import glm
 import pygame
 
-from diskovery_mesh import Mesh, AnimatedMesh
+from diskovery_mesh import Mesh, AnimatedMesh, Animator
 from diskovery_ubos import MVPMatrix
 from diskovery_image import Texture
 from diskovery_buffer import UniformBuffer
@@ -372,7 +372,7 @@ class RenderedEntity(Entity):
 		self.definition = shader(shade).definition if shade != None else shader("Default").definition
 		self.uniforms = []
 
-		self.rot=0
+		self.rot=3.14/4 * 3
 
 		uniform_types = shader(shade).uniforms
 		for u_type in uniform_types:
@@ -459,6 +459,47 @@ class RenderedEntity(Entity):
 			self.descriptor.cleanup()
 
 class AnimatedEntity(RenderedEntity):
-	def __init__(self):
-		#self.animator = Animator()
-		pass
+	def __init__(self,
+		position=None,
+		rotation=None,
+		scale=None,
+		shade=None,
+		textures=None,
+		mes=None
+		):
+		RenderedEntity.__init__(self, position, rotation, scale, shade, textures, mes)
+		self.animator = Animator(self, _scene)
+		self.animator.animations['Run'] = mesh(mes).anim
+		self.animator.play('Run')
+		self.rig = mesh(mes).rig
+
+	def update(self, ind):
+		"""
+		Updates every :class:`~diskovery_buffer.UniformBuffer` stored in 
+		``uniforms`` with new data
+
+		:param ind: the index indicating which :class:`~diskovery_buffer.Buffer` in each :class:`~diskovery_buffer.UniformBuffer` should be filled with new data
+		"""
+		m = MVPMatrix()
+		
+		m.model = glm.rotate(
+			glm.translate(glm.mat4(1.0), glm.vec3(self.position)),
+			self.rot,
+			glm.vec3(0, 1, 0)
+		)
+
+		m.view = glm.translate(glm.mat4(1.0), glm.vec3(0, 0, -5))
+		m.projection = glm.perspective(
+			glm.radians(60),
+			_dk.image_data['extent'].width / _dk.image_data['extent'].height,
+			0.1,
+			10000.
+		)
+
+		self.uniforms[0].update(m.get_data(), ind)
+		self.animator.update()
+		self.uniforms[1].update(self.rig.get_joint_data(), ind)
+
+
+		if self.rot > 6.2832:
+			self.rot = 0

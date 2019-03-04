@@ -7,11 +7,11 @@ from ctypes import *
 MAX_FRAMES_IN_FLIGHT = 2
 UINT64_MAX = 18446744073709551615
 
+
 class EntityManager(object):
 
-	@staticmethod
 	def get_frame_time(self):
-		return self.time - self.last_time
+		return self.TIME_VAL - self.LAST_TIME_VAL  
 
 	def create_command_buffers(self):
 		self.destroy_command_buffers()
@@ -158,8 +158,8 @@ class EntityManager(object):
 
 	def draw(self):
 
-		self.last_time = self.time
-		self.time = time.perf_counter()
+		self.LAST_TIME_VAL = self.TIME_VAL 
+		self.TIME_VAL = time.perf_counter()
 
 		fence = vk.Fence(self.in_flight_fences[self.current_frame])
 		image = vk.Semaphore(self.image_available[self.current_frame])
@@ -233,7 +233,7 @@ class EntityManager(object):
 
 		self.current_frame = 0
 
-		self.time = time.perf_counter()
+		self.TIME_VAL = time.perf_counter()
 
 		self.create_command_buffers()
 		self.create_semaphores()

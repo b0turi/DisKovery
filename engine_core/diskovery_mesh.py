@@ -8,49 +8,7 @@ from enum import Enum
 from ctypes import *
 from diskovery_buffer import Buffer
 from diskovery_entity_manager import EntityManager
-
-class VertexLoader:
-	def __init__(self, index, position):
-		self.index = index
-		self.position = position
-		self.tex_ind = None
-		self.norm_ind = None
-		self.duplicate = None
-
-class Vertex(Structure):
-	_fields_ = (
-		('position', (c_float*3)), 
-		('color', (c_float*3)),
-		('tex_coord', (c_float*2)),
-		('normal', (c_float*3)),
-		('joint_ids', (c_uint*3)),
-		('weights', (c_float*3))
-	)
-
-	def __str__(self):
-		return "Position: {}, {}, {}\nColor: {}, {}, {}\nTexture: {}, {}\nNormal: {}, {}, {}".format(
-			self.position[0], self.position[1], self.position[2],
-			self.color[0], self.color[1], self.color[2],
-			self.tex_coord[0], self.tex_coord[1],
-			self.normal[0], self.normal[1], self.normal[2]
-		)
-
-class Joint:
-	def set_inverse_transform(self, parent_transform):
-		transform = parent_transform * self.local_transform
-		self.inverse_transform = glm.mat4.inverse(transform)
-		for child in self.children:
-			child.set_inverse_transform(transform)
-
-	def __init__(self, id, name, local_transform):
-		self.children = []
-		self.index = index
-		self.name = name
-
-		self.local_transform = local_transform
-
-		self.anim_transform = glm.mat4(1.0)
-		self.inverse_transform = glm.mat4(1.0)
+from diskovery_ubos import JointData, get_matrix_data
 
 def bindings():
 	b = (vk.VertexInputBindingDescription*1)()
@@ -120,6 +78,7 @@ class ParseType(Enum):
 
 class Parser(object):
 
+	# OBJ Parsing #
 	def process_vertex(self, v_data, ind, tex, norm, n_norm, n_tex):
 		vert = int(v_data[0]) - 1
 		ind.append(vert)
@@ -204,12 +163,13 @@ class Parser(object):
 
 		return (vertex_list, index_list)
 
+	# DAE Model Parsing #
 	def get_child_with_attribute(self, node, tag, attribute, value):
 		for child in node:
 			if child.tag == tag and child.attrib[attribute] == value:
 				return child
 
-	def fill_from_source(self, parent, src_id, lis, corr, dim):
+	def fill_from_source(self, parent, src_id, lis, dim, correction):
 		src_data_loc = self.get_child_with_attribute(
 			parent,
 			'source',
@@ -227,13 +187,19 @@ class Parser(object):
 			if dim == 3:
 				z = float(src_data[i * dim + 2])
 				vec = glm.vec4(x, y, z, 1.0)
+
+				if correction:
+					corr = glm.rotate(glm.mat4(1.0), glm.radians(90), glm.vec3(1, 0, 0))
+				else:
+					corr = glm.mat4(1.0)
 				vec = corr * vec
+
 				lis.append((c_float*3)(vec.x, vec.y, vec.z))
 
 			elif dim == 2:
 				lis.append((c_float*2)(x, 1 - y))
 
-	def duplicate_handler(self, vll, il, vert, tex_ind, norm_ind):
+	def duplicate_handler(self, vll, il, vert, tex_ind, norm_ind, rig):
 		if vert.norm_ind == norm_ind and vert.tex_ind == tex_ind:
 			index_list.append(pos_ind)
 			return
@@ -242,14 +208,74 @@ class Parser(object):
 				vert.duplicate = VertexLoader(len(vll), vert.position)
 				vert.duplicate.tex_ind = tex_ind
 				vert.duplicate.norm_ind = norm_ind
+				if rig:
+					vert.duplicate.joints = vert.joints
+					vert.duplicate.weights = vert.weights
 
 				vll.append(vert.duplicate)
 				il.append(vert.duplicate.index)
 				return
 			else:
-				self.duplicate_handler(vll, il, vert.duplicate, tex_ind, norm_ind)
+				self.duplicate_handler(vll, il, vert.duplicate, tex_ind, norm_ind, rig)
 
 	def load_dae(self, file, correction, rigged=False):
+
+		MAX_JOINTS = 3
+		root = xml.parse(file).getroot()
+
+		if correction:
+			corr = glm.rotate(glm.mat4(1.0), glm.radians(90), glm.vec3(1, 0, 0))
+		else:
+			corr = glm.mat4(1.0)
+
+		if rigged:
+			skin = root.find('library_controllers').find('controller').find('skin')
+
+			joints_id = self.get_child_with_attribute(
+				skin.find('vertex_weights'),
+				'input',
+				'semantic',
+				'JOINT'
+			).attrib['source'][1:]
+			joints_loc = self.get_child_with_attribute(
+				skin,
+				'source',
+				'id',
+				joints_id
+			).find('Name_array')
+			joint_list = joints_loc.text.split(' ')
+
+			weights_id = self.get_child_with_attribute(
+				skin.find('vertex_weights'),
+				'input',
+				'semantic',
+				'WEIGHT'
+			).attrib['source'][1:]
+			weights_loc = self.get_child_with_attribute(
+				skin,
+				'source',
+				'id',
+				weights_id
+			).find('float_array')
+
+			weights = [float(x) for x in weights_loc.text.split(' ')]
+
+			joint_counts_loc = skin.find('vertex_weights').find('vcount')
+			joint_counts = [int(x) for x in joint_counts_loc.text.split(' ')[:-1]]
+
+			p = 0
+			skin_values = []
+			skin_data = skin.find('vertex_weights').find('v').text.split(' ')
+			for count in joint_counts:
+				skin = VertexSkin()
+				for i in range(0, count):
+					joint = skin_data[p]
+					weight = weights[int(skin_data[p + 1])]
+					p += 2
+					skin.add_effect(float(joint), float(weight))
+				skin.scale(MAX_JOINTS)
+				skin_values.append(skin)
+
 		positions = []
 		normals = []
 		textures = []
@@ -257,13 +283,6 @@ class Parser(object):
 		vertex_loader_list = []
 		vertex_list = []
 		index_list = []
-
-		root = xml.parse(file).getroot()
-
-		if correction:
-			corr = glm.rotate(glm.mat4(1.0), glm.radians(90), glm.vec3(1., 0., 0.))
-		else:
-			corr = glm.mat4(1.0)
 
 		mesh = root.find('library_geometries').find('geometry').find('mesh')
 
@@ -283,8 +302,22 @@ class Parser(object):
 			y = float(pos_data[i * 3 + 1])
 			z = float(pos_data[i * 3 + 2])
 			vec = glm.vec4(x, y, z, 1.0)
+
+			if correction:
+				corr = glm.rotate(glm.mat4(1.0), glm.radians(90), glm.vec3(1, 0, 0))
+			else:
+				corr = glm.mat4(1.0)
 			vec = corr * vec
-			v = VertexLoader(len(vertex_list), (c_float*3)(vec.x, vec.y, vec.z))
+
+			if rigged:
+				v = VertexLoader(
+					len(vertex_loader_list), 
+					(c_float*3)(vec.x, vec.y, vec.z),
+					(c_float*MAX_JOINTS)(*skin_values[len(vertex_loader_list)].joints),
+					(c_float*MAX_JOINTS)(*skin_values[len(vertex_loader_list)].weights)
+				)
+			else:
+				v = VertexLoader(len(vertex_loader_list), (c_float*3)(vec.x, vec.y, vec.z))
 			vertex_loader_list.append(v)
 
 		norm_id = self.get_child_with_attribute(
@@ -293,7 +326,7 @@ class Parser(object):
 			'semantic',
 			'NORMAL'
 		).attrib['source'][1:]
-		self.fill_from_source(mesh, norm_id, normals, corr, 3)
+		self.fill_from_source(mesh, norm_id, normals, 3, correction)
 
 		tex_id = self.get_child_with_attribute(
 			mesh.find('polylist'),
@@ -301,7 +334,7 @@ class Parser(object):
 			'semantic',
 			'TEXCOORD'
 		).attrib['source'][1:]
-		self.fill_from_source(mesh, tex_id, textures, corr, 2)
+		self.fill_from_source(mesh, tex_id, textures, 2, correction)
 
 		poly = mesh.find('polylist')
 		type_count = len(poly.findall('input'))
@@ -321,7 +354,7 @@ class Parser(object):
 				vert.norm_ind = norm_ind
 				index_list.append(pos_ind)
 			else:
-				self.duplicate_handler(vertex_loader_list, index_list, vert, tex_ind, norm_ind)
+				self.duplicate_handler(vertex_loader_list, index_list, vert, tex_ind, norm_ind, rigged)
 
 		for vert in vertex_loader_list:
 			if vert.norm_ind == None:
@@ -333,11 +366,107 @@ class Parser(object):
 			v.tex_coord = textures[vert.tex_ind]
 			v.normal = normals[vert.norm_ind]
 
+			if rigged:
+				v.joint_ids = vert.joints
+				v.weights = vert.weights
+
 			vertex_list.append(v)
 
+		if rigged:
+			return (vertex_list, index_list, joint_list)
 		return (vertex_list, index_list)
 
-	def __init__(self, file, parse_type, correction=False):
+	# DAE Rig Parsing #
+	def load_joint(self, node, joints, correction, is_root):
+
+		name_id = node.attrib['id']
+		index = joints.index(name_id)
+		matrix_data = [float(x) for x in node.find('matrix').text.split(' ')]
+		matrix = glm.mat4(matrix_data)
+		matrix = glm.transpose(matrix)
+
+		if is_root:
+			if correction:
+				corr = glm.rotate(glm.mat4(1.0), glm.radians(90), glm.vec3(1, 0, 0))
+			else:
+				corr = glm.mat4(1.0)
+			matrix = corr * matrix
+
+		j = Joint(index, name_id, matrix)
+		self.joint_count += 1
+		for child in node.findall('node'):
+			j.children.append(self.load_joint(child, joints, 0, False))
+
+		return j
+
+	def load_rig(self, file, joints, correction):
+		root = xml.parse(file).getroot()
+
+		rig = self.get_child_with_attribute(
+			root.find('library_visual_scenes').find('visual_scene'),
+			'node',
+			'id',
+			'Armature'
+		)
+
+		root_joint = self.load_joint(rig.find('node'), joints, correction, True)
+		return Rig(root_joint, self.joint_count)
+
+	# DAE Animation Parsing #
+	def load_animations(self, file, correction):
+		root = xml.parse(file).getroot()
+
+		anim = root.find('library_animations').find('animation')
+		root_joint = self.get_child_with_attribute(
+			root.find('library_visual_scenes').find('visual_scene'),
+			'node',
+			'id',
+			'Armature'
+		).find('node').attrib['id']
+
+		times = [float(x) for x in anim.find('source').find('float_array').text.split(' ')]
+		duration = times[len(times) - 1]
+		
+		keyframes = []
+		for time in times:
+			keyframes.append(KeyFrame(time))
+
+		for joint_node in root.find('library_animations').findall('animation'):
+			
+			joint_name_id = joint_node.find('channel').attrib['target'].split('/')[0]
+
+			data_id = self.get_child_with_attribute(
+				joint_node.find('sampler'),
+				'input',
+				'semantic',
+				'OUTPUT'
+			).attrib['source'][1:]
+
+			transforms = [float(x) for x in self.get_child_with_attribute(
+				joint_node,
+				'source',
+				'id',
+				data_id
+			).find('float_array').text.split(' ')]
+
+			for i, time in enumerate(times):
+				matrix = glm.mat4(transforms[i*16:(i+1)*16])
+				matrix = glm.transpose(matrix)
+
+				if joint_name_id == root_joint:
+					if correction:
+						corr = glm.rotate(glm.mat4(1.0), glm.radians(90), glm.vec3(1, 0, 0))
+					else:
+						corr = glm.mat4(1.0)
+					matrix = corr * matrix
+
+				position = glm.vec3(matrix[3].x, matrix[3].y, matrix[3].z)
+				rotation = glm.quat_cast(matrix)
+				keyframes[i].pose[joint_name_id] = JointTransform(position, rotation)
+
+		return Animation(duration, keyframes)
+
+	def __init__(self, file, parse_type, correction=False, joints=None):
 		if parse_type == ParseType.OBJ_MODEL:
 			self.data = self.load_obj(file)
 
@@ -347,7 +476,12 @@ class Parser(object):
 		if parse_type == ParseType.DAE_RIGGED_MODEL:
 			self.data = self.load_dae(file, correction, True)
 
+		if parse_type == ParseType.DAE_RIG:
+			self.joint_count = 0
+			self.data = self.load_rig(file, joints, correction)
 
+		if parse_type == ParseType.DAE_ANIMATIONS:
+			self.data = self.load_animations(file, correction)
 
 class Mesh():
 	def __init__(self, dk, file):
@@ -384,15 +518,93 @@ class Mesh():
 		self.vertices.cleanup()
 		self.indices.cleanup()
 
+class VertexLoader:
+	def __init__(self, index, position, joints=None, weights=None):
+		self.index = index
+		self.position = position
+		self.tex_ind = None
+		self.norm_ind = None
+		self.joints = joints
+		self.weights = weights
+		self.duplicate = None
+
+class Vertex(Structure):
+	_fields_ = (
+		('position', (c_float*3)), 
+		('color', (c_float*3)),
+		('tex_coord', (c_float*2)),
+		('normal', (c_float*3)),
+		('joint_ids', (c_float*3)),
+		('weights', (c_float*3))
+	)
+
+	def __str__(self):
+		return "Position: {}, {}, {}\nColor: {}, {}, {}\nTexture: {}, {}\nNormal: {}, {}, {}".format(
+			self.position[0], self.position[1], self.position[2],
+			self.color[0], self.color[1], self.color[2],
+			self.tex_coord[0], self.tex_coord[1],
+			self.normal[0], self.normal[1], self.normal[2]
+		)
+
+class VertexSkin:
+	def scale(self, num_weights):
+		if len(self.joints) > num_weights:
+			top = self.weights[:num_weights]
+			total = sum(top)
+
+			self.weights = []
+			for weight in top:
+				self.weights.append(min(weight/total, 1))
+			self.joints = self.joints[:num_weights]
+		elif len(self.joints) < num_weights:
+			while len(self.joints) < num_weights:
+				self.joints.append(0)
+				self.weights.append(0)
+
+	def add_effect(self, joint, weight):
+		for i in range(0, len(self.joints)):
+			if weight > self.weights[i]:
+				self.weights.insert(i, float(weight))
+				self.joints.insert(i, float(joint))
+				return
+
+		self.weights.append(weight)
+		self.joints.append(joint)
+
+	def __init__(self):
+		self.joints = []
+		self.weights = []
+
+class Joint:
+	def set_inverse_transform(self, parent_transform):
+		transform = parent_transform * self.local_transform
+		self.inverse_transform = glm.inverse(transform)
+		for child in self.children:
+			child.set_inverse_transform(transform)
+
+	def __init__(self, index, name, local_transform):
+		self.children = []
+		self.index = index
+		self.name = name
+
+		self.local_transform = local_transform
+
+		self.anim_transform = glm.mat4(1.0)
+		self.inverse_transform = glm.mat4(1.0)
+
 class AnimatedMesh(Mesh):
 	def __init__(self, dk, file, correction=False):
 
 		if file.split('.')[1] == 'obj':
 			raise RuntimeError("`AnimatedMesh` cannot accept data from a .obj file." \
 							   " Use a `Mesh` object instead.")
+		elif file.split('.')[1] == 'dae':
+			vertex_list, index_list, joint_list = Parser(file, ParseType.DAE_RIGGED_MODEL, correction).data
+			self.rig = Parser(file, ParseType.DAE_RIG, correction, joint_list).data
 
-		if file.split('.')[1] == 'dae':
-			vertex_list, index_list = Parser(file, ParseType.DAE_RIGGED_MODEL, correction).data
+			self.anim = Parser(file, ParseType.DAE_ANIMATIONS, correction).data
+		else:
+			raise RuntimeError("Unsupported file type for 3D model and animation data")
 
 		v_size = sizeof(Vertex) * len(vertex_list)
 		i_size = sizeof(c_uint) * len(index_list)
@@ -425,13 +637,12 @@ class Rig(object):
 		self.root.set_inverse_transform(glm.mat4(1.0))
 
 	def fill_joints(self, head, arr):
-		arr[head.index] = head.anim_transform
-		for child in self.children:
+		arr[head.index] = get_matrix_data(head.anim_transform)
+		for child in head.children:
 			self.fill_joints(child, arr)
 
 	def get_joint_data(self):
 		matrix_type = (c_float*4)*4
-
 		joint_data = (matrix_type*self.joint_count)()
 		self.fill_joints(self.root, joint_data)
 		return joint_data
@@ -448,12 +659,12 @@ class JointTransform(object):
 	@staticmethod
 	def interpolate(a, b, progression):
 		position = JointTransform.pos_interp(a.position, b.position, progression)
-		rotation = glm.mix(a.rotation, b.rotation, progression)
+		rotation = glm.slerp(a.rotation, b.rotation, progression)
 		return JointTransform(position, rotation)
 
 	def local_transform(self):
 		mat = glm.translate(glm.mat4(1.0), self.position)
-		return mat * glm.toMat4(self.rotation)
+		return mat * glm.mat4_cast(self.rotation)
 
 	def __init__(self, position, rotation):
 		# Position and rotation are relative to the parent joint
@@ -461,9 +672,9 @@ class JointTransform(object):
 		self.rotation = rotation
 
 class KeyFrame(object):
-	def __init__(self, timestamp, joint_keys):
+	def __init__(self, timestamp):
 		self.timestamp = timestamp
-		self.pose = joint_keys
+		self.pose = { }
 
 class Animation(object):
 	def __init__(self, length, keys):
@@ -492,7 +703,7 @@ class Animator(object):
 		pose = { }
 		for name in prev_frame.pose.keys():
 			prev_t = prev_frame.pose[name]
-			next_t = next_Frame.pose[name]
+			next_t = next_frame.pose[name]
 			current_t = JointTransform.interpolate(prev_t, next_t, progression)
 			pose[name] = current_t.local_transform()
 		return pose
@@ -506,24 +717,25 @@ class Animator(object):
 		current_local = pose[joint.name]
 		current = parent_transform * current_local
 
+		joint.anim_transform = current * joint.inverse_transform
+
 		for child in joint.children:
 			self.fill_rig(pose, child, current)
 
-		joint.anim_transform = current * joint.inverse_transform
 
 	def update(self):
 		if self.current_anim not in self.animations.keys():
 			return
 
-		self.anim_time += EntityManager.get_frame_time()
+		self.anim_time += self.dk.get_frame_time()
 		if self.anim_time > self.animations[self.current_anim].length:
-			sef.anim_time %= self.animations[self.current_anim].length
+			self.anim_time %= self.animations[self.current_anim].length
 
 		pose = self.get_pose()
-		self.fill_rig(pose, self.entity.rig, glm.mat4(1.0))
+		self.fill_rig(pose, self.entity.rig.root, glm.mat4(1.0))
 
-
-	def __init__(self, entity):
+	def __init__(self, entity, dk):
+		self.dk = dk
 		self.entity = entity
 
 		self.current_anim = None

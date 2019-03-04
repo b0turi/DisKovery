@@ -43,6 +43,6 @@ void main()
 	}
 
     gl_Position = mvp.proj * mvp.view * mvp.model * totalLocalPos;
-    fragColor = inColor;
+    fragColor = normalize(inPosition);
     fragTexCoord = inTexCoord;
 }
