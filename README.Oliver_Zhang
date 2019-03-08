@@ -1,4 +1,20 @@
 /*************************
+          Week 4
+**************************/
+3/4/2019 - 3/8/2019
+With Kyle's help, I edited the diskovery_gui.py file to embed the Pygame window in a center frame instead of
+an image on Canvas. I moved in some code from Kyle's diskovery.py file with his permission in order to 
+facilitate the process. However, we ran into some issues loading up the Pygame program in the embedded
+window. As a result, although the window has been embedded, it is only a black screen right now, and we'll
+need to cooperate later to fix the issue. In the meantime, I put the menu bar setup into a function, and I
+later plan to put the setup in a different file to avoid cluttering diskovery_gui.py. I've moved resources 
+from the engine_core directory into the tkinter_stuff directory, but we have plans to get rid of separate
+directories later down the line and put both folders' contents in one directory.
+
+In the meantime, I am still working to furnish the UI and menubar with buttons and widgets, with plans
+to catch up on intended tasks from the past few weeks over spring break.
+
+/*************************
            Week 3
 **************************/
 2/25/2019 - 3/1/2019
