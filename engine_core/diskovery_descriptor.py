@@ -260,7 +260,6 @@ class Descriptor(object):
 					u_ptr += 1
 
 				if self.definition[j] == BindingType.TEXTURE_SAMPLER:
-
 					image_info = vk.DescriptorImageInfo(
 						image_layout=vk.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 						image_view=self.textures[t_ptr].image_view,

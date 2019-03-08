@@ -1,4 +1,18 @@
 #################################################################################
+									Week 4
+#################################################################################
+
+I've added some nice touches to optimize our rendering and make it look nicer 
+(mipmapping and anti-aliasing, respectively, if you're familiar with graphics programming terms). We're about to start actually taking the stuff I'm working on 
+and merging it with Oliver's GUI so that a user can manipulate 3D objects so I've 
+been trying to modularize my code so that it can fit together with an external UI 
+more easily. I've added a Camera object (default extension of Entity, as 
+described in the design doc) and the view and projection matrices defined by the 
+camera are passed to rendered entities whenever they are updated so the position 
+of the camera will affect where things are rendered and its perspective is 
+adjustable (i.e. field of view, draw distance, etc.)
+
+#################################################################################
 									Week 3
 #################################################################################
 

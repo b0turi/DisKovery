@@ -77,7 +77,7 @@ class Pipeline(object):
 		)
 		return module
 
-	def make_pipeline(self, animated):
+	def make_pipeline(self, animated, samples):
 		path = os.path.dirname(os.path.abspath(__file__))
 		with open(os.path.join(path, self.shader.filenames['vert']), 'rb') as f:
 			vert_shader_src = f.read()
@@ -158,7 +158,7 @@ class Pipeline(object):
 		multisample_create = vk.PipelineMultisampleStateCreateInfo(
 		    s_type=vk.STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
 		    sample_shading_enable=vk.FALSE,
-		    rasterization_samples=vk.SAMPLE_COUNT_1_BIT,
+		    rasterization_samples=self.dk.image_data['msaa_samples'],
 		    min_sample_shading=1
 		)
 
@@ -203,7 +203,7 @@ class Pipeline(object):
 		    color_blend_state=pointer(color_blend_create),
 		    dynamic_state=None,
 		    layout=self.pipeline_layout,
-		    render_pass=self.dk.render_pass
+		    render_pass=self.dk.get_render_pass(samples)
 		)
 
 		pipeline = vk.Pipeline(0)
@@ -222,8 +222,11 @@ class Pipeline(object):
 		self.dk.DestroyShaderModule(self.dk.device, fragment_shader, None)
 
 
-	def __init__(self, dk, shader, set_layout, animated):
+	def __init__(self, dk, shader, set_layout, animated, samples=None):
 		self.dk = dk
+
+		if samples == None:
+			samples = self.dk.image_data['msaa_samples']
 		# A reference to the Shader (Shader) this pipeline is being built around
 		self.shader = shader
 		# A restructuring of the definition of the above shader for
@@ -233,7 +236,7 @@ class Pipeline(object):
 		self.pipeline_ref = vk.Pipeline(0)
 
 		self.make_pipeline_layout(set_layout)
-		self.make_pipeline(animated)
+		self.make_pipeline(animated, samples)
 
 	def cleanup(self):
 		self.dk.DestroyPipelineLayout(self.dk.device, self.pipeline_layout, None)

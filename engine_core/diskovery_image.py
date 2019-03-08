@@ -15,7 +15,7 @@ class Image(object):
 			extent=vk.Extent3D(extent.width, extent.height, 1),
 			mip_levels=mip,
 			array_layers=1,
-			samples=vk.SAMPLE_COUNT_1_BIT,
+			samples=samp,
 			tiling=vk.IMAGE_TILING_OPTIMAL,
 			usage=use,
 			format=form,
@@ -171,7 +171,7 @@ def make_texture_sampler(dk, mip):
 		address_mode_U=vk.SAMPLER_ADDRESS_MODE_REPEAT,
 		address_mode_V=vk.SAMPLER_ADDRESS_MODE_REPEAT,
 		address_mode_W=vk.SAMPLER_ADDRESS_MODE_REPEAT,
-		anisotropy_enable=vk.FALSE,
+		anisotropy_enable=vk.TRUE,
 		max_anisotropy=16,
 		border_color=vk.BORDER_COLOR_INT_OPAQUE_BLACK,
 		unnormalized_coordinates=vk.FALSE,
@@ -234,15 +234,18 @@ class Texture(Image):
 			image=self.image,
 			src_queue_family_index=vk.QUEUE_FAMILY_IGNORED,
 			dst_queue_family_index=vk.QUEUE_FAMILY_IGNORED,
+			subresource_range=sub
 		)
 
+		w = wid
+		h = hei
+
 		for i in range(1, mip):
-			sub.base_mip_level = i - 1
 			barrier.old_layout = vk.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 			barrier.new_layout = vk.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 			barrier.src_access_mask = vk.ACCESS_TRANSFER_WRITE_BIT
 			barrier.dst_access_mask = vk.ACCESS_TRANSFER_READ_BIT
-			barrier.subresource_range = sub
+			barrier.subresource_range.base_mip_level = i - 1
 
 			self.dk.CmdPipelineBarrier(
 				cmd,
@@ -253,9 +256,18 @@ class Texture(Image):
 				1, byref(barrier)
 			)
 
-			src_offsets = (vk.Offset3D * 2)(vk.Offset3D(0,0,0), vk.Offset3D(int(wid), int(hei), 1))
-			dst_offsets = (vk.Offset3D * 2)(vk.Offset3D(0,0,0),
-				vk.Offset3D(int(wid/2) if wid > 1 else 1, int(hei/2) if hei > 1 else 1, 1)
+			src_offsets = (vk.Offset3D * 2)(
+				vk.Offset3D(0,0,0), 
+				vk.Offset3D(int(w), int(h), 1)
+			)
+
+			dst_offsets = (vk.Offset3D * 2)(
+				vk.Offset3D(0,0,0),
+				vk.Offset3D(
+					int(w/2) if w > 1 else 1, 
+					int(h/2) if h > 1 else 1, 
+					1
+				)
 			)
 
 			src_sub = vk.ImageSubresourceLayers(
@@ -277,11 +289,15 @@ class Texture(Image):
 				dst_subresource=dst_sub
 			)
 
-			self.dk.CmdBlitImage(cmd,
-			self.image, vk.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-			self.image, vk.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			1, byref(blit),
-			vk.FILTER_LINEAR)
+			self.dk.CmdBlitImage(
+				cmd,
+				self.image, 
+				vk.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+				self.image, 
+				vk.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				1, byref(blit),
+				vk.FILTER_LINEAR
+			)
 
 			barrier.old_layout = vk.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
 			barrier.new_layout = vk.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
@@ -289,11 +305,34 @@ class Texture(Image):
 			barrier.dst_access_mask = vk.ACCESS_SHADER_READ_BIT
 
 			self.dk.CmdPipelineBarrier(cmd,
-			vk.PIPELINE_STAGE_TRANSFER_BIT, vk.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			0, 0, None, 0, None, 1, byref(barrier))
+				vk.PIPELINE_STAGE_TRANSFER_BIT, 
+				vk.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				0, 0, 
+				None, 0, 
+				None, 1, 
+				byref(barrier)
+			)
 
-			if wid > 1: wid /= 2
-			if hei > 1: hei /= 2
+			if w > 1: 
+				w = int(w/2)
+			if h > 1: 
+				h = int(h/2)
+
+		barrier.subresource_range.base_mip_level = mip - 1
+		barrier.old_layout = vk.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+		barrier.new_layout = vk.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+		barrier.src_access_mask = vk.ACCESS_TRANSFER_WRITE_BIT
+		barrier.dst_access_mask = vk.ACCESS_SHADER_READ_BIT
+
+		self.dk.CmdPipelineBarrier(
+			cmd,
+			vk.PIPELINE_STAGE_TRANSFER_BIT, 
+			vk.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			0, 0, 
+			None,
+			0, None,
+			1, byref(barrier)
+		)
 
 		self.dk.end_command(cmd)
 
@@ -303,11 +342,10 @@ class Texture(Image):
 
 		extent = vk.Extent2D(width=img.get_width(), height=img.get_height())
 		size = extent.width * extent.height * 4
-		mip = math.floor(math.log2(max(extent.width, extent.height))) + 1
 
 		arr = pygame.PixelArray(img)
 
-		self.mip = 1
+		self.mip = int(math.floor(math.log2(max(extent.width, extent.height))) + 1)
 
 		data = (c_ubyte*size)()
 
@@ -325,7 +363,7 @@ class Texture(Image):
 			dk,
 			extent,
 			vk.FORMAT_R8G8B8A8_UNORM,
-			1,
+			self.mip,
 			vk.SAMPLE_COUNT_1_BIT,
 			vk.IMAGE_USAGE_TRANSFER_SRC_BIT |
 			vk.IMAGE_USAGE_TRANSFER_DST_BIT |
@@ -336,15 +374,13 @@ class Texture(Image):
 		)
 
 		staging_buffer = Buffer(dk, size, data)
-		buffer_to_image(dk, staging_buffer.buffer, self.image, extent.width, extent.height)
-
-		self.set_layout(
-			self.image,
-			vk.FORMAT_R8G8B8A8_UNORM,
-			vk.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			vk.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			self.mip
+		buffer_to_image(
+			dk, 
+			staging_buffer.buffer, 
+			self.image, 
+			extent.width, 
+			extent.height
 		)
 		staging_buffer.cleanup()
 
-		self._generate_mipmaps(extent.width, extent.height, mip)
+		self._generate_mipmaps(extent.width, extent.height, self.mip)

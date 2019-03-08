@@ -37,12 +37,15 @@ from diskovery_image import Texture
 from diskovery_buffer import UniformBuffer
 from diskovery_instance import DkInstance
 from diskovery_pipeline import Shader, Pipeline
-from diskovery_entity_manager import EntityManager
+from diskovery_entity_manager import EntityManager, Renderer
 from diskovery_descriptor import make_set_layout, Descriptor
+from diskovery_input_manager import InputManager
 
 # Dictionaries and objects wrapped by this module for convenience
 _dk = None
 _scene = None
+_inputs = None
+_camera = None
 
 _meshes = { }
 _textures = { }
@@ -51,8 +54,6 @@ _animations = { }
 _shaders = { }
 _descriptors = { }
 _pipelines = { }
-
-_samplers = { }
 
 def add_mesh(filename, name=None, animated=False):
 	"""
@@ -125,6 +126,7 @@ def add_shader(name, files, definition, uniforms, animated=False):
 	if s.definition not in _descriptors.keys():
 		_descriptors[definition] = make_set_layout(_dk, definition)
 
+	# TODO: Adjust so that pipelines are defined by names as well as definitions to account for cases where multiple shaders have the same DSL
 	_pipelines[definition] = Pipeline(_dk, s, _descriptors[definition], animated)
 
 def add_entity(entity, name):
@@ -184,17 +186,46 @@ def pipeline(definition):
 	global _pipelines
 	return _pipelines[definition]
 
-def init(debug_mode=False):
+def init(debug_mode=False, config=None):
 	"""
 	Initializes the :class:`~diskovery_instance.DkInstance` and
 	:class:`~diskovery_entity_manager.EntityManager` objects used in
 	this module.
 
 	:param debug_mode: Whether or not the :class:`~diskovery_instance.DkInstance` should be created with Vulkan Validation Layers
+	:param config: An optional dictionary of configuration values to set up the Diskovery instance
 	"""
-	global _dk, _scene
+	global _dk, _scene, _camera
 	_dk = DkInstance(debug_mode)
 	_scene = EntityManager(_dk)
+
+	r = Renderer(_dk, _dk.image_data['msaa_samples'], _dk.sc_image_views)
+	_scene.add_renderer(r)
+
+	cam_pos = glm.vec3(0, 0, -5)
+	cam_rot = glm.vec3()
+	fov = glm.radians(60)
+	draw_distance = 1000
+	aspect_ratio = 16/9
+
+	if config != None:
+		if 'cam_pos' in config:
+			cam_pos = glm.vec3(config['cam_pos'])
+		if 'cam_rot' in config:
+			cam_rot = glm.vec3(config['cam_rot'])
+		if 'fov' in config:
+			fov = glm.radians(config['fov'])
+		if 'draw_distance' in config:
+			draw_distance = config['draw_distance']
+
+		if 'width' in config and 'height' in config:
+			aspect_ratio = config['width']/config['height']
+
+		if 'bg_color' in config:
+			_dk.bg_color = config['bg_color']
+
+	_camera = Camera(cam_pos, cam_rot, fov, draw_distance, aspect_ratio)
+	_scene.add_entity(_camera, "Camera")
 
 def run():
 	"""Begins the game loop and starts the event handler"""
@@ -263,7 +294,7 @@ class Entity():
 	**Methods of the Entity class:**
 	"""
 	def __init__(self, position=None):
-		self.position = position if position != None else (0, 0, 0)
+		self.position = glm.vec3(position) if position != None else glm.vec3()
 
 		self.parent = None
 		self.children = []
@@ -273,16 +304,23 @@ class Entity():
 		Get the position of the :class:`~diskovery.Entity` relative to world coordinates
 		rather than the default, which is relative to its parent's coordinates
 
-		:returns: a tuple describing the x, y, and z coordinates of the :class:`~diskovery.Entity` in world space
+		:returns: a glm vec3 describing the x, y, and z 
+			coordinates of the :class:`~diskovery.Entity` in world space
 		"""
 		p = self.parent
 		pos = self.position
 
 		while p != None:
-			pos = vec_add(pos, p.position)
+			pos += p.position
 			p = p.parent
 
 		return pos
+
+	def update(self, ind):
+		pass
+
+	def cleanup(self):
+		pass
 
 	def detach(self):
 		"""Removes the reference to the parent of the :class:`~diskovery.Entity` cleanly"""
@@ -291,7 +329,8 @@ class Entity():
 
 	def set_parent(self, parent):
 		"""
-		Sets the parent of the :class:`~diskovery.Entity` to be the given :class:`~diskovery.Entity`
+		Sets the parent of the :class:`~diskovery.Entity` to be the given 
+		:class:`~diskovery.Entity`
 
 		:param parent: the :class:`~diskovery.Entity` to set the parent as
 		"""
@@ -300,6 +339,41 @@ class Entity():
 
 		self.parent = parent
 		parent.children.append(self)
+
+class Camera(Entity):
+	def __init__(self, position, rotation, fov, draw_distance, aspect_ratio):
+		Entity.__init__(self, position)
+		self.rotation = rotation
+
+		self.fov = fov
+		self.draw_distance = draw_distance
+		self.aspect_ratio = aspect_ratio
+
+		self.view_matrix = glm.mat4()
+		self.proj_matrix = glm.mat4()
+
+		self.update(0)
+		self.update_projection()
+
+	def update_projection(self, fov=None, draw_distance=None, aspect_ratio=None):
+		if fov != None:
+			self.fov = fov
+		if draw_distance != None:
+			self.draw_distance = draw_distance
+		if aspect_ratio != None:
+			self.aspect_ratio = aspect_ratio
+
+		self.proj_matrix = glm.perspective(
+			self.fov,
+			self.aspect_ratio,
+			0.1,
+			self.draw_distance
+		)
+
+	def update(self, ind):
+		self.view_matrix = glm.translate(glm.mat4(1.0), self.position) * \
+						   glm.mat4_cast(glm.quat(self.rotation))
+
 
 class RenderedEntity(Entity):
 	"""
@@ -316,11 +390,11 @@ class RenderedEntity(Entity):
 	+-------------------+-------------------+
 	| scale             | (1, 1, 1)         |
 	+-------------------+-------------------+
-	| shade             | "Default"         |
+	| shader_str        | "Default"         |
 	+-------------------+-------------------+
-	| textures          | ["Default"]       |
+	| textures_str      | ["Default"]       |
 	+-------------------+-------------------+
-	| mesh              | "Default"         |
+	| mesh_str          | "Default"         |
 	+-------------------+-------------------+
 
 	**Attributes of the RenderedEntity class:**
@@ -374,16 +448,14 @@ class RenderedEntity(Entity):
 		mesh_str=None):
 		Entity.__init__(self, position)
 
-		self.rotation = rotation if rotation != None else (0, 0, 0)
-		self.scale = scale if scale != None else (1, 1, 1)
+		self.rotation = glm.vec3(rotation) if rotation != None else glm.vec3()
+		self.scale = glm.vec3(scale) if scale != None else glm.vec3(1, 1, 1)
 
 		self.textures = textures_str if textures_str != None else ["Default"]
 		self.mesh = mesh_str if mesh_str != None else None
 
 		self.definition = shader(shader_str).definition if shader_str != None else shader("Default").definition
 		self.uniforms = []
-
-		self.rot=3.14/4 * 3
 
 		uniform_types = shader(shader_str).uniforms
 		for u_type in uniform_types:
@@ -407,26 +479,13 @@ class RenderedEntity(Entity):
 		"""
 		m = MVPMatrix()
 
-		m.model = glm.rotate(
-			glm.translate(glm.mat4(1.0), glm.vec3(self.position)),
-			self.rot,
-			glm.vec3(0, 1, 0)
-		)
+		m.model = glm.scale(glm.translate(glm.mat4(1.0), self.position) * \
+				  glm.mat4_cast(glm.quat(self.rotation)), self.scale)
 
-		m.view = glm.translate(glm.mat4(1.0), glm.vec3(0, 0, -5))
-		m.projection = glm.perspective(
-			glm.radians(90),
-			_dk.image_data['extent'].width / _dk.image_data['extent'].height,
-			0.1,
-			10000.
-		)
+		m.view = _camera.view_matrix
+		m.projection = _camera.proj_matrix
 
-		for uniform in self.uniforms:
-			uniform.update(m.get_data(), ind)
-
-		self.rot += 0.0001
-		if self.rot > 6.2832:
-			self.rot = 0
+		self.uniforms[0].update(m.get_data(), ind)
 
 	def get_pipeline(self):
 		"""
@@ -496,26 +555,8 @@ class AnimatedEntity(RenderedEntity):
 
 		:param ind: the index indicating which :class:`~diskovery_buffer.Buffer` in each :class:`~diskovery_buffer.UniformBuffer` should be filled with new data
 		"""
-		m = MVPMatrix()
+		
+		RenderedEntity.update(self, ind)
 
-		m.model = glm.rotate(
-			glm.translate(glm.mat4(1.0), glm.vec3(self.position)),
-			self.rot,
-			glm.vec3(0, 1, 0)
-		)
-
-		m.view = glm.translate(glm.mat4(1.0), glm.vec3(0, 0, -5))
-		m.projection = glm.perspective(
-			glm.radians(60),
-			_dk.image_data['extent'].width / _dk.image_data['extent'].height,
-			0.1,
-			10000.
-		)
-
-		self.uniforms[0].update(m.get_data(), ind)
 		self.animator.update()
 		self.uniforms[1].update(self.rig.get_joint_data(), ind)
-
-
-		if self.rot > 6.2832:
-			self.rot = 0

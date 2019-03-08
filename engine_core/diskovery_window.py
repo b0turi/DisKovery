@@ -49,8 +49,8 @@ class Window:
 
 		pygame.display.init()
 
-		self.width = config.get('width') if config.get('width') else 1280
-		self.height = config.get('height') if config.get('height') else 720
+		self.width = config.get('width') if config.get('width') else 1920
+		self.height = config.get('height') if config.get('height') else 1080
 
 		full = config.get('fullscreen') if config.get('fullscreen') else False
 		# A window can't be resizable if it's fullscreen
