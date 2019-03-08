@@ -2,15 +2,39 @@
 									Week 4
 #################################################################################
 
-I've added some nice touches to optimize our rendering and make it look nicer 
-(mipmapping and anti-aliasing, respectively, if you're familiar with graphics programming terms). We're about to start actually taking the stuff I'm working on 
-and merging it with Oliver's GUI so that a user can manipulate 3D objects so I've 
-been trying to modularize my code so that it can fit together with an external UI 
-more easily. I've added a Camera object (default extension of Entity, as 
-described in the design doc) and the view and projection matrices defined by the 
-camera are passed to rendered entities whenever they are updated so the position 
-of the camera will affect where things are rendered and its perspective is 
-adjustable (i.e. field of view, draw distance, etc.)
+Got some nice stuff done this week, but not all stuff that was originally on the
+schedule. I've added some nice touches to optimize our rendering and make it look
+nicer (mipmapping and anti-aliasing, respectively, if you're familiar with 
+graphics programming terms). We're about to start actually taking the stuff I'm 
+working on and merging it with Oliver's GUI so that a user can manipulate 3D 
+objects so I've been trying to modularize my code so that it can fit together 
+with an external UI more easily. I've added a Camera object (default extension of Entity, as described in the design doc) and the view and projection matrices 
+defined by the camera are passed to rendered entities whenever they are updated 
+so the position of the camera will affect where things are rendered and its
+perspective is adjustable (i.e. field of view, draw distance, etc.) I've done a 
+lot of restructuring of the core of the engine so that we can render to offscreen 
+images rather than just rendering directly to the screen, so we can have the 
+color picking algorithm implemented. It should work but it required a bigger 
+adjustment than I thought it would and that plus having other midterms this week 
+meant I didn't get quite as much done as I had hoped. 
+
+I added documentation for the EntityManager class, but that's now out of date.
+There's also a new class I started working on for input in diskovery_input_manager,
+but that didn't really get off the ground this week. Most of my work revolved around
+the new Renderer class in diskovery_entity_manager, and that's going to be the main
+thing that changes in terms of how things are rendered to the screen. 
+
+For over spring break, I'll probably try to wrap up everything I was supposed to
+have ready for this week and also try to help Oliver get my window embedded in his
+GUI. We had some issues because he was using an IDE for python that used Anacoda
+for package management and I'm just working with Sublime Text and using the command
+line to compile, and pip for package management. When last we met up Friday 
+afternoon I was helping him get the pygame window embedded in his TkInter GUI,
+but we weren't able to get both working at the same time because the diskovery
+run() method and the TkInter root.mainloop() method are both blocking calls, so 
+we need to figure out a way to have them both loop at the same time. Hopefully
+by the end of break we'll have those sorted out and we'll be able to start working
+out of the same folder within our repository.
 
 #################################################################################
 									Week 3
