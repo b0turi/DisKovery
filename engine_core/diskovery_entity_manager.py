@@ -48,6 +48,52 @@ def cleanup_entities():
 
 class Renderer(object):
 	
+	def create_attachments(self, samples):
+		self.color['image'] = Image(
+			self.dk,
+			self.dk.image_data['extent'],
+			self.color['format'],
+			1,
+			self.sample_count,
+
+			vk.IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | 
+			vk.IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+
+			vk.MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			vk.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			vk.IMAGE_ASPECT_COLOR_BIT
+		)
+
+		self.depth['image'] = Image(
+			self.dk, 
+			self.dk.image_data['extent'],
+			self.depth['format'],
+			1,
+			self.sample_count,
+			vk.IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+			vk.MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			vk.IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+			vk.IMAGE_ASPECT_DEPTH_BIT
+		)
+
+		if samples != vk.SAMPLE_COUNT_1_BIT:
+			self.resolve = { }
+			self.resolve['format'] = self.color['format']
+			self.resolve['image'] = Image(
+				self.dk,
+				self.dk.image_data['extent'],
+				self.resolve['format'],
+				1,
+				self.sample_count,
+
+				vk.IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT |
+				vk.IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+
+				vk.MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+				vk.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+				vk.IMAGE_ASPECT_COLOR_BIT
+			)
+
 	def create_frame_buffers(self):
 		self.framebuffers = (vk.Framebuffer*self.buffer_count)()
 
@@ -78,6 +124,22 @@ class Renderer(object):
 			self.dk.CreateFramebuffer(self.dk.device, byref(create_info), None, byref(fb))
 			self.framebuffers[index] = fb
 
+	def create_semaphores(self):
+		
+		create_info = vk.SemaphoreCreateInfo(
+			s_type=vk.STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+		)
+
+		for i in range(0, MAX_FRAMES_IN_FLIGHT):
+			img = vk.Semaphore(0)
+			self.dk.CreateSemaphore(
+				self.dk.device, 
+				byref(create_info), 
+				None, 
+				byref(img)
+			)
+			self.done_rendering[i] = img
+
 	def create_command_buffers(self):
 		"""
 		Any time a new Entity is added or an Entity is removed from the scene,
@@ -86,7 +148,6 @@ class Renderer(object):
 		the creation and recreation of the list of VkCommandBuffer_ objects.
 		"""
 		global _entities
-
 
 		# Make sure no other command buffers exist
 		self.destroy_command_buffers()
@@ -207,11 +268,11 @@ class Renderer(object):
 			cast(self.command_buffers, POINTER(vk.CommandBuffer))
 		)
 
-	def __init__(self, dk, samples, src=None, size=None):
+	def __init__(self, dk, samples, src=None, size=None, bg_color=None):
 		self.dk = dk
 
 		self.entities = { }
-		self.bg_color = (0.1, 0.2, 0.3)
+		self.bg_color = (0.1, 0.2, 0.3) if bg_color is None else bg_color
 
 		self.color = { 'format': dk.color_format }
 		self.depth = { 'format': dk.depth_format }
@@ -228,52 +289,9 @@ class Renderer(object):
 
 		self.framebuffers = None
 		self.command_buffers = (vk.CommandBuffer * self.buffer_count)()
+		self.done_rendering = (vk.Semaphore * MAX_FRAMES_IN_FLIGHT)()
 
-		self.color['image'] = Image(
-			self.dk,
-			self.dk.image_data['extent'],
-			self.color['format'],
-			1,
-			self.sample_count,
-
-			vk.IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | 
-			vk.IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-
-			vk.MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			vk.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-			vk.IMAGE_ASPECT_COLOR_BIT
-		)
-
-		self.depth['image'] = Image(
-			self.dk, 
-			self.dk.image_data['extent'],
-			self.depth['format'],
-			1,
-			self.sample_count,
-			vk.IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-			vk.MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			vk.IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-			vk.IMAGE_ASPECT_DEPTH_BIT
-		)
-
-		if src == None and samples != vk.SAMPLE_COUNT_1_BIT:
-			self.resolve = { }
-			self.resolve['format'] = self.color['format']
-			self.resolve['image'] = Image(
-				self.dk,
-				self.dk.image_data['extent'],
-				self.resolve['format'],
-				1,
-				self.sample_count,
-
-				vk.IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT |
-				vk.IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-
-				vk.MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-				vk.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-				vk.IMAGE_ASPECT_COLOR_BIT
-			)
-
+		self.create_attachments(samples)
 		self.render_pass = self.dk.get_render_pass(samples)
 		self.create_frame_buffers()
 		self.create_command_buffers()
@@ -498,6 +516,7 @@ class EntityManager(object):
 		for i, renderer in enumerate(self.renderers):
 			is_first = (i == 0)
 			is_last = (i == (len(self.renderers) - 1))
+
 			if renderer.buffer_count > 1:
 				cmd = vk.CommandBuffer(renderer.command_buffers[image_index])
 			else:
@@ -506,17 +525,25 @@ class EntityManager(object):
 			submit_info = vk.SubmitInfo(
 				s_type=vk.STRUCTURE_TYPE_SUBMIT_INFO,
 				wait_semaphore_count=1,
-				wait_semaphores=pointer(image),
 				signal_semaphore_count=1,
-				signal_semaphores=pointer(render),
 				command_buffer_count=1,
 				command_buffers=pointer(cmd),
 				wait_dst_stage_mask=pointer(c_uint(vk.PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT))
 			)
+
+			if is_first:
+				submit_info.wait_semaphores = pointer(image)
+			else:
+				sem = self.renderers[i - 1].done_rendering[self.current_frame]
+				submit_info.wait_semaphores = pointer(sem)
+
+			if is_last:
+				submit_info.signal_semaphores = pointer(render)
+			else:
+				sem = self.renderers[i].done_rendering[self.current_frame]
+				submit_info.signal_semaphores = pointer(sem)
+			
 			self.dk.QueueSubmit(self.dk.graphics['queue'], 1, byref(submit_info), fence)
-
-
-
 
 		present_info = vk.PresentInfoKHR(
 			s_type=vk.STRUCTURE_TYPE_PRESENT_INFO_KHR,

@@ -141,6 +141,11 @@ def add_entity(entity, name):
 	global _scene
 	_scene.add_entity(entity, name)
 
+def add_renderer(renderer, name):
+	global _scene
+
+	_scene.add_renderer(renderer)
+
 def mesh(name):
 	"""
 	Retrieve a :class:`~diskovery_mesh.Mesh` from the dictionary in this module
