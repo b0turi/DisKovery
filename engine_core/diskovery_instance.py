@@ -279,7 +279,7 @@ class DkInstance(object):
 			composite_alpha=vk.COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
 			present_mode=present_mode,
 			clipped=1,
-			old_swapchain=(self.swap_chain or vk.SwapchainKHR(0))
+			old_swapchain=(vk.SwapchainKHR(0))
 		)
 
 		assert(self.CreateSwapchainKHR(self.device, byref(create_info), None, byref(self.swap_chain)) == vk.SUCCESS)
@@ -353,6 +353,24 @@ class DkInstance(object):
 
 		self.DestroySwapchainKHR(self.device, self.swap_chain, None)
 
+	def cleanup_swap_chain(self):
+		for r in self.render_passes.values():
+			self.DestroyRenderPass(self.device, r, None)
+
+		self.DestroyCommandPool(self.device, self.pool, None)
+		self.destroy_swap_chain()
+
+	def refresh(self):
+		self.DeviceWaitIdle(self.device)
+
+		self.cleanup_swap_chain()
+
+		self.create_swap_chain()
+		self.create_pool()
+		self.create_sc_views()
+
+
+
 	def __init__(self, debug):
 		# The Vulkan instance (VkInstance)
 		self.instance = vk.Instance(0)
@@ -387,34 +405,34 @@ class DkInstance(object):
 		# The depth format to be used across all renderers (VkFormat)
 		self.depth_format = None
 
+		self.frame_resized = False
+
 		self.samplers = { }
 		self.render_passes = { }
 
 		self.create_instance(debug)
 		if debug:
 			self.create_debugger()
-		self.window = Window(self, {'width': 1280, 'height': 720})
+		self.window = Window(self, {'width': 1280, 'height': 720, 'resizable': True})
 		self.surface = self.window.surface
 		self.pick_gpu()
 		self.depth_format = self._find_depth_format()
 		self.create_device(debug)
 		self.fill_queues()
+		self.create_pipeline_cache()
+
 		self.create_swap_chain()
 		self.create_sc_views()
-		self.create_pipeline_cache()
 		self.create_pool()
 
 	def cleanup(self):
 
+		self.cleanup_swap_chain()
+
 		for s in self.samplers.values():
 			self.DestroySampler(self.device, s, None)
 
-		for r in self.render_passes.values():
-			self.DestroyRenderPass(self.device, r, None)
-
-		self.DestroyCommandPool(self.device, self.pool, None)
 		self.DestroyPipelineCache(self.device, self.pipeline_cache, None)
-		self.destroy_swap_chain()
 		self.DestroyDevice(self.device, None)
 		self.DestroyDebugReportCallbackEXT(self.instance, self.debugger, None)
 		self.DestroyInstance(self.instance, None)

@@ -95,7 +95,7 @@ def make_set_layout(dk, definition):
 
 		if definition[index] == BindingType.UNIFORM_BUFFER:
 			binding.descriptor_type = vk.DESCRIPTOR_TYPE_UNIFORM_BUFFER
-			binding.stage_flags = vk.SHADER_STAGE_VERTEX_BIT
+			binding.stage_flags = vk.SHADER_STAGE_VERTEX_BIT | vk.SHADER_STAGE_FRAGMENT_BIT
 
 		if definition[index] == BindingType.TEXTURE_SAMPLER:
 			binding.descriptor_type = vk.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
