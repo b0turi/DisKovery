@@ -87,10 +87,51 @@ class JointData(UniformBufferObject):
 	def __init__(self):
 		self.joint_data = (_matrix_type * MAX_JOINTS)()
 
-	@staticmethod
 	def get_data(self):
 		return self.joint_data
 
 	@staticmethod
 	def get_size():
 		return sizeof(_matrix_type) * MAX_JOINTS
+
+class ScreenSize(UniformBufferObject):
+	def __init__(self, width, height):
+		self.width = c_float(width)
+		self.height = c_float(height)
+
+	def get_data(self):
+		return (c_float*2)(self.width, self.height)
+
+	@staticmethod
+	def get_size():
+		return sizeof(c_float) * 2
+
+class ObjectColor(UniformBufferObject):
+	def __init__(self, color):
+		hex_val = int(color, 16)
+		r = hex_val//(16**4)
+		hex_val -= r
+		g = hex_val//(16**2)
+		hex_val -= g
+		b = hex_val
+
+		self.color = (c_float*3)(r/255, g/255, b/255)
+
+
+	def get_data(self):
+		return self.color
+
+	@staticmethod
+	def get_size():
+		return sizeof(c_float) * 3
+
+class Boolean(UniformBufferObject):
+	def __init__(self, value=True):
+		self.value = value
+
+	def get_data(self):
+		return (c_float * 1)(1) if self.value else (c_float * 1)(0)
+
+	@staticmethod
+	def get_size():
+		return sizeof(c_float)

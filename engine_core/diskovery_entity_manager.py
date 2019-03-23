@@ -51,7 +51,7 @@ class Renderer(object):
 	def create_attachments(self, samples):
 		self.color['image'] = Image(
 			self.dk,
-			self.dk.image_data['extent'],
+			self.size,
 			self.color['format'],
 			1,
 			self.sample_count,
@@ -66,7 +66,7 @@ class Renderer(object):
 
 		self.depth['image'] = Image(
 			self.dk, 
-			self.dk.image_data['extent'],
+			self.size,
 			self.depth['format'],
 			1,
 			self.sample_count,
@@ -81,13 +81,13 @@ class Renderer(object):
 			self.resolve['format'] = self.color['format']
 			self.resolve['image'] = Image(
 				self.dk,
-				self.dk.image_data['extent'],
+				self.size,
 				self.resolve['format'],
 				1,
-				self.sample_count,
+				vk.SAMPLE_COUNT_1_BIT,
 
-				vk.IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT |
-				vk.IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+				vk.IMAGE_USAGE_COLOR_ATTACHMENT_BIT | 
+				vk.IMAGE_USAGE_SAMPLED_BIT,
 
 				vk.MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 				vk.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
@@ -97,6 +97,12 @@ class Renderer(object):
 	def create_frame_buffers(self):
 		self.framebuffers = (vk.Framebuffer*self.buffer_count)()
 
+		if not hasattr(self, 'src'):
+			if self.sample_count == vk.SAMPLE_COUNT_1_BIT:
+				self.src = (vk.ImageView*1)(self.color['image'].image_view)
+			else:
+				self.src = (vk.ImageView*1)(self.resolve['image'].image_view)
+		
 		for index, view in enumerate(self.src):
 			attachments = (vk.ImageView*2)(
 				view,
@@ -115,8 +121,8 @@ class Renderer(object):
 				render_pass=self.render_pass,
 				attachment_count=len(attachments),
 				attachments=cast(attachments, POINTER(vk.ImageView)),
-				width=self.size[0],
-				height=self.size[1],
+				width=self.size.width,
+				height=self.size.height,
 				layers=1
 			)
 
@@ -169,6 +175,7 @@ class Renderer(object):
 		)
 
 		for index, buff in enumerate(self.command_buffers):
+
 			begin_info = vk.CommandBufferBeginInfo(
 				s_type=vk.STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 				flags=vk.COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT
@@ -268,10 +275,21 @@ class Renderer(object):
 			cast(self.command_buffers, POINTER(vk.CommandBuffer))
 		)
 
+	def refresh(self):
+
+		if hasattr(self, 'src'):
+			print("HELLO")
+			self.cleanup()
+
+			self.create_attachments(samples)
+			self.render_pass = self.dk.get_render_pass(samples)
+			self.create_frame_buffers()
+			self.create_command_buffers()
+			self.create_semaphores()
+
 	def __init__(self, dk, samples, src=None, size=None, bg_color=None):
 		self.dk = dk
 
-		self.entities = { }
 		self.bg_color = (0.1, 0.2, 0.3) if bg_color is None else bg_color
 
 		self.color = { 'format': dk.color_format }
@@ -281,7 +299,7 @@ class Renderer(object):
 
 		if src != None:
 			self.src = src
-			self.size = (dk.image_data['extent'].width, dk.image_data['extent'].height)
+			self.size = dk.image_data['extent']
 			self.buffer_count = len(src)
 		else:
 			self.size = size
@@ -295,6 +313,7 @@ class Renderer(object):
 		self.render_pass = self.dk.get_render_pass(samples)
 		self.create_frame_buffers()
 		self.create_command_buffers()
+		self.create_semaphores()
 
 	def cleanup(self):
 
@@ -304,6 +323,11 @@ class Renderer(object):
 		if hasattr(self, 'resolve'):
 			self.resolve['image'].cleanup()
 
+		self.destroy_command_buffers()
+
+		for i in range(0, MAX_FRAMES_IN_FLIGHT):
+			self.dk.DestroySemaphore(self.dk.device, self.done_rendering[i], None)
+
 		for fb in self.framebuffers:
 			self.dk.DestroyFramebuffer(self.dk.device, fb, None)
 
@@ -312,7 +336,7 @@ class EntityManager(object):
 	The :class:`~diskovery_entity_manager.EntityManager`, as the name
 	suggests, stores and manages all Entity objects in the game world at a 
 	given time. While the :mod:`diskovery` module stores all meshes, textures,
-	shaders, and other related objects that may be used by entities at a given
+	pipelines, and other related objects that may be used by entities at a given
 	time, the :class:`~diskovery_entity_manager.EntityManager` class stores
 	Entity objects that hold references to these objects, usually with strings
 	that act as keys for the dictionaries in which they are stored. Contained
@@ -493,14 +517,8 @@ class EntityManager(object):
 			UINT64_MAX
 		)
 
-		self.dk.ResetFences(
-			self.dk.device,
-			1,
-			pointer(fence)
-		)
-
 		next_image = c_uint(0)
-		self.dk.AcquireNextImageKHR(
+		result = self.dk.AcquireNextImageKHR(
 			self.dk.device,
 			self.dk.swap_chain,
 			c_ulonglong(-1),
@@ -509,9 +527,23 @@ class EntityManager(object):
 			byref(next_image)
 		)
 
+		# if result == vk.ERROR_OUT_OF_DATE_KHR:
+		# 	self.dk.refresh()
+		# 	for r in self.renderers:
+		# 		r.refresh()
+		# 	return
+		# elif result != vk.SUCCESS and result != vk.SUBOPTIMAL_KHR:
+		# 	raise RuntimeError("Failed to acquire next swap chain image")
+
 		image_index = next_image.value
 
 		update_entities(image_index)
+
+		self.dk.ResetFences(
+			self.dk.device,
+			1,
+			pointer(fence)
+		)
 
 		for i, renderer in enumerate(self.renderers):
 			is_first = (i == 0)
@@ -534,16 +566,20 @@ class EntityManager(object):
 			if is_first:
 				submit_info.wait_semaphores = pointer(image)
 			else:
-				sem = self.renderers[i - 1].done_rendering[self.current_frame]
+				sem = vk.Semaphore(self.renderers[i - 1].done_rendering[self.current_frame])
 				submit_info.wait_semaphores = pointer(sem)
 
 			if is_last:
 				submit_info.signal_semaphores = pointer(render)
 			else:
-				sem = self.renderers[i].done_rendering[self.current_frame]
+				sem = vk.Semaphore(renderer.done_rendering[self.current_frame])
 				submit_info.signal_semaphores = pointer(sem)
 			
-			self.dk.QueueSubmit(self.dk.graphics['queue'], 1, byref(submit_info), fence)
+
+			if is_last:
+				self.dk.QueueSubmit(self.dk.graphics['queue'], 1, byref(submit_info), fence)
+			else:
+				self.dk.QueueSubmit(self.dk.graphics['queue'], 1, byref(submit_info), vk.Fence(0))
 
 		present_info = vk.PresentInfoKHR(
 			s_type=vk.STRUCTURE_TYPE_PRESENT_INFO_KHR,
@@ -554,7 +590,15 @@ class EntityManager(object):
 			wait_semaphores=pointer(render)
 		)
 
-		self.dk.QueuePresentKHR(self.dk.present['queue'], byref(present_info))
+		result = self.dk.QueuePresentKHR(self.dk.present['queue'], byref(present_info))
+
+		# if result == vk.ERROR_OUT_OF_DATE_KHR or result == vk.SUBOPTIMAL_KHR or self.dk.frame_resized:
+		# 	self.dk.frame_resized = False
+		# 	self.dk.refresh()
+		# 	for r in self.renderers:
+		# 		r.refresh()
+		# elif result != vk.SUCCESS:
+		# 	raise RuntimeError("Unable to present swap chain image")
 
 		self.current_frame = (self.current_frame + 1) % MAX_FRAMES_IN_FLIGHT
 

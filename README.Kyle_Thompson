@@ -1,4 +1,33 @@
 #################################################################################
+									Week 5
+#################################################################################
+
+This week was kind of a stand still. I didn't really make much progress because
+we were hung up on trying to embed the Pygame window into the TkInter window.
+It just wasn't cooperating and kept resizing the Vulkan surface to be 1 pixel
+by 1 pixel and I coudn't get a resize function working for Vulkan, so all the work
+I put in this week was just frustrating brick wall after brick wall. We're
+probably gonna have the editor be a collection of smaller windows rather than one
+big window, kind of like how Gimp works on Mac OS. In terms of actual work we
+accomplished, I don't know that there's much to mention. I got the renderers
+working together, the main thing that was holding me up last week, that's all in
+diskovery_entity_manager.py, but other than that the program still does about
+the same amount of stuff. I did add a GUI shader that will be useful for when
+we're adding GUI elements with correct proportions for the actual screen rather 
+than Vulkan coordinates, but in terms of the color picking application I was
+talking about, it became apparent that the rest of the UI will have to be 
+developed before that can be added, so that's going to have to wait a bit.
+
+Also, I found out tonight that Jaafar has dropped the class. We're going to need
+to do some regrouping come Monday to try and figure out which features are not
+going to end up in the final product. We left the last couple weeks to be mainly
+for the final paper and anything we weren't able to finish earlier, so hopefully
+if we just fill in those weeks and remove some of the stretch goals, it should
+still be pretty doable to get a working product, but for this week, we definitely
+don't have a minimum viable product. Sometime next week I'll tweak our design
+doc to reflect our new plans with just the two of us.
+
+#################################################################################
 									Week 4
 #################################################################################
 

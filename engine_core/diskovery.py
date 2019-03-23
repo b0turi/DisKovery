@@ -31,6 +31,7 @@ entity types, from which DisKovery users can extend their own custom object defi
 import glm
 import pygame
 
+import vk
 from diskovery_mesh import Mesh, AnimatedMesh, Animator, Rig
 from diskovery_ubos import MVPMatrix
 from diskovery_image import Texture
@@ -126,8 +127,7 @@ def add_shader(name, files, definition, uniforms, animated=False):
 	if s.definition not in _descriptors.keys():
 		_descriptors[definition] = make_set_layout(_dk, definition)
 
-	# TODO: Adjust so that pipelines are defined by names as well as definitions to account for cases where multiple shaders have the same DSL
-	_pipelines[definition] = Pipeline(_dk, s, _descriptors[definition], animated)
+	_pipelines[name] = Pipeline(_dk, s, _descriptors[definition], animated)
 
 def add_entity(entity, name):
 	"""
@@ -141,10 +141,17 @@ def add_entity(entity, name):
 	global _scene
 	_scene.add_entity(entity, name)
 
-def add_renderer(renderer, name):
+def add_renderer(size=None, bg_color=None):
 	global _scene
-
-	_scene.add_renderer(renderer)
+	if size == None:
+		size = _dk.image_data['extent']
+	r = Renderer(_dk, 
+		_dk.image_data['msaa_samples'], 
+		size=size, 
+		bg_color=bg_color
+	)
+	_scene.add_renderer(r)
+	
 
 def mesh(name):
 	"""
@@ -182,14 +189,25 @@ def descriptor(definition):
 	global _descriptors
 	return _descriptors[definition]
 
-def pipeline(definition):
+def pipeline(name):
 	"""
 	Retrieve a :class:`~diskovery_pipeline.Pipeline` from the dictionary in this module
 
 	:param name: The definition (key) of the :class:`~diskovery_pipeline.Pipeline`
 	"""
 	global _pipelines
-	return _pipelines[definition]
+	return _pipelines[name]
+
+def dimensions():
+	"""
+	Get the width and height of the screen in pixels.
+
+	:returns: A tuple with the width and height of the screen, in pixels
+	"""
+	return _dk.image_data['extent'].width, _dk.image_data['extent'].height
+
+def extent():
+	return _dk.image_data['extent']
 
 def init(debug_mode=False, config=None):
 	"""
@@ -232,6 +250,9 @@ def init(debug_mode=False, config=None):
 	_camera = Camera(cam_pos, cam_rot, fov, draw_distance, aspect_ratio)
 	_scene.add_entity(_camera, "Camera")
 
+def draw():
+	_scene.draw()
+
 def run():
 	"""Begins the game loop and starts the event handler"""
 	global _dk
@@ -242,6 +263,9 @@ def run():
 		_scene.draw()
 
 		for event in pygame.event.get():
+			if event.type == pygame.VIDEOEXPOSE:
+				_dk.frame_resized = True
+
 			if event.type == pygame.QUIT:
 				running = False
 				_dk.DeviceWaitIdle(_dk.device)
@@ -460,6 +484,7 @@ class RenderedEntity(Entity):
 		self.mesh = mesh_str if mesh_str != None else None
 
 		self.definition = shader(shader_str).definition if shader_str != None else shader("Default").definition
+		self.pipeline = shader_str
 		self.uniforms = []
 
 		uniform_types = shader(shader_str).uniforms
@@ -499,7 +524,7 @@ class RenderedEntity(Entity):
 
 		:returns: The :class:`~diskovery_pipeline.Pipeline` with this :class:`~diskovery.RenderedEntity`'s definition
 		"""
-		return pipeline(self.definition)
+		return pipeline(self.pipeline)
 
 	def get_mesh(self):
 		"""

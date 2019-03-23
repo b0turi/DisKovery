@@ -31,8 +31,8 @@ class Shader(object):
 		os.chdir("Shaders")
 
 		for src in sources:
-			#if os.path.isfile("{}.spv".format(src)):
-			#	subprocess.call("rm {}.spv".format(src))
+			# if os.path.isfile("{}.spv".format(src)):
+			# 	subprocess.call("rm {}.spv".format(src))
 			# subprocess.call("glslangValidator.exe -V {} -o {}.spv".format(src, src))
 			# subprocess.call("compile.bat {}".format(src))
 			self.filenames[src.split('.')[1]] = "shaders/{}.spv".format(src)
@@ -227,6 +227,7 @@ class Pipeline(object):
 
 		if samples == None:
 			samples = self.dk.image_data['msaa_samples']
+		self.samples = samples
 		# A reference to the Shader (Shader) this pipeline is being built around
 		self.shader = shader
 		# A restructuring of the definition of the above shader for
