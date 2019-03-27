@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 # !/usr/bin/python3
-"""
-Created on Mon Feb 11 15:49:35 2019
 
-@author: olive
+"""
+The diskovery_gui.py
 """
 import tkinter as tk
 from tkinter import LEFT,RIGHT,TOP,BOTH,CENTER,X,Y,N
@@ -12,17 +11,34 @@ import glm
 import pygame
 import sys
 import subprocess
+from PIL import Image
 
-f_w = 1300 #default width
+import copy
+
+f_w = 1200 #default width
 f_h = 825 #default height
+f_dim = "{0}{1}{2}{3}".format(str(f_w), 'x', str(f_h), '+0+0')
 
 #Settings for the window
 root = tk.Tk()
-root.geometry('1200x825+0+0')
+root.geometry(f_dim)
 root.title('DisKovery Engine v0.01')
 
+# Copy object function
+cp_stored = 0
+def copy(object):
+
+	cp_stored = copy.copy(object)
+
+
+def paste(cp_stored, new_object):
+	
+	new_object = copy.deepcopy(cp_stored)
+
+
+
 def menusetup():
-#Set up the window menu for the UI
+    #Set up the window menu for the UI
 	menubar = tk.Menu(root)
 	
 	m_file = tk.Menu(menubar, tearoff=0)
@@ -79,24 +95,11 @@ direct.insert(25, "Asset Directories")
 direct.insert(25, " ")
 w2.pack(fill = BOTH, expand = True)
 
-"""projection = Image.open("./vulkan_graphic.gif")
+projection = Image.open("./vulkan_graphic.gif")
 display = ImageTk.PhotoImage(projection)
 w3 = tk.Canvas(root, bg="white", width = "15c")
 w3.pack(side=LEFT, fill=BOTH, expand = True)
-w3.create_image(f_w/3, f_h/3,anchor=CENTER, image=display)"""
-w3_embed = tk.Frame(root, width = 800, height = 450)
-w3_embed.pack(side = LEFT, fill=BOTH, expand=True)
-
-
-env = dict(os.environ)
-env['SDL_WINDOWID'] = str(w3_embed.winfo_id())
-
-os.chdir('..')
-os.chdir('engine_core')
-full_path = os.path.abspath(os.getcwd())
-
-print(full_path)
-p = subprocess.run('python main.py', env=env, capture_output=True, check=True, cwd=os.getcwd())
+w3.create_image(f_w/3, f_h/3,anchor=CENTER, image=display)
 
 w4 = tk.Frame(root, height = 50, width = 50)
 pro = tk.Listbox(w4, justify = CENTER, width = 50)

@@ -1,4 +1,27 @@
 /*************************
+	Week 6
+**************************/
+3/25/2019 - 3/29/2019
+Kyle and I have agreed to change the format of the UI to multiple windows instead of a single window, since
+Vulkan has experienced difficulties trying to load in the embedded window from the original UI. As a result,
+our group will have rethink how we want the UI set up, and decided to have the Vulkan load up in its own window,
+while other UI features can interact with that window through background processes.
+
+In addition, I failed to notice that the README file from last week failed to get pushed to the online
+repository, so I made sure to include this week's updates and last week's with this commit and push.
+
+/*************************
+	Week 5
+**************************/
+3/18/2019 - 3/22/2019
+
+Nothing of note was accomplished. Jaafar has left the group, forcing us to rethink our goal and how we want
+to progress on the project.
+
+I added empty Python files diskov_directory and diskov_win. In file diskov_menu, I copied code from 
+diskovery_gui.py related to setting up the menu at the top of the UI.
+
+/*************************
           Week 4
 **************************/
 3/4/2019 - 3/8/2019
