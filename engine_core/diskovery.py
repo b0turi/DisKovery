@@ -30,6 +30,7 @@ entity types, from which DisKovery users can extend their own custom object defi
 """
 import glm
 import pygame
+import inspect
 
 import vk
 from diskovery_mesh import Mesh, AnimatedMesh, Animator, Rig
@@ -47,6 +48,7 @@ _dk = None
 _scene = None
 _inputs = None
 _camera = None
+_classes = { }
 
 _meshes = { }
 _textures = { }
@@ -82,6 +84,8 @@ def add_animation(filename, name=None):
 	global _animations
 
 	a = AnimatedMesh(_dk, filename, True, True).anim
+
+	a.filename = filename
 
 	if name is None:
 		_animations[filename[:-4]] = a
@@ -151,7 +155,11 @@ def add_renderer(size=None, bg_color=None):
 		bg_color=bg_color
 	)
 	_scene.add_renderer(r)
-	
+
+def add_class(class_type, class_name):
+	global _classes
+
+	_classes[class_name] = class_type
 
 def mesh(name):
 	"""
@@ -224,6 +232,11 @@ def init(debug_mode=False, config=None):
 
 	r = Renderer(_dk, _dk.image_data['msaa_samples'], _dk.sc_image_views)
 	_scene.add_renderer(r)
+
+	add_class(Entity, "Entity")
+	add_class(RenderedEntity, "RenderedEntity")
+	add_class(AnimatedEntity, "AnimatedEntity")
+	add_class(Camera, "Camera")
 
 	cam_pos = glm.vec3(0, 0, -5)
 	cam_rot = glm.vec3()
@@ -590,3 +603,121 @@ class AnimatedEntity(RenderedEntity):
 
 		self.animator.update()
 		self.uniforms[1].update(self.rig.get_joint_data(), ind)
+
+def save_scene(filename, scene_name):
+	global _meshes, _textures, _shaders, _animations, _scene
+
+	contents = "{}\n".format(scene_name)
+
+	f = open(filename, "w+")
+		
+	contents += "Meshes\n"
+	for name, m in _meshes.items():
+		animated = isinstance(m, AnimatedMesh)
+		contents += "{} {} {}\n".format(m.filename, name, 'T' if animated else 'F')
+
+	contents += "Textures\n"
+	for name, t in _textures.items():
+		contents += "{} {}\n".format(t.filename, name)
+
+	contents += "Shaders\n"
+	for name, s in _shaders.items():
+		contents += "{} {} {}\n".format(s.sources[0], s.sources[1], name) 
+
+	contents += "Animations\n"
+	for name, a in _animations.items():
+		contents += "{} {}\n".format(a.filename, name)
+
+	contents += "Entities\n"
+	for name, e in _scene.entities().items():
+		contents += "E {} {}\n".format(e.__class__.__name__, name)
+		args = dict(inspect.getmembers(e.__class__.__init__.__code__))['co_varnames']
+		for arg_name in args:
+			if arg_name == "self":
+				continue
+
+			attr = getattr(e, arg_name)
+
+			if type(attr) == glm.vec3:
+				attr = "{} {} {}".format(attr.x, attr.y, attr.z)
+			contents += "{}\n".format(attr)
+
+	f.write(contents)
+
+	f.close()
+
+def load_scene(filename):
+	global _classes
+
+	func_map = { 'Meshes': add_mesh,
+	 'Textures': add_texture, 
+	 'Shaders': add_shader, 
+	 'Animations': add_animation,
+	 'Entities': add_entity }
+
+	filled = []
+
+	with open(filename, 'r') as f:
+		current = None
+		title = f.readline()[:-1]
+		current = f.readline()[:-1]
+
+		line = f.readline()[:-1]
+
+		print(len(filled), len(func_map))
+
+		while len(filled) < len(func_map):
+			while line and not line in func_map.keys():
+
+				args = line.split(' ')
+				if args[0] != 'E':
+					cmd = "func_map[current]("
+					for i in range(0, len(args)):
+						if args[i] == 'T':
+							cmd += "True,"
+						elif args[i] == 'F':
+							cmd += "False,"
+						else:
+							cmd += "args[{}],".format(i)
+					cmd = cmd[:-1] + ")"
+
+					exec(cmd)
+					line = f.readline()[:-1]
+				else:
+					class_type = _classes[args[1]]
+
+					cmd = "func_map[current]({}(".format(class_type.__name__)
+
+					sub_line = f.readline()[:-1]
+					while sub_line and sub_line[:2] != 'E ':
+						param = tuple(sub_line.split(' '))
+						if param[0][0] != '\"' and param[0][:2] != '0x':
+							param = tuple([float(x) for x in param])
+						cmd += str(param[0]) if len(param) == 1 else str(param)
+						cmd += ","
+
+						sub_line = f.readline()[:-1]
+
+					cmd = cmd[:-1] + "), \"{}\")".format(args[2])
+
+					exec(cmd) 
+					line = sub_line
+
+				if not line:
+					break
+
+			filled.append(current)
+			current = line
+
+			line = f.readline()[:-1]
+
+
+
+
+
+
+
+
+
+
+

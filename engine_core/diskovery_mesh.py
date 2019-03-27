@@ -512,6 +512,7 @@ class Mesh():
 			vk.BUFFER_USAGE_INDEX_BUFFER_BIT
 		)
 
+		self.filename = file
 		self.count = len(index_array)
 
 	def cleanup(self):
@@ -628,6 +629,8 @@ class AnimatedMesh(Mesh):
 			vk.BUFFER_USAGE_INDEX_BUFFER_BIT
 		)
 
+		self.filename = file
+
 		self.count = len(index_array)
 
 class Rig(object):
@@ -697,6 +700,8 @@ class Animation(object):
 	def __init__(self, length, keys):
 		self.length = length
 		self.keys = keys
+
+		self.filename = None
 
 class Animator(object):
 
