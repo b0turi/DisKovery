@@ -383,4 +383,5 @@ class Texture(Image):
 		)
 		staging_buffer.cleanup()
 
+		self.filename = filename
 		self._generate_mipmaps(extent.width, extent.height, self.mip)

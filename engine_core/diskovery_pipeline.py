@@ -39,6 +39,8 @@ class Shader(object):
 
 		os.chdir("..")
 
+		self.sources = sources
+
 class Pipeline(object):
 
 	def make_pipeline_layout(self, set_layout):

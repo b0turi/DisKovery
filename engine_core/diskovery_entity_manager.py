@@ -617,6 +617,10 @@ class EntityManager(object):
 
 		self.create_sync_objects()
 
+	def entities(self):
+		global _entities
+		return _entities
+
 	def add_renderer(self, renderer):
 		self.renderers.insert(0, renderer)
 
@@ -634,3 +638,4 @@ class EntityManager(object):
 			self.dk.DestroyFence(self.dk.device, self.in_flight_fences[i], None)
 		
 		cleanup_entities()
+
