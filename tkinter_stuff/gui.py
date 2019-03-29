@@ -2,13 +2,20 @@
 """ """
 import tkinter as tk
 import diskov_win as dw
+#import diskov_menu as mb
 
-screen_wd = 1366
-screen_ht = 732
+screen_wd = 1280
+screen_ht = 720
 
-win1 = dw.diskov_win(400, 700, screen_wd/2, 0)
-win2 = dw.diskov_win(400, 700, screen_wd/4, 0)
-win3 = dw.diskov_Win(400, 700, 3*(screen_wd)/4, 0)
+def main():
+	root = tk.Tk()
+	diskov_app = dw.Display(root, 768, 700, int(screen_wd * 0.2) + 5, 40)
+	#diskov_opt = mb.Menu_Toolbar(root)
+	while True:
+		root.update_idletasks()
+		root.update()
+
+main()	
 
 """
 end

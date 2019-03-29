@@ -7,16 +7,15 @@ Created on Tue Mar  5 00:58:38 2019
 
 import tkinter as tk
 
-class diskov_menu:
+class Menu_Toolbar:
     
-	def __init__():
-	
-	def
-	
-    def buildMB():
+	def __init__(self, master):
+		self.master = master
+		
         #Set up the window menu for the UI
-        menubar = tk.Menu(root)
+        self.menubar = tk.Menu(self.master)
         
+	def option_buttons(
         m_file = tk.Menu(menubar, tearoff=0)
         m_file.add_command(label="New")
         m_file.add_command(label="Load")
