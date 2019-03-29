@@ -4,16 +4,20 @@ import vk
 import os
 import subprocess
 from ctypes import *
+from diskovery_ubos import *
+from diskovery_descriptor import BindingType
 from diskovery_mesh import Vertex, bindings, attributes, animated_attributes
 
 class Shader(object):
-	def __init__(self, sources, definition, uniforms):
+	def __init__(self, sources):
 		# A tuple defining the order of the descriptor sets as uniforms and samplers
-		self.definition = definition
+		self.definition = [None] * 100
 		# A breakdown of what each of the above uniforms contains
-		self.uniforms = uniforms
+		self.uniforms = []
 		# A dictionary of the filenames of each stage of the shader
 		self.filenames = {}
+
+		def_uni_map = []
 
 		"""
 		Shaders are typically written in a C-style language called GLSL.
@@ -30,11 +34,59 @@ class Shader(object):
 		"""
 		os.chdir("Shaders")
 
+		max_binding = 0
+
+		with open(sources[0], 'r') as f:
+			num_attribs = 0
+			for line in f:
+				if line[:7] != 'layout(':
+					continue
+
+				# If the variable descriptes the attribute definitions
+				if line.split('(')[1][:1] == 'l' and line.split(' ')[3] == 'in':
+					num_attribs = int(line.split(' ')[2][:-1])
+
+				# If the variable descripes a uniform buffer object
+				if line.split('(')[1][:1] == 'b':
+					binding = int(line.split(' ')[2][:-1])
+
+					if binding > max_binding:
+						max_binding = binding
+
+					self.definition[binding] = BindingType.UNIFORM_BUFFER
+					def_uni_map.append(binding) 
+					self.uniforms.append(eval(line.split(' ')[4]))
+
+			self.animated = num_attribs > 4
+
+		with open(sources[1], 'r') as f:
+			num_attribs = 0
+			for line in f:
+				if line[:8] != 'layout(b':
+					continue
+
+				binding = int(line.split(' ')[2][:-1])
+
+				if binding > max_binding:
+						max_binding = binding
+
+				if line.split(' ')[4] == 'sampler2D':
+					self.definition[binding] = BindingType.TEXTURE_SAMPLER
+				else:
+					self.definition[binding] = BindingType.UNIFORM_BUFFER
+					
+					slots_back = sum(i > binding for i in def_uni_map)
+					def_uni_map.insert(len(def_uni_map) - slots_back, binding)
+					self.uniforms.insert(len(self.uniforms) - slots_back, eval(line.split(' ')[4]))
+
+		self.definition = tuple(self.definition[:(max_binding+1)])
+
 		for src in sources:
 			# if os.path.isfile("{}.spv".format(src)):
 			# 	subprocess.call("rm {}.spv".format(src))
 			# subprocess.call("glslangValidator.exe -V {} -o {}.spv".format(src, src))
 			# subprocess.call("compile.bat {}".format(src))
+
 			self.filenames[src.split('.')[1]] = "shaders/{}.spv".format(src)
 
 		os.chdir("..")

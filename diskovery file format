@@ -1,0 +1,19 @@
+[Scene Title]
+Models
+[Local Path to Model] model_name [animated (T/F)]
+...
+Textures
+[Local Path to Texture] texture_name
+...
+Shaders
+[path to vertex shader GLSL] [path to fragment shader GLSL] shader_name
+...
+Animations
+[Local path to Animation] animation_name
+Entities
+E [Class name] entity_name
+[class param 1]
+[class param 2]
+...
+E [Class name] entity_name
+... 
