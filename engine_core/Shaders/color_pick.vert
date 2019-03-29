@@ -1,7 +1,7 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(binding = 0) uniform UniformBufferObject {
+layout(binding = 0) uniform MVPMatrix {
     mat4 model;
     mat4 view;
     mat4 proj;
@@ -18,7 +18,7 @@ layout(binding = 2) uniform ScreenSize
 	float height;
 } s;
 
-layout(binding = 3) uniform IsGUI 
+layout(binding = 3) uniform Boolean 
 { 
 	float is_gui; 
 } g;

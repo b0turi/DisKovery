@@ -31,6 +31,7 @@ entity types, from which DisKovery users can extend their own custom object defi
 import glm
 import pygame
 import inspect
+import importlib
 
 import vk
 from diskovery_mesh import Mesh, AnimatedMesh, Animator, Rig
@@ -110,7 +111,7 @@ def add_texture(filename, name=None):
 	else:
 		_textures[name] = t
 
-def add_shader(name, files, definition, uniforms, animated=False):
+def add_shader(vert, frag, name):
 	"""
 	Creates and adds a :class:`~diskovery_pipeline.Shader` to the dictionary
 	of Shaders stored in this module. Also creates a :class:`~diskovery_pipeline.Pipeline`
@@ -124,14 +125,14 @@ def add_shader(name, files, definition, uniforms, animated=False):
 	"""
 	global _shaders
 
-	s = Shader(files, definition, uniforms)
+	s = Shader([vert, frag])
 
 	_shaders[name] = s
 
 	if s.definition not in _descriptors.keys():
-		_descriptors[definition] = make_set_layout(_dk, definition)
+		_descriptors[s.definition] = make_set_layout(_dk, s.definition)
 
-	_pipelines[name] = Pipeline(_dk, s, _descriptors[definition], animated)
+	_pipelines[name] = Pipeline(_dk, s, _descriptors[s.definition], s.animated)
 
 def add_entity(entity, name):
 	"""
@@ -217,6 +218,10 @@ def dimensions():
 def extent():
 	return _dk.image_data['extent']
 
+def get_class(name):
+	global _classes
+	return _classes[name]
+
 def init(debug_mode=False, config=None):
 	"""
 	Initializes the :class:`~diskovery_instance.DkInstance` and
@@ -237,6 +242,15 @@ def init(debug_mode=False, config=None):
 	add_class(RenderedEntity, "RenderedEntity")
 	add_class(AnimatedEntity, "AnimatedEntity")
 	add_class(Camera, "Camera")
+
+	custom_module = 'diskovery_entities'
+
+	external_classes = importlib.import_module(custom_module)
+	for x in dir(external_classes):
+		obj = getattr(external_classes, x)
+
+		if inspect.isclass(obj) and inspect.getmodule(obj).__name__ == custom_module:
+			add_class(obj, obj.__name__)
 
 	cam_pos = glm.vec3(0, 0, -5)
 	cam_rot = glm.vec3()
@@ -604,7 +618,7 @@ class AnimatedEntity(RenderedEntity):
 		self.animator.update()
 		self.uniforms[1].update(self.rig.get_joint_data(), ind)
 
-def save_scene(filename, scene_name):
+def _save_scene(filename, scene_name):
 	global _meshes, _textures, _shaders, _animations, _scene
 
 	contents = "{}\n".format(scene_name)
@@ -645,79 +659,3 @@ def save_scene(filename, scene_name):
 	f.write(contents)
 
 	f.close()
-
-def load_scene(filename):
-	global _classes
-
-	func_map = { 'Meshes': add_mesh,
-	 'Textures': add_texture, 
-	 'Shaders': add_shader, 
-	 'Animations': add_animation,
-	 'Entities': add_entity }
-
-	filled = []
-
-	with open(filename, 'r') as f:
-		current = None
-		title = f.readline()[:-1]
-		current = f.readline()[:-1]
-
-		line = f.readline()[:-1]
-
-		print(len(filled), len(func_map))
-
-		while len(filled) < len(func_map):
-			while line and not line in func_map.keys():
-
-				args = line.split(' ')
-				if args[0] != 'E':
-					cmd = "func_map[current]("
-					for i in range(0, len(args)):
-						if args[i] == 'T':
-							cmd += "True,"
-						elif args[i] == 'F':
-							cmd += "False,"
-						else:
-							cmd += "args[{}],".format(i)
-					cmd = cmd[:-1] + ")"
-
-					exec(cmd)
-					line = f.readline()[:-1]
-				else:
-					class_type = _classes[args[1]]
-
-					cmd = "func_map[current]({}(".format(class_type.__name__)
-
-					sub_line = f.readline()[:-1]
-					while sub_line and sub_line[:2] != 'E ':
-						param = tuple(sub_line.split(' '))
-						if param[0][0] != '\"' and param[0][:2] != '0x':
-							param = tuple([float(x) for x in param])
-						cmd += str(param[0]) if len(param) == 1 else str(param)
-						cmd += ","
-
-						sub_line = f.readline()[:-1]
-
-					cmd = cmd[:-1] + "), \"{}\")".format(args[2])
-
-					exec(cmd) 
-					line = sub_line
-
-				if not line:
-					break
-
-			filled.append(current)
-			current = line
-
-			line = f.readline()[:-1]
-
-
-
-
-
-
-
-
-
-
-

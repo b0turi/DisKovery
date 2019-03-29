@@ -6,7 +6,7 @@ Textures
 test.png Default
 character.png Man
 Shaders
-color_pick.vert color_pick.frag Color Picker
+color_pick.vert color_pick.frag ColorPicker
 animated.vert default.frag Animated
 default.vert default.frag Default
 gui.vert gui.frag GUI
