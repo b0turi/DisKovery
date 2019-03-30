@@ -10,13 +10,33 @@ while other UI features can interact with that window through background process
 In addition, I failed to notice that the README file from last week failed to get pushed to the online
 repository, so I made sure to include this week's updates and last week's with this commit and push.
 
+In the python file diskov_win.py, I created three separate classes that are tied to each other via the
+TopLevel method: Display, Directory, and Context. All three adjust the settings of the Tkinter windows.
+We have plans to replace the central Tkinter window with the Pygame window.
+
+In gui.py, I had it run a function main() where it would load up all files.
+
+Further additions have been added to the Directory class that allows it to generate two subwindows through 
+envir_dir and cpu_dir. I put Tkinter Listboxes into Frames, and the text displayed in each listbox will 
+represent environmental assets (in the Pygame window) and assets stored in directories (folders on the
+computer).
+
+Finally, I edited the Context class to have a function that will automatically generate Frames for context
+windows on objects in the environments. I plan to add a function that will retrieve details and attributes
+of the object at a later time. Once the windows spawn, close the central window to remove all windows at
+once.
+
+To summarize the changes, I edited the files diskov_win.py and gui.py, and running gui.py will successfully
+generate the planned UI. I plan to add a menubar later through the diskov_menu.py file, but that will be
+done a little later.
+
 /*************************
 	Week 5
 **************************/
 3/18/2019 - 3/22/2019
 
-Nothing of note was accomplished. Jaafar has left the group, forcing us to rethink our goal and how we want
-to progress on the project.
+Nothing of note was accomplished over the spring break. Jaafar has left the group, forcing us to rethink our
+goals and how we want to progress on the project.
 
 I added empty Python files diskov_directory and diskov_win. In file diskov_menu, I copied code from 
 diskovery_gui.py related to setting up the menu at the top of the UI.

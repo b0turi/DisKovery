@@ -11,14 +11,7 @@ import glm
 import pygame
 import sys
 import subprocess
-# from PIL import Image
-
-import sys
-import os.path
-sys.path.append("../engine_core/")
-
-import diskovery
-
+from PIL import Image
 
 import copy
 
