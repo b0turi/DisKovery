@@ -47,7 +47,7 @@ from diskovery_input_manager import InputManager
 # Dictionaries and objects wrapped by this module for convenience
 _dk = None
 _scene = None
-_inputs = None
+_input = None
 _camera = None
 _classes = { }
 
@@ -150,9 +150,9 @@ def add_renderer(size=None, bg_color=None):
 	global _scene
 	if size == None:
 		size = _dk.image_data['extent']
-	r = Renderer(_dk, 
-		_dk.image_data['msaa_samples'], 
-		size=size, 
+	r = Renderer(_dk,
+		_dk.image_data['msaa_samples'],
+		size=size,
 		bg_color=bg_color
 	)
 	_scene.add_renderer(r)
@@ -222,6 +222,10 @@ def get_class(name):
 	global _classes
 	return _classes[name]
 
+def input(name):
+	global _input
+	return _input.input_values[name]
+
 def init(debug_mode=False, config=None):
 	"""
 	Initializes the :class:`~diskovery_instance.DkInstance` and
@@ -231,9 +235,15 @@ def init(debug_mode=False, config=None):
 	:param debug_mode: Whether or not the :class:`~diskovery_instance.DkInstance` should be created with Vulkan Validation Layers
 	:param config: An optional dictionary of configuration values to set up the Diskovery instance
 	"""
-	global _dk, _scene, _camera
+	global _dk, _scene, _camera, _input
+
+	pygame.init()
+
 	_dk = DkInstance(debug_mode)
 	_scene = EntityManager(_dk)
+
+	pygame.joystick.init()
+	_input = InputManager("maininput.in")
 
 	r = Renderer(_dk, _dk.image_data['msaa_samples'], _dk.sc_image_views)
 	_scene.add_renderer(r)
@@ -282,27 +292,27 @@ def draw():
 
 def run():
 	"""Begins the game loop and starts the event handler"""
-	global _dk
+	global _dk, _input
 
 	running = True
 	while running:
-
 		_scene.draw()
+		_input.update()
 
 		for event in pygame.event.get():
-			if event.type == pygame.VIDEOEXPOSE:
-				_dk.frame_resized = True
-
 			if event.type == pygame.QUIT:
 				running = False
 				_dk.DeviceWaitIdle(_dk.device)
 				quit()
 				break
 
+
+
 def quit():
 	"""Handles necessary Vulkan Destroy methods for all Vulkan components"""
 	global _dk, _meshes, _textures, _pipelines, _descriptors, _scene
 
+	pygame.joystick.quit()
 	_scene.cleanup()
 
 	for mesh in _meshes.values():
@@ -318,6 +328,7 @@ def quit():
 		_dk.DestroyDescriptorSetLayout(_dk.device, descriptor, None)
 
 	_dk.cleanup()
+	pygame.quit()
 
 class Entity():
 	"""
@@ -360,7 +371,7 @@ class Entity():
 		Get the position of the :class:`~diskovery.Entity` relative to world coordinates
 		rather than the default, which is relative to its parent's coordinates
 
-		:returns: a glm vec3 describing the x, y, and z 
+		:returns: a glm vec3 describing the x, y, and z
 			coordinates of the :class:`~diskovery.Entity` in world space
 		"""
 		p = self.parent
@@ -385,7 +396,7 @@ class Entity():
 
 	def set_parent(self, parent):
 		"""
-		Sets the parent of the :class:`~diskovery.Entity` to be the given 
+		Sets the parent of the :class:`~diskovery.Entity` to be the given
 		:class:`~diskovery.Entity`
 
 		:param parent: the :class:`~diskovery.Entity` to set the parent as
@@ -612,7 +623,7 @@ class AnimatedEntity(RenderedEntity):
 
 		:param ind: the index indicating which :class:`~diskovery_buffer.Buffer` in each :class:`~diskovery_buffer.UniformBuffer` should be filled with new data
 		"""
-		
+
 		RenderedEntity.update(self, ind)
 
 		self.animator.update()
@@ -624,7 +635,7 @@ def _save_scene(filename, scene_name):
 	contents = "{}\n".format(scene_name)
 
 	f = open(filename, "w+")
-		
+
 	contents += "Meshes\n"
 	for name, m in _meshes.items():
 		animated = isinstance(m, AnimatedMesh)
@@ -636,7 +647,7 @@ def _save_scene(filename, scene_name):
 
 	contents += "Shaders\n"
 	for name, s in _shaders.items():
-		contents += "{} {} {}\n".format(s.sources[0], s.sources[1], name) 
+		contents += "{} {} {}\n".format(s.sources[0], s.sources[1], name)
 
 	contents += "Animations\n"
 	for name, a in _animations.items():

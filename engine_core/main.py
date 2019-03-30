@@ -1,5 +1,5 @@
 
-import diskovery 
+import diskovery
 import diskovery_scene_manager
 
 def main():

@@ -15,11 +15,10 @@ class BigBoy(diskovery.AnimatedEntity):
 			animations_str=["Run"]
 		)
 
+		self.speed = 0.05
+
 	def update(self, ind):
 		diskovery.AnimatedEntity.update(self, ind)
-
-		self.position.x += 0.0001
-		self.rotation.y += 0.0005
 
 class CubeMan(diskovery.RenderedEntity):
 	def __init__(self, position, rotation, scale, color):
@@ -40,3 +39,5 @@ class CubeMan(diskovery.RenderedEntity):
 		dim = diskovery.dimensions()
 		s = ScreenSize(dim[0], dim[1])
 		self.uniforms[1].update(s.get_data(), ind)
+		self.position.x += diskovery.input("WalkX")
+		self.position.y += diskovery.input("WalkY")

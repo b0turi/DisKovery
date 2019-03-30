@@ -1,0 +1,8 @@
+MainInput
+RR WalkX
+RS WalkY
+
+WalkX K_a K_d,K_LEFT K_RIGHT
+WalkY K_s K_w,K_DOWN K_UP
+WalkX K_a K_d,K_LEFT K_RIGHT
+WalkY K_s K_w,K_DOWN K_UP
