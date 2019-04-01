@@ -59,6 +59,8 @@ _shaders = { }
 _descriptors = { }
 _pipelines = { }
 
+_light_scenes = { }
+
 def add_mesh(filename, name=None, animated=False):
 	"""
 	Creates and adds a :class:`~diskovery_mesh.Mesh` to the dictionary
@@ -161,6 +163,24 @@ def add_class(class_type, class_name):
 	global _classes
 
 	_classes[class_name] = class_type
+
+def add_light_scene(scene, name):
+	global _light_scenes
+	_light_scenes[name] = scene
+
+def set_camera_settings(position, rotation, fov, draw_distance, aspect_ratio):
+	global _camera
+
+	_camera.position = position
+	_camera.rotation = rotation
+	_camera.fov = fov
+	_camera.draw_distance = draw_distance,
+	_camera.aspect_ratio = aspect_ratio
+
+	print(fov, draw_distance, aspect_ratio)
+
+	_camera.update_projection()
+
 
 def mesh(name):
 	"""
@@ -441,6 +461,24 @@ class Camera(Entity):
 		self.view_matrix = glm.translate(glm.mat4(1.0), self.position) * \
 						   glm.mat4_cast(glm.quat(self.rotation))
 
+# class Light(Entity):
+# 	def __init__(self, position, direction, distance, intensity, tint, spread, scene):
+# 		Entity.__init__(self, position)
+# 		self.direction = direction
+
+# 		# To make a directional light (infinite distance), use a value of -1
+# 		self.distance = distance 
+
+# 		self.intensity = intensity
+# 		self.tint = tint
+
+# 		# To make a point light (infinite spread), use a value of -1
+# 		self.spread = spread
+
+# 		_light_scenes[scene].lights.append(self)
+
+# 	def update(self, ind):
+# 		pass
 
 class RenderedEntity(Entity):
 	"""

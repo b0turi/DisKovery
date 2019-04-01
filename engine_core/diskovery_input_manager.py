@@ -1,5 +1,4 @@
 import pygame
-import inputs
 from enum import Enum
 
 class InputType(Enum):
@@ -28,8 +27,8 @@ class Input(object):
 		if self.mod == 'R':
 			self.time = None
 			self.attacked = False
-			self.attack_delay = 1000
-			self.repeat_delay = 200
+			self.attack_delay = 8000
+			self.repeat_delay = 100
 
 		self.acceptable = True
 

@@ -25,6 +25,8 @@ layout(location = 5) in vec3 inWeights;
 
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 fragTexCoord;
+layout(location = 2) out vec3 fragNormal;
+layout(location = 3) out vec4 worldPosition;
 
 void main() 
 {
@@ -42,7 +44,10 @@ void main()
 		totalNormal += worldNormal * inWeights[i];
 	}
 
-    gl_Position = mvp.proj * mvp.view * mvp.model * totalLocalPos;
-    fragColor = normalize(inPosition);
+
+	worldPosition = mvp.model * totalLocalPos;
+    gl_Position = mvp.proj * mvp.view * worldPosition;
+    fragColor = inColor;
     fragTexCoord = inTexCoord;
+    fragNormal = (mvp.model * totalNormal).xyz;
 }

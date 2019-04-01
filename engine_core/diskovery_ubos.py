@@ -135,3 +135,39 @@ class Boolean(UniformBufferObject):
 	@staticmethod
 	def get_size():
 		return sizeof(c_float)
+
+MAX_LIGHTS = 5
+class SceneLighting(UniformBufferObject):
+	def __init__(self):
+		self.lights = []
+
+	def get_data(self):
+		position = ((c_float*3) * MAX_LIGHTS)()
+		direction = ((c_float*3) * MAX_LIGHTS)()
+		tint = ((c_float*3) * MAX_LIGHTS)()
+
+		intensity = (c_float * MAX_LIGHTS)()
+		distance = (c_float * MAX_LIGHTS)()
+		spread = (c_float * MAX_LIGHTS)()
+
+		for i, light in enumerate(self.lights):
+			position[i] = light.position
+			direction[i] = light.direction
+			tint[i] = light.tint
+
+			intensity[i] = light.intensity
+			distance[i] = light.distance
+			spread[i] = light.spread
+
+		return (c_float * 12 * MAX_LIGHTS)(*(
+			list(position) +
+			list(direction) +
+			list(tint) +
+			list(intensity) +
+			list(distance) +
+			list(spread)
+		))
+
+	@staticmethod
+	def get_size():
+		return sizeof(c_float) * 12 * MAX_LIGHTS

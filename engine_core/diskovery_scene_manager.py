@@ -12,6 +12,7 @@ def load_scene(filename):
 	 'Textures': diskovery.add_texture, 
 	 'Shaders': diskovery.add_shader, 
 	 'Animations': diskovery.add_animation,
+	 'Camera': diskovery.set_camera_settings,
 	 'Entities': diskovery.add_entity }
 
 	filled = []
@@ -34,6 +35,8 @@ def load_scene(filename):
 							cmd += "True,"
 						elif args[i] == 'F':
 							cmd += "False,"
+						elif ',' in args[i]:
+							cmd += "{},".format(tuple(float(x) for x in args[i].split(',')))
 						else:
 							cmd += "args[{}],".format(i)
 					cmd = cmd[:-1] + ")"

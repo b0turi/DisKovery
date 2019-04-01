@@ -82,9 +82,9 @@ class Shader(object):
 		self.definition = tuple(self.definition[:(max_binding+1)])
 
 		for src in sources:
-			# if os.path.isfile("{}.spv".format(src)):
-			# 	subprocess.call("rm {}.spv".format(src))
-			# subprocess.call("glslangValidator.exe -V {} -o {}.spv".format(src, src))
+			if os.path.isfile("{}.spv".format(src)):
+				subprocess.call("rm {}.spv".format(src))
+			subprocess.call("glslangValidator.exe -V {} -o {}.spv".format(src, src))
 			# subprocess.call("compile.bat {}".format(src))
 
 			self.filenames[src.split('.')[1]] = "shaders/{}.spv".format(src)

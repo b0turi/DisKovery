@@ -2,23 +2,27 @@
 import diskovery
 from diskovery_ubos import *
 
-class BigBoy(diskovery.AnimatedEntity):
+class BigBoy(diskovery.RenderedEntity):
 	def __init__(self, position, rotation, scale):
-		diskovery.AnimatedEntity.__init__(
+		diskovery.RenderedEntity.__init__(
 			self,
 			position=position,
 			rotation=rotation,
 			scale=scale,
-			shader_str="Animated",
-			mesh_str="Man",
-			textures_str=["Man"],
-			animations_str=["Run"]
+			shader_str="Default",
+			mesh_str="Orb",
+			textures_str=["Cube"]
 		)
 
 		self.speed = 0.05
 
 	def update(self, ind):
-		diskovery.AnimatedEntity.update(self, ind)
+		diskovery.RenderedEntity.update(self, ind)
+		self.position.x += diskovery.input("WalkX") *self.speed**2
+		self.position.z += diskovery.input("WalkY")*self.speed**2
+
+		if diskovery.input("Spinning"):
+			self.rotation.y += self.speed**2;
 
 class CubeMan(diskovery.RenderedEntity):
 	def __init__(self, position, rotation, scale, color):
@@ -39,5 +43,4 @@ class CubeMan(diskovery.RenderedEntity):
 		dim = diskovery.dimensions()
 		s = ScreenSize(dim[0], dim[1])
 		self.uniforms[1].update(s.get_data(), ind)
-		self.position.x += diskovery.input("WalkX")
-		self.position.y += diskovery.input("WalkY")
+		

@@ -1,10 +1,12 @@
 Template
 Meshes
+cube.obj Orb F
 test.obj Default F
 model.dae Man T
 Textures
 test.png Default
 character.png Man
+cubemap.png Cube
 Shaders
 color_pick.vert color_pick.frag ColorPicker
 animated.vert default.frag Animated
@@ -12,13 +14,9 @@ default.vert default.frag Default
 gui.vert gui.frag GUI
 Animations
 model.dae Run
+Camera
+0.0,4.0,-5.0 0.0,0.0,0.0 1.01 1000 1.7777777777777777
 Entities
-E Camera Camera
-0.0 0.0 -5.0
-0.0 0.0 0.0
-1.0471975511965976
-1000
-1.7777777777777777
 E CubeMan CubeMan0
 10.0 10.0 0.0
 0.0 0.0 0.0
@@ -70,6 +68,6 @@ E CubeMan CubeMan9
 60.0 60.0 60.0
 0x5b
 E BigBoy big
-0.0 4.0 -10.0
+0.0 2.0 0.0
 0.0 0.0 0.0
 1.0 1.0 1.0
