@@ -5,15 +5,18 @@ const int MAX_LIGHTS = 1;
 
 layout(binding = 1) uniform sampler2D tex;
 
-vec3 lightPos = vec3(0, 0, 0);
-vec3 lightDirection = vec3(0, 0, 0);
-vec3 lightTint = vec3(1, 0.8, 0.8);
+layout(binding = 2) uniform SceneLighting
+{
+		vec3 position[MAX_LIGHTS];
+		vec3 direction[MAX_LIGHTS];
+		vec3 tint[MAX_LIGHTS];
 
+		float intensity[MAX_LIGHTS];
+		float dist[MAX_LIGHTS];
+		float spread[MAX_LIGHTS];
+} lights;
 
 float ambient = 0.3;
-float lightIntensity = 1;
-float lightDistance = 5;
-
 
 layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec2 fragTexCoord;
@@ -32,23 +35,23 @@ void main() {
 		vec3 lightVector = vec3(0.0);
 		float proximity = 0.0;
 
-		if(lightDirection != vec3(0.0))
+		if(lights.direction[i] != vec3(0.0))
 		{
 			// Directional Light
-			lightVector = lightDirection;
+			lightVector = lights.direction[i];
 		}else{
 			// Point Light
-			lightVector = lightPos - worldPosition.xyz;
-			proximity = clamp(length(lightVector)/lightDistance, 0, 1);
+			lightVector = lights.position[i] - worldPosition.xyz;
+			proximity = clamp(length(lightVector)/lights.dist[i], 0, 1);
 		}
 
 		float nDotl = dot(unitNormal, normalize(lightVector));
-		float brightness = ((1 - ambient) * max(nDotl, 0.0) * (1-proximity) * lightIntensity) + ambient;
+		float brightness = ((1 - ambient) * max(nDotl, 0.0) * (1-proximity) * lights.intensity[i]) + ambient;
 
-		vec3 diffuse = brightness * lightTint;
+		vec3 diffuse = brightness * lights.tint[i];
 
 		totalLightingColor += vec4(diffuse, 1.0);
 	}
-	
+
     outColor = totalLightingColor * texture(tex, fragTexCoord);
 }

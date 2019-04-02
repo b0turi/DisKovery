@@ -35,7 +35,7 @@ import importlib
 
 import vk
 from diskovery_mesh import Mesh, AnimatedMesh, Animator, Rig
-from diskovery_ubos import MVPMatrix
+from diskovery_ubos import MVPMatrix, SceneLighting
 from diskovery_image import Texture
 from diskovery_buffer import UniformBuffer
 from diskovery_instance import DkInstance
@@ -164,8 +164,10 @@ def add_class(class_type, class_name):
 
 	_classes[class_name] = class_type
 
-def add_light_scene(scene, name):
+def add_light_scene(name):
 	global _light_scenes
+
+	scene = SceneLighting()
 	_light_scenes[name] = scene
 
 def set_camera_settings(position, rotation, fov, draw_distance, aspect_ratio):
@@ -173,13 +175,8 @@ def set_camera_settings(position, rotation, fov, draw_distance, aspect_ratio):
 
 	_camera.position = position
 	_camera.rotation = rotation
-	_camera.fov = fov
-	_camera.draw_distance = draw_distance,
-	_camera.aspect_ratio = aspect_ratio
 
-	print(fov, draw_distance, aspect_ratio)
-
-	_camera.update_projection()
+	_camera.update_projection(float(fov), float(draw_distance), float(aspect_ratio))
 
 
 def mesh(name):
@@ -312,10 +309,12 @@ def draw():
 
 def run():
 	"""Begins the game loop and starts the event handler"""
-	global _dk, _input
+	global _dk, _input, _scene, _light_scenes
 
 	running = True
 	while running:
+		#for ls in _light_scenes.values():
+			#ls.update()
 		_scene.draw()
 		_input.update()
 
@@ -467,7 +466,7 @@ class Camera(Entity):
 # 		self.direction = direction
 
 # 		# To make a directional light (infinite distance), use a value of -1
-# 		self.distance = distance 
+# 		self.distance = distance
 
 # 		self.intensity = intensity
 # 		self.tint = tint
@@ -642,7 +641,7 @@ class AnimatedEntity(RenderedEntity):
 		shader_str=None,
 		textures_str=None,
 		mesh_str=None,
-		animations_str=None
+		animations_str=None,
 		):
 		RenderedEntity.__init__(self, position, rotation, scale, shader_str, textures_str, mesh_str)
 

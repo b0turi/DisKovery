@@ -24,6 +24,26 @@ class BigBoy(diskovery.RenderedEntity):
 		if diskovery.input("Spinning"):
 			self.rotation.y += self.speed**2;
 
+class RunningMan(diskovery.AnimatedEntity):
+	def __init__(self, position, rotation, scale):
+		diskovery.AnimatedEntity.__init__(
+			self,
+			position=position,
+			rotation=rotation,
+			scale=scale,
+			shader_str="Animated",
+			mesh_str="Man",
+			textures_str=["Man"],
+			animations_str=["Run"]
+		)
+
+		self.speed = 0.1
+
+	def update(self, ind):
+		diskovery.AnimatedEntity.update(self, ind)
+		self.position.x += diskovery.input("WalkX")*self.speed
+		self.position.z += diskovery.input("WalkY")*self.speed
+
 class CubeMan(diskovery.RenderedEntity):
 	def __init__(self, position, rotation, scale, color):
 		diskovery.RenderedEntity.__init__(
@@ -43,4 +63,3 @@ class CubeMan(diskovery.RenderedEntity):
 		dim = diskovery.dimensions()
 		s = ScreenSize(dim[0], dim[1])
 		self.uniforms[1].update(s.get_data(), ind)
-		

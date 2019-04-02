@@ -9,10 +9,11 @@ def load_scene(filename):
 	global _classes
 
 	func_map = { 'Meshes': diskovery.add_mesh,
-	 'Textures': diskovery.add_texture, 
-	 'Shaders': diskovery.add_shader, 
+	 'Textures': diskovery.add_texture,
+	 'Shaders': diskovery.add_shader,
 	 'Animations': diskovery.add_animation,
 	 'Camera': diskovery.set_camera_settings,
+	 'LightScenes': diskovery.add_light_scene,
 	 'Entities': diskovery.add_entity }
 
 	filled = []
@@ -58,7 +59,7 @@ def load_scene(filename):
 						sub_line = f.readline()[:-1]
 
 					cmd = cmd[:-1] + "), \"{}\")".format(args[2])
-					exec(cmd) 
+					exec(cmd)
 					line = sub_line
 
 				if not line:
