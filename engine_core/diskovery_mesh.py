@@ -79,13 +79,6 @@ class ParseType(Enum):
 class Parser(object):
 
 	# OBJ Parsing #
-	def process_vertex(self, v_data, ind, tex, norm, n_norm, n_tex):
-		vert = int(v_data[0]) - 1
-		ind.append(vert)
-		current_tex = tex[int(v_data[1]) - 1]
-		n_tex[vert] = current_tex
-		current_norm = norm[int(v_data[2]) - 1]
-		n_norm[vert] = current_norm
 
 	def load_obj(self, file):
 		normals = []

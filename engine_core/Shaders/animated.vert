@@ -4,7 +4,7 @@
 const int MAX_JOINTS = 50;
 const int MAX_WEIGHTS = 3;
 
-layout(binding = 0) uniform MVPMatrix
+layout(binding = 1) uniform MVPMatrix
 {
     mat4 model;
     mat4 view;

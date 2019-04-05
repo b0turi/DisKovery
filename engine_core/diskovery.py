@@ -29,6 +29,7 @@ entity types, from which DisKovery users can extend their own custom object defi
 - :class:`~diskovery.AnimatedEntity` - a :class:`~diskovery.RenderedEntity` with an :class:`~diskovery_animator.Animator` to handle skeletal animation
 """
 import glm
+import math
 import pygame
 import inspect
 import importlib
@@ -60,6 +61,17 @@ _descriptors = { }
 _pipelines = { }
 
 _light_scenes = { }
+
+def clear_environment():
+	global _meshes, _textures, _animations, _shaders, _descriptors, _pipelines, _light_scenes
+
+	_meshes.clear()
+	_textures.clear()
+	_animations.clear()
+	_shaders.clear()
+	_descriptors.clear()
+	_pipelines.clear()
+	_light_scenes.clear()
 
 def add_mesh(filename, name=None, animated=False):
 	"""
@@ -173,8 +185,8 @@ def add_light_scene(name):
 def set_camera_settings(position, rotation, fov, draw_distance, aspect_ratio):
 	global _camera
 
-	_camera.position = position
-	_camera.rotation = rotation
+	_camera.position = glm.vec3(position)
+	_camera.rotation = glm.vec3(rotation)
 
 	_camera.update_projection(float(fov), float(draw_distance), float(aspect_ratio))
 
@@ -241,9 +253,26 @@ def get_class(name):
 
 def input(name):
 	global _input
-	return _input.input_values[name]
+	
 
-def init(debug_mode=False, config=None):
+	if name in _input.input_values.keys():
+		return _input.input_values[name]
+	else:
+		return 0
+
+def entity(name):
+	global _scene
+	return _scene.entities()[name]
+
+def camera():
+	global _camera
+	return _camera
+
+def refresh():
+	global _scene
+	_scene.refresh()
+
+def init(debug_mode=False, config=None, edit_mode=False):
 	"""
 	Initializes the :class:`~diskovery_instance.DkInstance` and
 	:class:`~diskovery_entity_manager.EntityManager` objects used in
@@ -260,15 +289,20 @@ def init(debug_mode=False, config=None):
 	_scene = EntityManager(_dk)
 
 	pygame.joystick.init()
-	_input = InputManager("maininput.in")
 
-	r = Renderer(_dk, _dk.image_data['msaa_samples'], _dk.sc_image_views)
+	if config != None and 'input' in config:
+		_input = InputManager(config['input'])
+	else:
+		_input = InputManager("maininput.in")
+
+	r = Renderer(_dk, _dk.image_data['msaa_samples'], _dk.sc_image_views, edit_mode)
 	_scene.add_renderer(r)
 
 	add_class(Entity, "Entity")
 	add_class(RenderedEntity, "RenderedEntity")
 	add_class(AnimatedEntity, "AnimatedEntity")
 	add_class(Camera, "Camera")
+	add_class(Light, "Light")
 
 	custom_module = 'diskovery_entities'
 
@@ -319,6 +353,11 @@ def run():
 		_input.update()
 
 		for event in pygame.event.get():
+			if event.type == pygame.MOUSEBUTTONDOWN:
+				if event.button == 4:
+					_input.scrollwheel = 1
+				if event.button == 5:
+					_input.scrollwheel = -1
 			if event.type == pygame.QUIT:
 				running = False
 				_dk.DeviceWaitIdle(_dk.device)
@@ -379,11 +418,14 @@ class Entity():
 
 	**Methods of the Entity class:**
 	"""
-	def __init__(self, position=None):
+	def __init__(self, position=None, rotation=None):
 		self.position = glm.vec3(position) if position != None else glm.vec3()
+		self.rotation =  glm.vec3(rotation) if rotation != None else glm.vec3()
 
 		self.parent = None
 		self.children = []
+
+	presets = NotImplemented
 
 	def world_position(self):
 		"""
@@ -408,6 +450,30 @@ class Entity():
 	def cleanup(self):
 		pass
 
+	def left(self, mat=None):
+		if not mat:
+			matrix = glm.mat4_cast(glm.quat(self.rotation))
+		else:
+			matrix = mat
+
+		return glm.vec3(matrix[0])
+
+	def up(self, mat=None):
+		if not mat:
+			matrix = glm.mat4_cast(glm.quat(self.rotation))
+		else:
+			matrix = mat
+
+		return glm.vec3(matrix[1])
+
+	def forward(self, mat=None):
+		if not mat:
+			matrix = glm.mat4_cast(glm.quat(self.rotation))
+		else:
+			matrix = mat
+
+		return glm.vec3(matrix[2])
+
 	def detach(self):
 		"""Removes the reference to the parent of the :class:`~diskovery.Entity` cleanly"""
 		self.parent.children.remove(self)
@@ -427,13 +493,19 @@ class Entity():
 		parent.children.append(self)
 
 class Camera(Entity):
+
+	presets = { }
+
 	def __init__(self, position, rotation, fov, draw_distance, aspect_ratio):
-		Entity.__init__(self, position)
-		self.rotation = rotation
+		Entity.__init__(self, position, rotation)
+		
 
 		self.fov = fov
 		self.draw_distance = draw_distance
 		self.aspect_ratio = aspect_ratio
+
+		self.cam_speed = 0.04
+		self.rot_speed = 0.004
 
 		self.view_matrix = glm.mat4()
 		self.proj_matrix = glm.mat4()
@@ -457,27 +529,55 @@ class Camera(Entity):
 		)
 
 	def update(self, ind):
-		self.view_matrix = glm.translate(glm.mat4(1.0), self.position) * \
-						   glm.mat4_cast(glm.quat(self.rotation))
+		self.view_matrix = glm.rotate(glm.mat4(1.0), self.rotation.x, glm.vec3(1,0,0)) * \
+							glm.rotate(glm.mat4(1.0), self.rotation.y, glm.vec3(0,1,0)) * \
+							glm.translate(glm.mat4(1.0), self.position) 
+		
+		forward = self.forward()
+		forward.z *= -1
 
-# class Light(Entity):
-# 	def __init__(self, position, direction, distance, intensity, tint, spread, scene):
-# 		Entity.__init__(self, position)
-# 		self.direction = direction
+		up = self.up()
+		up.z *= -1
 
-# 		# To make a directional light (infinite distance), use a value of -1
-# 		self.distance = distance
+		left = self.left()
+		left.z *= -1
 
-# 		self.intensity = intensity
-# 		self.tint = tint
+		self.position += left * self.cam_speed * input("ObjMoveX") * -0.5
+		self.position += forward * self.cam_speed * input("ObjMoveZ") * -0.5
+		self.position += up * self.cam_speed * input("ObjMoveY") * -0.25
 
-# 		# To make a point light (infinite spread), use a value of -1
-# 		self.spread = spread
+		if input("Panning"):
+			self.position += up * self.cam_speed * input("CamX")
+			self.position += left * self.cam_speed * input("CamY")
+		if input("Rotating"):
+			self.rotation.x -= input("CamRotX") * self.rot_speed
+			self.rotation.y += input("CamRotY") * self.rot_speed
 
-# 		_light_scenes[scene].lights.append(self)
+		self.position += forward * -3 * input("CamZoom")
 
-# 	def update(self, ind):
-# 		pass
+		if input("Select"):
+			check_selected()
+
+class Light(Entity):
+
+	presets = { }
+
+	def __init__(self, position, direction, tint, intensity, distance, spread, scene):
+		Entity.__init__(self, position, direction)
+
+		# To make a directional light (infinite distance), use a value of -1
+		self.distance = distance
+
+		self.intensity = intensity
+		self.tint = tint
+
+		# To make a point light (infinite spread), use a value of -1
+		self.spread = spread
+
+		_light_scenes[scene].lights.append(self)
+
+	def update(self, ind):
+		pass
 
 class RenderedEntity(Entity):
 	"""
@@ -548,11 +648,11 @@ class RenderedEntity(Entity):
 		rotation=None,
 		scale=None,
 		shader_str=None,
+		mesh_str=None,
 		textures_str=None,
-		mesh_str=None):
-		Entity.__init__(self, position)
+		light_scene="MainLight"):
+		Entity.__init__(self, position, rotation)
 
-		self.rotation = glm.vec3(rotation) if rotation != None else glm.vec3()
 		self.scale = glm.vec3(scale) if scale != None else glm.vec3(1, 1, 1)
 
 		self.textures = textures_str if textures_str != None else ["Default"]
@@ -561,6 +661,9 @@ class RenderedEntity(Entity):
 		self.definition = shader(shader_str).definition if shader_str != None else shader("Default").definition
 		self.pipeline = shader_str
 		self.uniforms = []
+
+		if light_scene:
+			self.light_scene = light_scene
 
 		uniform_types = shader(shader_str).uniforms
 		for u_type in uniform_types:
@@ -591,6 +694,9 @@ class RenderedEntity(Entity):
 		m.projection = _camera.proj_matrix
 
 		self.uniforms[0].update(m.get_data(), ind)
+
+		if hasattr(self, 'light_scene'):
+			self.uniforms[1].update(_light_scenes[self.light_scene].get_data(), ind)
 
 	def get_pipeline(self):
 		"""
@@ -639,11 +745,12 @@ class AnimatedEntity(RenderedEntity):
 		rotation=None,
 		scale=None,
 		shader_str=None,
-		textures_str=None,
 		mesh_str=None,
+		textures_str=None,
 		animations_str=None,
+		light_scene="MainLight"
 		):
-		RenderedEntity.__init__(self, position, rotation, scale, shader_str, textures_str, mesh_str)
+		RenderedEntity.__init__(self, position, rotation, scale, shader_str, mesh_str, textures_str, light_scene)
 
 		self.animations = animations_str if animations_str != None else []
 		self.rig = Rig.from_template(mesh(mesh_str).rig)
@@ -664,7 +771,10 @@ class AnimatedEntity(RenderedEntity):
 		RenderedEntity.update(self, ind)
 
 		self.animator.update()
-		self.uniforms[1].update(self.rig.get_joint_data(), ind)
+		if hasattr(self, 'light_scene'):
+			self.uniforms[2].update(self.rig.get_joint_data(), ind)
+		else:
+			self.uniforms[1].update(self.rig.get_joint_data(), ind)
 
 def _save_scene(filename, scene_name):
 	global _meshes, _textures, _shaders, _animations, _scene
@@ -707,3 +817,8 @@ def _save_scene(filename, scene_name):
 	f.write(contents)
 
 	f.close()
+
+def check_selected():
+	print(pygame.mouse.get_pos())
+
+	_scene.get_image(0, 1)

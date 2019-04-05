@@ -116,6 +116,56 @@ class Image(object):
 
 		self.dk.end_command(cmd)
 
+		self.access_mask = dst_access_mask
+		self.stage = dst_stage
+
+	def swap_to_source(self, cmd):
+
+		barrier = vk.ImageMemoryBarrier(
+			s_type=vk.STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+			old_layout=self.layout,
+			new_layout=vk.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			src_queue_family_index=vk.QUEUE_FAMILY_IGNORED,
+			dst_queue_family_index=vk.QUEUE_FAMILY_IGNORED,
+			image=image,
+			src_access_mask=self.access_mask,
+			dst_access_mask=vk.ACCESS_TRANSFER_WRITE_BIT,
+			subresource_range=sub
+		)
+
+		self.dk.CmdPipelineBarrier(
+			cmd,
+			self.stage,
+			vk.PIPELINE_STAGE_TRANSFER_BIT,
+			0, 0,
+			None, 0,
+			None, 1,
+			byref(barrier)
+		)
+
+	def swap_from_source(self, cmd):
+		barrier = vk.ImageMemoryBarrier(
+			s_type=vk.STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+			old_layout=vk.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			new_layout=self.layout,
+			src_queue_family_index=vk.QUEUE_FAMILY_IGNORED,
+			dst_queue_family_index=vk.QUEUE_FAMILY_IGNORED,
+			image=image,
+			src_access_mask=vk.ACCESS_TRANSFER_WRITE_BIT,
+			dst_access_mask=self.access_mask,
+			subresource_range=sub
+		)
+
+		self.dk.CmdPipelineBarrier(
+			cmd,
+			vk.PIPELINE_STAGE_TRANSFER_BIT,
+			self.stage,
+			0, 0,
+			None, 0,
+			None, 1,
+			byref(barrier)
+		)
+
 	def create_image_view(self, form, aspects, mip):
 		sub = vk.ImageSubresourceRange(
 			aspect_mask=aspects,
@@ -154,6 +204,7 @@ class Image(object):
 		# Newly created images have an undefined layout. This method
 		# fills the image with its given layout.
 		self.set_layout(self.image, form, vk.IMAGE_LAYOUT_UNDEFINED, layout, mip)
+		self.layout = layout
 		self.create_image_view(form, aspects, mip)
 
 	def cleanup(self):
@@ -205,6 +256,20 @@ def buffer_to_image(dk, buff, image, width, height):
 	dk.CmdCopyBufferToImage(
 		cmd,
 		buff,
+		image,
+		vk.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		1,
+		byref(region)
+	)
+
+	dk.end_command(cmd)
+
+def image_to_buffer(dk, image, buff, region):
+	cmd = dk.start_command()
+	image.
+	dk.CmdCopyImageToBuffer(
+		cmd,
+		image.,
 		image,
 		vk.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 		1,

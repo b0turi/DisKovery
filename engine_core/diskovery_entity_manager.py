@@ -27,7 +27,8 @@ to be used elsewhere.
 import vk
 import time
 from ctypes import *
-from diskovery_image import Image
+from diskovery_image import Image, image_to_buffer
+from diskovery_buffer import Buffer
 
 MAX_FRAMES_IN_FLIGHT = 2
 UINT64_MAX = 18446744073709551615
@@ -48,11 +49,12 @@ def cleanup_entities():
 
 class Renderer(object):
 	
-	def create_attachments(self, samples):
-		self.color['image'] = Image(
+
+	def add_color_attachment(self):
+		img = Image(
 			self.dk,
 			self.size,
-			self.color['format'],
+			self.color_format,
 			1,
 			self.sample_count,
 
@@ -64,10 +66,17 @@ class Renderer(object):
 			vk.IMAGE_ASPECT_COLOR_BIT
 		)
 
-		self.depth['image'] = Image(
+		self.color_attachments.append(img)
+
+	def create_attachments(self, samples):
+
+		for i in range(0, self.dk.max_color_attachments - 1):
+			self.add_color_attachment()
+
+		self.depth_attachment = Image(
 			self.dk, 
 			self.size,
-			self.depth['format'],
+			self.depth_format,
 			1,
 			self.sample_count,
 			vk.IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
@@ -77,50 +86,45 @@ class Renderer(object):
 		)
 
 		if samples != vk.SAMPLE_COUNT_1_BIT:
-			self.resolve = { }
-			self.resolve['format'] = self.color['format']
-			self.resolve['image'] = Image(
-				self.dk,
-				self.size,
-				self.resolve['format'],
-				1,
-				vk.SAMPLE_COUNT_1_BIT,
+			self.add_color_attachment()
+			for i in range(0, self.dk.max_color_attachments - 1):
 
-				vk.IMAGE_USAGE_COLOR_ATTACHMENT_BIT | 
-				vk.IMAGE_USAGE_SAMPLED_BIT,
+				img = Image(
+					self.dk,
+					self.size,
+					self.color_format,
+					1,
+					self.sample_count,
 
-				vk.MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-				vk.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-				vk.IMAGE_ASPECT_COLOR_BIT
-			)
+					vk.IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | 
+					vk.IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+
+					vk.MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+					vk.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+					vk.IMAGE_ASPECT_COLOR_BIT
+				)
+
+				self.resolve_attachments.append(img)
 
 	def create_frame_buffers(self):
 		self.framebuffers = (vk.Framebuffer*self.buffer_count)()
-
-		if not hasattr(self, 'src'):
-			if self.sample_count == vk.SAMPLE_COUNT_1_BIT:
-				self.src = (vk.ImageView*1)(self.color['image'].image_view)
-			else:
-				self.src = (vk.ImageView*1)(self.resolve['image'].image_view)
 		
 		for index, view in enumerate(self.src):
-			attachments = (vk.ImageView*2)(
-				view,
-				self.depth['image'].image_view
-			)
-
-			if self.sample_count != vk.SAMPLE_COUNT_1_BIT:
-				attachments = (vk.ImageView*3)(
-					self.color['image'].image_view,
-					self.depth['image'].image_view,
-					view
-				)
+			if len(self.resolve_attachments) > 0:
+				attachments = [x.image_view for x in (self.color_attachments)] + \
+					[self.depth_attachment.image_view, vk.ImageView(view)] + \
+					[x.image_view for x in (self.resolve_attachments)]
+			else:
+				attachments = [vk.ImageView(view)] + \
+					[x.image_view for x in (self.color_attachments)] + \
+					[self.depth_attachment.image_view]
+			att = (vk.ImageView * len(attachments))(*attachments)
 
 			create_info = vk.FramebufferCreateInfo(
 				s_type=vk.STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
 				render_pass=self.render_pass,
-				attachment_count=len(attachments),
-				attachments=cast(attachments, POINTER(vk.ImageView)),
+				attachment_count=len(att),
+				attachments=cast(att, POINTER(vk.ImageView)),
 				width=self.size.width,
 				height=self.size.height,
 				layers=1
@@ -190,24 +194,30 @@ class Renderer(object):
 			render_area.extent = self.size
 
 			# Set the color the screen will reset to when redrawn
-			clear_values = (vk.ClearValue*2)(
-				vk.ClearValue(
-					color=vk.ClearColorValue(
-						float32=(c_float*4)(
-							self.bg_color[0], 
-							self.bg_color[1], 
-							self.bg_color[2], 
-							1.
-						)
-					)	
-				),
-				vk.ClearValue(
-					depth_stencil=vk.ClearDepthStencilValue(
+			clear_values = (vk.ClearValue*(self.dk.max_color_attachments + 1))()
+
+			for i in range(0, len(clear_values)):
+				clear_values[i] = vk.ClearValue()
+
+				if i <  len(clear_values) - 1:
+					if i == 0:
+						clear_values[i].color = vk.ClearColorValue(
+							float32=(c_float*4)(
+								self.bg_color[0], 
+								self.bg_color[1], 
+								self.bg_color[2], 
+								1.
+							)
+						)	
+
+					else:
+						clear_values[i].color = vk.ClearColorValue(float32=(c_float*4)(0.,0.,0.,1.))
+
+				else:
+					clear_values[i].depth_stencil = vk.ClearDepthStencilValue(
 						depth=1., 
 						stencil=0
 					)
-				)	
-			)
 
 			renderpass_info = vk.RenderPassBeginInfo(
 				s_type=vk.STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
@@ -223,7 +233,7 @@ class Renderer(object):
 			for entity in _entities.values():
 
 				# Skip standard Entity objects
-				if not hasattr(entity, 'mesh'):
+				if not hasattr(entity, 'mesh') or (hasattr(entity, 'hidden') and entity.hidden):
 					continue
 
 				self.dk.CmdBindPipeline(buff, 
@@ -292,8 +302,12 @@ class Renderer(object):
 
 		self.bg_color = (0.1, 0.2, 0.3) if bg_color is None else bg_color
 
-		self.color = { 'format': dk.color_format }
-		self.depth = { 'format': dk.depth_format }
+		self.color_format = dk.color_format
+		self.depth_format = dk.depth_format
+
+		self.color_attachments = []
+		self.depth_attachment = None
+		self.resolve_attachments = []
 
 		self.sample_count = samples
 
@@ -310,18 +324,20 @@ class Renderer(object):
 		self.done_rendering = (vk.Semaphore * MAX_FRAMES_IN_FLIGHT)()
 
 		self.create_attachments(samples)
-		self.render_pass = self.dk.get_render_pass(samples)
+		self.render_pass = self.dk.get_render_pass(samples, self.dk.max_color_attachments)
 		self.create_frame_buffers()
 		self.create_command_buffers()
 		self.create_semaphores()
 
 	def cleanup(self):
 
-		self.color['image'].cleanup()
-		self.depth['image'].cleanup()
+		for color in self.color_attachments:
+			color.cleanup()
 
-		if hasattr(self, 'resolve'):
-			self.resolve['image'].cleanup()
+		self.depth_attachment.cleanup()
+
+		for resolve in self.resolve_attachments:
+			resolve.cleanup()
 
 		self.destroy_command_buffers()
 
@@ -397,6 +413,7 @@ class EntityManager(object):
 		is black, but the user can define another color if they choose. This
 		is typically done by passing a 'bg_color' value in the config dictionary
 		when initializing DisKovery, where a tuple of 3 values can be passed.
+	if hasattr(entity, 'mesh'):
 
 
 	"""
@@ -424,9 +441,7 @@ class EntityManager(object):
 
 		_entities[name] = entity
 
-		for renderer in self.renderers:
-			if hasattr(entity, 'mesh'):
-				renderer.create_command_buffers()
+		self.refresh()
 
 	def remove_entity(self, name):
 		"""
@@ -443,9 +458,11 @@ class EntityManager(object):
 		ent = _entities[name]
 		ent.cleanup()
 
+		self.refresh()
+
+	def refresh(self):
 		for renderer in self.renderers:
-			if hasattr(ent, 'mesh'):
-				renderer.create_command_buffers()
+			renderer.create_command_buffers()
 
 	def create_sync_objects(self):
 		"""
@@ -623,6 +640,30 @@ class EntityManager(object):
 
 	def add_renderer(self, renderer):
 		self.renderers.insert(0, renderer)
+
+
+	def get_image(self, renderer_ind = 0, col_att = 0, region = None):
+		img = self.renderers[renderer_ind].color_attachments[col_att]
+
+		if region == None:
+			sub = vk.ImageSubresourceLayers(
+				aspect_mask=vk.IMAGE_ASPECT_COLOR_BIT,
+				mip_level=0,
+				base_array_layer=0,
+				layer_count=1,
+			)
+
+			region = vk.BufferImageCopy(
+				image_subresource=sub,
+				image_offset=vk.Offset3D(0, 0, 0),
+				image_extent=vk.Extent3D(self.dk.image_data['extent'].width,
+										 self.dk.image_data['extent'].height, 1)
+			)
+
+
+		buff = Buffer(self.dk, )
+		image_to_buffer()
+
 
 	def cleanup(self):
 		"""

@@ -74,10 +74,13 @@ class InputManager:
 		self.input_values = { }
 		self.control_set = "Empty"
 
+		self.scrollwheel = 0
+
 		if filename:
 			self.load_control_set(filename)
 
 	def update(self):
+
 		global _keyboard_state, _mouse_state, _gamepad_state
 		_keyboard_state = pygame.key.get_pressed()
 
@@ -85,6 +88,7 @@ class InputManager:
 
 		_mouse_state = pygame.mouse.get_pressed()
 		_mouse_state += m_delta
+		_mouse_state += (self.scrollwheel,)
 
 		for name, inputs in self.inputs.items():
 			input_value = 0
@@ -100,6 +104,9 @@ class InputManager:
 				self.input_values[name] = input_value / accepted_inputs
 			else:
 				self.input_values[name] = 0
+
+		self.scrollwheel = 0
+
 
 	def load_control_set(self, filename):
 		self.inputs.clear()
@@ -117,7 +124,8 @@ class InputManager:
 						  'G': InputType.Gamepad }
 
 			mouse_delta_map = { 'x': len(pygame.mouse.get_pressed()),
-								'y': len(pygame.mouse.get_pressed()) + 1}
+								'y': len(pygame.mouse.get_pressed()) + 1,
+								's': len(pygame.mouse.get_pressed()) + 2}
 
 			self.control_set = f.readline()[:-1]
 
@@ -148,7 +156,7 @@ class InputManager:
 							if in_source == InputType.Keyboard:
 								in_index = int(eval("pygame.{}".format(sub_input)))
 							else:
-								if not isinstance(sub_input[2:], int):
+								if not sub_input[2:].isdigit():
 									in_index = mouse_delta_map[sub_input[2:]]
 								else:
 									in_index = int(sub_input[2:])
