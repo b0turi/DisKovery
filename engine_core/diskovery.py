@@ -33,6 +33,7 @@ import math
 import pygame
 import inspect
 import importlib
+from ctypes import *
 
 import vk
 from diskovery_mesh import Mesh, AnimatedMesh, Animator, Rig
@@ -253,7 +254,7 @@ def get_class(name):
 
 def input(name):
 	global _input
-	
+
 
 	if name in _input.input_values.keys():
 		return _input.input_values[name]
@@ -498,7 +499,7 @@ class Camera(Entity):
 
 	def __init__(self, position, rotation, fov, draw_distance, aspect_ratio):
 		Entity.__init__(self, position, rotation)
-		
+
 
 		self.fov = fov
 		self.draw_distance = draw_distance
@@ -531,8 +532,8 @@ class Camera(Entity):
 	def update(self, ind):
 		self.view_matrix = glm.rotate(glm.mat4(1.0), self.rotation.x, glm.vec3(1,0,0)) * \
 							glm.rotate(glm.mat4(1.0), self.rotation.y, glm.vec3(0,1,0)) * \
-							glm.translate(glm.mat4(1.0), self.position) 
-		
+							glm.translate(glm.mat4(1.0), self.position)
+
 		forward = self.forward()
 		forward.z *= -1
 
@@ -819,6 +820,20 @@ def _save_scene(filename, scene_name):
 	f.close()
 
 def check_selected():
-	print(pygame.mouse.get_pos())
+	m_pos = pygame.mouse.get_pos()
 
-	_scene.get_image(0, 1)
+	pixel_data = _scene.get_image(0, 1)
+	dim = (_dk.image_data['extent'].width, _dk.image_data['extent'].height)
+
+	surface = pygame.Surface((dim[0], dim[1]))
+
+	for i in range(0, dim[1]):
+		for j in range(0, dim[0]):
+			offset = (i * dim[1] + j) * 4
+			pixel = pixel_data[offset:(offset + 4)]
+			color = pygame.Color(pixel[0], pixel[1], pixel[2], pixel[3])
+			surface.set_at((j, i), color)
+
+	#print(surface.get_at(m_pos))
+
+	pygame.image.save(surface, "test_img.png")

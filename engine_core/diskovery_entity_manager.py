@@ -7,11 +7,11 @@ only ever has one instance created, housed inside the :mod:`diskovery`
 module. It works in conjunction with the :class:`~diskovery_instance.DkInstance`
 object stored in the :mod:`diskovery` module, but is used to handle real-time
 event updates and asynchronous events, rather than simply setting up values
-to be used elsewhere. 
+to be used elsewhere.
 
 .. warning::
 
-	When an :class:`~diskovery.Entity` of any type is created, if it is not 
+	When an :class:`~diskovery.Entity` of any type is created, if it is not
 	added to the EntityManager using :func:`diskovery.add_entity`, an explicit
 	call to its `cleanup()` method must be made, or Vulkan errors will occur, as
 	the EntityManager calls the `cleanup()` method on all objects inside the
@@ -19,7 +19,7 @@ to be used elsewhere.
 	:class:`~diskovery.Entity` is to be destroyed, if it is before the full scene
 	is being destroyed or unloaded, the :func:`diskovery.remove_entity` function
 	must be used or else the EntityManager will call `cleanup()` on the Entity
-	again, and if it has already been destroyed, this will also cause Vulkan 
+	again, and if it has already been destroyed, this will also cause Vulkan
 	errors.
 
 """
@@ -43,12 +43,12 @@ def update_entities(ind):
 
 def cleanup_entities():
 	global _entities
-	
+
 	for e in _entities.values():
 		e.cleanup()
 
 class Renderer(object):
-	
+
 
 	def add_color_attachment(self):
 		img = Image(
@@ -58,7 +58,7 @@ class Renderer(object):
 			1,
 			self.sample_count,
 
-			vk.IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | 
+			vk.IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT |
 			vk.IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 
 			vk.MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -74,7 +74,7 @@ class Renderer(object):
 			self.add_color_attachment()
 
 		self.depth_attachment = Image(
-			self.dk, 
+			self.dk,
 			self.size,
 			self.depth_format,
 			1,
@@ -96,7 +96,7 @@ class Renderer(object):
 					1,
 					self.sample_count,
 
-					vk.IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | 
+					vk.IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT |
 					vk.IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 
 					vk.MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -108,7 +108,7 @@ class Renderer(object):
 
 	def create_frame_buffers(self):
 		self.framebuffers = (vk.Framebuffer*self.buffer_count)()
-		
+
 		for index, view in enumerate(self.src):
 			if len(self.resolve_attachments) > 0:
 				attachments = [x.image_view for x in (self.color_attachments)] + \
@@ -135,7 +135,7 @@ class Renderer(object):
 			self.framebuffers[index] = fb
 
 	def create_semaphores(self):
-		
+
 		create_info = vk.SemaphoreCreateInfo(
 			s_type=vk.STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
 		)
@@ -143,9 +143,9 @@ class Renderer(object):
 		for i in range(0, MAX_FRAMES_IN_FLIGHT):
 			img = vk.Semaphore(0)
 			self.dk.CreateSemaphore(
-				self.dk.device, 
-				byref(create_info), 
-				None, 
+				self.dk.device,
+				byref(create_info),
+				None,
 				byref(img)
 			)
 			self.done_rendering[i] = img
@@ -203,19 +203,19 @@ class Renderer(object):
 					if i == 0:
 						clear_values[i].color = vk.ClearColorValue(
 							float32=(c_float*4)(
-								self.bg_color[0], 
-								self.bg_color[1], 
-								self.bg_color[2], 
+								self.bg_color[0],
+								self.bg_color[1],
+								self.bg_color[2],
 								1.
 							)
-						)	
+						)
 
 					else:
-						clear_values[i].color = vk.ClearColorValue(float32=(c_float*4)(0.,0.,0.,1.))
+						clear_values[i].color = vk.ClearColorValue(float32=(c_float*4)(0.,1.,0.,1.))
 
 				else:
 					clear_values[i].depth_stencil = vk.ClearDepthStencilValue(
-						depth=1., 
+						depth=1.,
 						stencil=0
 					)
 
@@ -236,16 +236,16 @@ class Renderer(object):
 				if not hasattr(entity, 'mesh') or (hasattr(entity, 'hidden') and entity.hidden):
 					continue
 
-				self.dk.CmdBindPipeline(buff, 
-					vk.PIPELINE_BIND_POINT_GRAPHICS, 
+				self.dk.CmdBindPipeline(buff,
+					vk.PIPELINE_BIND_POINT_GRAPHICS,
 					entity.get_pipeline().pipeline_ref
 				)
 
 				offset = c_ulonglong(0)
 				self.dk.CmdBindVertexBuffers(
-					buff, 
-					0, 
-					1, 
+					buff,
+					0,
+					1,
 					byref(entity.get_mesh().vertices.buffer),
 					byref(offset)
 				)
@@ -350,7 +350,7 @@ class Renderer(object):
 class EntityManager(object):
 	"""
 	The :class:`~diskovery_entity_manager.EntityManager`, as the name
-	suggests, stores and manages all Entity objects in the game world at a 
+	suggests, stores and manages all Entity objects in the game world at a
 	given time. While the :mod:`diskovery` module stores all meshes, textures,
 	pipelines, and other related objects that may be used by entities at a given
 	time, the :class:`~diskovery_entity_manager.EntityManager` class stores
@@ -370,14 +370,14 @@ class EntityManager(object):
 
 	.. py:attribute:: dk
 
-		A reference to the :class:`~diskovery_instance.DkInstance` 
+		A reference to the :class:`~diskovery_instance.DkInstance`
 		that stores all the relevant fields for the Vulkan instance
 		and handles all Vulkan commands
 
 	.. py:attribute:: _entities
 
 		The dictionary in which all entities in the game world at a given time
-		are stored. 
+		are stored.
 
 	.. py:attribute:: command_buffers
 
@@ -386,7 +386,7 @@ class EntityManager(object):
 
 	.. py:attribute:: image_available
 
-		A list of VkSemaphore_ objects that signal when a given framebuffer is 
+		A list of VkSemaphore_ objects that signal when a given framebuffer is
 		available to be drawn on.
 
 	.. py:attribute:: render_finished
@@ -396,7 +396,7 @@ class EntityManager(object):
 
 	.. py:attribute:: in_flight_fences
 
-		A list of VkFence_ objects that are used in conjunction with the 
+		A list of VkFence_ objects that are used in conjunction with the
 		semaphores to wait until a given framebuffer is available to have its
 		draw calls executed, and then signal when those operations are done.
 
@@ -409,7 +409,7 @@ class EntityManager(object):
 	.. py:attribute:: bg_color
 
 		A tuple that stores the normalized RGB values that define the color the
-		game screen will be filled with when each new frame begins. The default 
+		game screen will be filled with when each new frame begins. The default
 		is black, but the user can define another color if they choose. This
 		is typically done by passing a 'bg_color' value in the config dictionary
 		when initializing DisKovery, where a tuple of 3 values can be passed.
@@ -421,7 +421,7 @@ class EntityManager(object):
 		"""
 		Gets the amount of time, in nanoseconds, between two given frames being
 		completed. This difference is used when calculating the interpolation
-		of animated models. 
+		of animated models.
 
 		:returns: the amount of time it takes to render one frame
 		"""
@@ -431,7 +431,7 @@ class EntityManager(object):
 		"""
 		Adds an entity to the dictionary of entities. If the entity
 		given is a :class:`~diskovery.RenderedEntity`, this method
-		will also refresh the command buffers to include the draw 
+		will also refresh the command buffers to include the draw
 		calls for this new entity.
 
 		:param entity: The :class:`~diskovery.Entity` to be added
@@ -446,7 +446,7 @@ class EntityManager(object):
 	def remove_entity(self, name):
 		"""
 		Given the name by which an :class:`~diskovery.Entity` in the
-		dictionary of entities is addressed, remove it from the 
+		dictionary of entities is addressed, remove it from the
 		dictionary, and if it was a :class:`~diskovery.RenderedEntity`,
 		update the command buffers to not include this Entity in the
 		draw calls.
@@ -471,7 +471,7 @@ class EntityManager(object):
 		fences act as the objects that signal these. An internal value
 		for the maximum number of frames that can be processed at once
 		(MAX_FRAMES_IN_FLIGHT) will determine how many of each of these
-		objects are created. 
+		objects are created.
 		"""
 
 		# All semaphores and fences use the same creation info
@@ -488,18 +488,18 @@ class EntityManager(object):
 
 			img = vk.Semaphore(0)
 			self.dk.CreateSemaphore(
-				self.dk.device, 
-				byref(create_info), 
-				None, 
+				self.dk.device,
+				byref(create_info),
+				None,
 				byref(img)
 			)
 			self.image_available[i] = img
 
 			ren = vk.Semaphore(0)
 			self.dk.CreateSemaphore(
-				self.dk.device, 
-				byref(create_info), 
-				None, 
+				self.dk.device,
+				byref(create_info),
+				None,
 				byref(ren)
 			)
 			self.renders_finished[i] = ren
@@ -517,9 +517,9 @@ class EntityManager(object):
 		"""
 		Performs the necessary Vulkan operations to submit the images
 		stored in the framebuffers to the presentation queue to be
-		displayed on the surface. 
+		displayed on the surface.
 		"""
-		self.LAST_TIME_VAL = self.TIME_VAL 
+		self.LAST_TIME_VAL = self.TIME_VAL
 		self.TIME_VAL = time.perf_counter()
 
 		fence = vk.Fence(self.in_flight_fences[self.current_frame])
@@ -527,8 +527,8 @@ class EntityManager(object):
 		render = vk.Semaphore(self.renders_finished[self.current_frame])
 
 		self.dk.WaitForFences(
-			self.dk.device, 
-			1, 
+			self.dk.device,
+			1,
 			pointer(fence),
 			vk.TRUE,
 			UINT64_MAX
@@ -591,7 +591,7 @@ class EntityManager(object):
 			else:
 				sem = vk.Semaphore(renderer.done_rendering[self.current_frame])
 				submit_info.signal_semaphores = pointer(sem)
-			
+
 
 			if is_last:
 				self.dk.QueueSubmit(self.dk.graphics['queue'], 1, byref(submit_info), fence)
@@ -643,7 +643,7 @@ class EntityManager(object):
 
 
 	def get_image(self, renderer_ind = 0, col_att = 0, region = None):
-		img = self.renderers[renderer_ind].color_attachments[col_att]
+		img = self.renderers[renderer_ind].resolve_attachments[-1]
 
 		if region == None:
 			sub = vk.ImageSubresourceLayers(
@@ -661,13 +661,33 @@ class EntityManager(object):
 			)
 
 
-		buff = Buffer(self.dk, )
-		image_to_buffer()
+		size = self.dk.image_data['extent'].width * \
+				self.dk.image_data['extent'].height * 4
 
+		buff = Buffer(self.dk, size, None, None, False)
+		image_to_buffer(self.dk, img, buff.buffer, region)
+
+		dst = (c_ubyte * size)()
+		src = vk.c_void_p(0)
+
+		self.dk.MapMemory(
+			self.dk.device,
+			buff.memory,
+			0,
+			buff.mem_req.size,
+			0,
+			byref(src)
+		)
+		memmove(dst, src, size)
+		self.dk.UnmapMemory(self.dk.device, buff.memory)
+
+		buff.cleanup()
+
+		return dst
 
 	def cleanup(self):
 		"""
-		Handles necessary Destroy methods for all the Vulkan components 
+		Handles necessary Destroy methods for all the Vulkan components
 		contained inside the :class:`~diskovery_entity_manager.EntityManager`
 		"""
 		for r in self.renderers:
@@ -677,6 +697,5 @@ class EntityManager(object):
 			self.dk.DestroySemaphore(self.dk.device, self.image_available[i], None)
 			self.dk.DestroySemaphore(self.dk.device, self.renders_finished[i], None)
 			self.dk.DestroyFence(self.dk.device, self.in_flight_fences[i], None)
-		
-		cleanup_entities()
 
+		cleanup_entities()

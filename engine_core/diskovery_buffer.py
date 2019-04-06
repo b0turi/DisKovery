@@ -6,7 +6,7 @@ and VkDeviceMemory_ objects. These two objects, in conjunction, define
 a region in the device's memory (VRAM if the VkPhysicalDevice_ being used
 is a discrete GPU, or RAM if the graphics are being handled by an integrated
 graphics card within a CPU). The transferring of data into these regions
-is handled by very low level C commands, which are wrapped by the 
+is handled by very low level C commands, which are wrapped by the
 :class:`~diskovery_buffer.Buffer` class for convenience and readability.
 
 There are two classes defined within the :mod:`~diskovery_buffer` module:
@@ -30,7 +30,7 @@ class Buffer(object):
 
 	#.  A Uniform Buffer (only size defined)
 
-		A buffer used for the :class:`~diskovery_buffer.UniformBuffer` 
+		A buffer used for the :class:`~diskovery_buffer.UniformBuffer`
 		class stores data relating to a uniform variable defined in
 		a Shader. The buffer is passed to a VkDescriptorSet_ in a
 		:class:`~diskovery_descriptor.Descriptor` and then bound when
@@ -39,42 +39,42 @@ class Buffer(object):
 	#.  A Staging Buffer (size and info defined)
 
 		A staging buffer is used to move data from one place
-		to another more efficiently. It handles the actual 
+		to another more efficiently. It handles the actual
 		transfer of data from one address to another.
-		
+
 		Staging Buffers' usage flags allow for more efficient copying
 		of data from one place to another, making it more efficient
-		to load the data into a staging buffer and the copy it 
+		to load the data into a staging buffer and the copy it
 		from the staging buffer to the other buffer using Vulkan's
-		vkCmdCopyBuffer_ function. 
+		vkCmdCopyBuffer_ function.
 
 	#.  A Standard Buffer (size, info, and usage defined)
 
 		A standard buffer is the main use case, and can store any
-		data in GPU memory. It is wrapped with an additional 
-		staging buffer when it is created so that the data is 
+		data in GPU memory. It is wrapped with an additional
+		staging buffer when it is created so that the data is
 		more efficiently loaded into the buffer.
 
 		The primary usage of the standard buffer is to store
 		vertex and input data for :class:`~diskovery_mesh.Mesh` objects.
 
 	The actual data to be stored in the buffer (passed in the ``info``
-	argument) must be passed in a ``ctypes`` array or a ``Structure``. 
+	argument) must be passed in a ``ctypes`` array or a ``Structure``.
 	Python lists are easily converted to ``ctypes`` arrays:::
 
 		data = [5, 10, 15, 20]
 		cdata = (c_int*4)(*data)
 
-	The ``usage`` argument takes usage flags used by Vulkan to 
-	determine what kind of buffer it should create. The 
-	VkBufferUsageFlagBits_ enum defines each flag with a different bit 
-	set to 1 so bitwise operations can be used to combine different usages. 
+	The ``usage`` argument takes usage flags used by Vulkan to
+	determine what kind of buffer it should create. The
+	VkBufferUsageFlagBits_ enum defines each flag with a different bit
+	set to 1 so bitwise operations can be used to combine different usages.
 
 	**Attributes of the Buffer class:**
 
 	.. py:attribute:: dk
 
-		A reference to the :class:`~diskovery_instance.DkInstance` 
+		A reference to the :class:`~diskovery_instance.DkInstance`
 		that stores all the relevant fields for the Vulkan instance
 		and handles all Vulkan commands
 
@@ -85,14 +85,14 @@ class Buffer(object):
 
 	.. py:attribute:: memory
 
-		Stores the VkDeviceMemory_ handle Vulkan will generate when memory on 
+		Stores the VkDeviceMemory_ handle Vulkan will generate when memory on
 		the Vulkan device is allocated
 
 	.. py:attribute:: size
 
 		The size of the buffer to be created, in bytes, stored as an
 		integer. If using ``ctypes``, the ``sizeof()`` method would
-		give an appropriate value for this field.	
+		give an appropriate value for this field.
 
 	.. _VkDescriptorSet: https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkDescriptorSet.html
 	.. _vkCmdCopyBuffer: https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkCmdCopyBuffer.html
@@ -102,11 +102,11 @@ class Buffer(object):
 	def make_buffer(self, usage, props):
 		"""
 		Performs the various Vulkan operations required to initialize
-		the :attr:`~diskovery_buffer.Buffer.buffer` and allocate the 
+		the :attr:`~diskovery_buffer.Buffer.buffer` and allocate the
 		:attr:`~diskovery_buffer.Buffer.memory`. The final step
 		binds the two together as virtual memory inside the Vulkan device.
 
-		:param usage: Mirrors the ``usage`` attribute described above, the constructor 
+		:param usage: Mirrors the ``usage`` attribute described above, the constructor
 			will fill the value based on which type of buffer it is:
 
 			- Uniform Buffer: ``VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT``
@@ -131,8 +131,8 @@ class Buffer(object):
 
 		self.mem_req = vk.MemoryRequirements()
 		self.dk.GetBufferMemoryRequirements(
-			self.dk.device, 
-			self.buffer, 
+			self.dk.device,
+			self.buffer,
 			byref(self.mem_req)
 		)
 
@@ -157,7 +157,7 @@ class Buffer(object):
 		:param src: The VkBuffer_ from which data will be transfered
 		:param dst: The VkBuffer_ to which data will be transfered
 		:param size: The size of the data to transfer (should be the size of both buffers as well)
-		
+
 		.. _VkCommandBuffer: https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkCommandBuffer.html
 		"""
 		cmd = self.dk.start_command()
@@ -168,7 +168,7 @@ class Buffer(object):
 
 		self.dk.end_command(cmd)
 
-	def __init__(self, dk, size, info=None, usage=None):
+	def __init__(self, dk, size, info=None, usage=None, uniform=True):
 		self.dk = dk
 		# The Vulkan buffer (VkBuffer) that will be referenced elsewhere
 		self.buffer = vk.Buffer(0)
@@ -177,7 +177,7 @@ class Buffer(object):
 		# A value that stores the size of the buffer (VkDeviceSize)
 		self.size = size
 
-		
+
 		if info != None and usage != None:
 			# Create a standard buffer, wrapped with a staging buffer
 			staging_buffer = Buffer(self.dk, size, info)
@@ -185,7 +185,7 @@ class Buffer(object):
 				vk.BUFFER_USAGE_TRANSFER_DST_BIT | usage,
 				vk.MEMORY_PROPERTY_DEVICE_LOCAL_BIT
 			)
-			
+
 			self.copy_buffer(staging_buffer.buffer, self.buffer, size)
 			staging_buffer.cleanup()
 
@@ -198,16 +198,23 @@ class Buffer(object):
 
 			data = vk.c_void_p(0)
 			self.dk.MapMemory(
-				self.dk.device, 
-				self.memory, 
-				0, 
-				self.mem_req.size, 
-				0, 
+				self.dk.device,
+				self.memory,
+				0,
+				self.mem_req.size,
+				0,
 				byref(data)
 			)
 			memmove(data, info, size)
 			self.dk.UnmapMemory(self.dk.device, self.memory)
-			
+		elif info == None and usage == None and not uniform:
+			# Destination buffer for data to be dropped in
+
+			self.make_buffer(
+				vk.BUFFER_USAGE_TRANSFER_DST_BIT,
+				vk.MEMORY_PROPERTY_HOST_VISIBLE_BIT
+			)
+
 		else:
 			# Create a Uniform Buffer
 			self.make_buffer(
@@ -218,7 +225,7 @@ class Buffer(object):
 
 	def cleanup(self):
 		"""
-		Handles necessary Destroy methods for all the Vulkan components 
+		Handles necessary Destroy methods for all the Vulkan components
 		contained inside the :class:`~diskovery_buffer.Buffer`
 		"""
 		self.dk.DestroyBuffer(self.dk.device, self.buffer, None)
@@ -228,15 +235,15 @@ class UniformBuffer(object):
 	"""
 	The :class:`~diskovery_buffer.Uniform_Buffer` class is used to store
 	data for transfer to the list of VkDescriptorSet_ objects defined in
-	a :class:`~diskovery_descriptor.Descriptor`. It is used inside the 
-	:class:`~diskovery.RenderedEntity` class, with one 
+	a :class:`~diskovery_descriptor.Descriptor`. It is used inside the
+	:class:`~diskovery.RenderedEntity` class, with one
 	:class:`~diskovery_buffer.UniformBuffer` defined for each uniform
 	listed in the definition of that RenderedEntity's :class:`~diskovery_pipeline.Shader`.
 
 	Each :class:`~diskovery_buffer.Uniform_Buffer` holds a list of
-	:class:`~diskovery_buffer.Buffer` objects with a length that is 
+	:class:`~diskovery_buffer.Buffer` objects with a length that is
 	determined by the number of back buffers the VkPhysicalDevice_ can
-	handle, a value that is calculated in the 
+	handle, a value that is calculated in the
 	:meth:`~diskovery_instance.DkInstance.create_swap_chain` method
 	of the :class:`~diskovery_instance.DkInstance` class.
 
@@ -244,7 +251,7 @@ class UniformBuffer(object):
 
 	.. py:attribute:: dk
 
-		A reference to the :class:`~diskovery_instance.DkInstance` 
+		A reference to the :class:`~diskovery_instance.DkInstance`
 		that stores all the relevant fields for the Vulkan instance
 		and handles all Vulkan commands
 
@@ -256,7 +263,7 @@ class UniformBuffer(object):
 	.. py:attribute:: size
 
 		The size, in bytes, of a uniform with this UniformBuffer's type.
-		:func:`~diskovery_descriptor.get_uniform_size` is 
+		:func:`~diskovery_descriptor.get_uniform_size` is
 		used to retrieve this value.
 
 	.. py:attribute:: buffers
@@ -291,10 +298,10 @@ class UniformBuffer(object):
 		"""
 		info = vk.c_void_p(0)
 		self.dk.MapMemory(
-			self.dk.device, 
-			self.buffers[index].memory, 
-			0, 
-			self.size, 
+			self.dk.device,
+			self.buffers[index].memory,
+			0,
+			self.size,
 			0,
 			byref(info)
 		)
@@ -315,7 +322,7 @@ class UniformBuffer(object):
 
 	def cleanup(self):
 		"""
-		Handles necessary Destroy methods for all the Vulkan components 
+		Handles necessary Destroy methods for all the Vulkan components
 		contained inside the :class:`~diskovery_buffer.Buffer`
 		"""
 		for buff in self.buffers:

@@ -109,7 +109,7 @@ def edit_scene(filename):
 
 		line = f.readline()[:-1]
 
-		color = 1
+		color = 100
 
 		while len(filled) < len(func_map):
 			while line and not line in func_map.keys():
@@ -239,7 +239,7 @@ def edit_scene(filename):
 						else:
 							cmd += "{}".format(cmd_val)
 						cmd += ","
-	
+
 					cmd = cmd[:-1] + "), '{}')".format(args[2])
 					exec(cmd)
 
@@ -253,4 +253,3 @@ def edit_scene(filename):
 			line = f.readline()[:-1]
 
 		#diskovery.entity("sir").selected = True
-
