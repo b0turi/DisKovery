@@ -9,13 +9,34 @@ import tkinter as tk
 
 class Menu_Toolbar:
     
-	def __init__(self, master):
+	def __init__(self, master, width, height, x, y):
 		self.master = master
+		self.width = width
+		self.height = height
+		self.x = x
+		self.y = y
+		self.dim = "{0}{1}{2}{3}{4}{5}{6}".format(str(self.width),'x',str(self.height),
+													 '+',str(self.x),'+',str(self.y))
 		
         #Set up the window menu for the UI
-        self.menubar = tk.Menu(self.master)
+		self.menubar = tk.Toplevel(self.master)
+		self.menubar.geometry(self.dim)
+		self.option_buttons(self.menubar)
         
-	def option_buttons(
+	def option_buttons(self, master):
+		self.master = master
+		self.filebutton = tk.Button(self.master, borderwidth = 5, text = "File")
+		self.filebutton.grid(row=0,column=0)
+		
+		self.editbutton = tk.Button(self.master, borderwidth = 5, text = "Edit")
+		self.editbutton.grid(row=0,column=1)
+		
+		self.viewbutton = tk.Button(self.master, borderwidth = 5, text = "View")
+		self.viewbutton.grid(row=0,column=2)
+		
+		self.helpbutton = tk.Button(self.master, borderwidth = 5, text = "Help")
+		self.helpbutton.grid(row=0,column=3)
+		"""
         m_file = tk.Menu(menubar, tearoff=0)
         m_file.add_command(label="New")
         m_file.add_command(label="Load")
@@ -49,4 +70,4 @@ class Menu_Toolbar:
         m_help.add_command(label="License")
         menubar.add_cascade(label="Help", menu=m_help)
         
-        root.config(menu=menubar)
+        root.config(menu=menubar)"""

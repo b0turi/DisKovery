@@ -1,4 +1,35 @@
 /*************************
+	Week 7
+**************************/
+4/1/2019 - 4/5/2019
+Kyle and I met up on Monday to elaborate both on the current state of the project and the poster that we'll
+present. We will both work on an individual PowerPoint slide that is scaled to match the size of the poster
+we'll present at Intersections. In the meantime, Kyle expects me to at least have the context menus done
+by the end of the week, so now I'll report the progress I've made on those menus.
+
+For context menus, I implemented four variables for the  context menus.
+3D vectors, which have a setting for position (x, y, z); string value (for the mesh), a mesh variable (which
+defines the shape of the object [a name and the type of shape]); boolean variables that turn on and off 
+features of the object (such as "lighted" or not); and a List for the animations attached the object (Run, 
+Walk, Idle). Possible stretch goals that are not the primary objective include variables for color, which will
+use the same variables for 3D vectors (utilizing a color picker).
+
+The progress on the context menus have been done in primarily one Python file: diskov_win.py. For context
+menus, I created a class called context consisting of a constructor function and several functions that
+assist with setting up four specific types of windows (context_pos for position, context_mesh for the mesh
+filter, context_features for additional traits such as degree of lighting, and context_anim for animations
+associated with an object. Speaking of which, we currently do not have the means of retrieving the attribute,
+so I created a faux function in Context called object_details, which returns an array indicative of the
+contextual attributes attached to an object in the Diskovery engine's visual environment, which has not
+been implemented into the UI.
+
+Lastly I crafted one more class to use as a variable specifically for position of objects and eventually as
+a potential means of selecting color: TripleVector. It's a simple class consisting of three fields x, y, and 
+z, and it has the ability to retrieve any of the current values input for the vector.
+
+The changes made can be summed up as creating two new classes with a constructors and functions in diskov_win.
+
+/*************************
 	Week 6
 **************************/
 3/25/2019 - 3/29/2019
