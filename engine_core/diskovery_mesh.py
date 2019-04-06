@@ -79,22 +79,16 @@ class ParseType(Enum):
 class Parser(object):
 
 	# OBJ Parsing #
-	def process_vertex(self, v_data, ind, tex, norm, n_norm, n_tex):
-		vert = int(v_data[0]) - 1
-		ind.append(vert)
-		current_tex = tex[int(v_data[1]) - 1]
-		n_tex[vert] = current_tex
-		current_norm = norm[int(v_data[2]) - 1]
-		n_norm[vert] = current_norm
 
 	def load_obj(self, file):
-		positions = []
 		normals = []
 		textures = []
 
 		new_norm = None
 		new_tex = None
 
+		vertex_loader_list = []
+		input_list = []
 		vertex_list = []
 		index_list = []
 
@@ -106,13 +100,16 @@ class Parser(object):
 					continue
 
 				if line[:2] == 'v ':
-					positions.append(
-						(float(contents[1]),
-					 	 float(contents[2]),
-						 float(contents[3]))
-					)
+					vertex_loader_list.append(VertexLoader(
+						len(vertex_loader_list),
+						(c_float * 3)(
+							float(contents[1]),
+							float(contents[2]),
+							float(contents[3])
+						)
+					))
 				elif line[:3] == 'vt ':
-					textures.append((float(contents[1]), float(contents[2])))
+					textures.append((float(contents[1]), 1 - float(contents[2])))
 				elif line[:3] == 'vn ':
 					normals.append(
 						(float(contents[1]),
@@ -120,44 +117,32 @@ class Parser(object):
 						 float(contents[3]))
 					)
 				elif line[:2] == 'f ':
-					if new_norm is None:
-						new_norm = ((c_float*3)*len(positions))()
-						new_tex = ((c_float*2)*len(positions))()
+					for i in range(1, 4):
+						for value in contents[i].split('/'):
+							input_list.append(int(value) - 1)
 
-					v1 = contents[1].split('/')
-					v2 = contents[2].split('/')
-					v3 = contents[3].split('/')
+		for i in range(0, int(len(input_list)/3)):
+			pos_ind = int(input_list[i * 3])
+			tex_ind = int(input_list[i * 3 + 1])
+			norm_ind = int(input_list[i * 3 + 2])
 
-					self.process_vertex(
-						v1,
-						index_list,
-						textures,
-						normals,
-						new_norm,
-						new_tex
-					)
-					self.process_vertex(
-						v2,
-						index_list,
-						textures,
-						normals,
-						new_norm,
-						new_tex
-					)
-					self.process_vertex(
-						v3,
-						index_list,
-						textures,
-						normals,
-						new_norm,
-						new_tex
-					)
+			vert = vertex_loader_list[pos_ind]
+			if vert.norm_ind == None:
+				vert.tex_ind = tex_ind
+				vert.norm_ind = norm_ind
+				index_list.append(pos_ind)
+			else:
+				self.duplicate_handler(vertex_loader_list, index_list, vert, tex_ind, norm_ind, False)
 
-		for index, vertex in enumerate(positions):
+		for vert in vertex_loader_list:
+			if vert.norm_ind == None:
+				vert.norm_ind = 0
+				vert.tex_ind = 0
+
 			v = Vertex()
-			v.position = vertex
-			v.tex_coord = new_tex[index]
-			v.normal = new_norm[index]
+			v.position = vert.position
+			v.tex_coord = textures[vert.tex_ind]
+			v.normal = normals[vert.norm_ind]
 
 			vertex_list.append(v)
 
@@ -201,7 +186,7 @@ class Parser(object):
 
 	def duplicate_handler(self, vll, il, vert, tex_ind, norm_ind, rig):
 		if vert.norm_ind == norm_ind and vert.tex_ind == tex_ind:
-			index_list.append(pos_ind)
+			il.append(vert.index)
 			return
 		else:
 			if vert.duplicate == None:
@@ -276,7 +261,6 @@ class Parser(object):
 				skin.scale(MAX_JOINTS)
 				skin_values.append(skin)
 
-		positions = []
 		normals = []
 		textures = []
 

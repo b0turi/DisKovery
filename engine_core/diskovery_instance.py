@@ -405,10 +405,14 @@ class DkInstance(object):
 		# The depth format to be used across all renderers (VkFormat)
 		self.depth_format = None
 
+		self.debug_mode = debug
+
 		self.frame_resized = False
 
 		self.samplers = { }
 		self.render_passes = { }
+
+		self.max_color_attachments = 2
 
 		self.create_instance(debug)
 		if debug:
@@ -434,7 +438,8 @@ class DkInstance(object):
 
 		self.DestroyPipelineCache(self.device, self.pipeline_cache, None)
 		self.DestroyDevice(self.device, None)
-		self.DestroyDebugReportCallbackEXT(self.instance, self.debugger, None)
+		if self.debug_mode:
+			self.DestroyDebugReportCallbackEXT(self.instance, self.debugger, None)
 		self.DestroyInstance(self.instance, None)
 
 	def _max_usable_samples(self):
@@ -510,24 +515,39 @@ class DkInstance(object):
 			self.samplers[mip] = make_texture_sampler(self, mip)
 			return self.samplers[mip]
 
-	def get_render_pass(self, samples):
-		if samples in self.render_passes.keys():
-			return self.render_passes[samples]
-		else:
-			self.render_passes[samples] = self.make_render_pass(samples)
-			return self.render_passes[samples]
-	
-	def make_render_pass(self, samples):
-		color, depth = vk.AttachmentDescription(), vk.AttachmentDescription()
+	def get_render_pass(self, samples, color_attachments):
+		if color_attachments > self.max_color_attachments:
+			self.max_color_attachments = color_attachments
 
-		color.format = self.color_format
-		color.samples = samples
-		color.load_op = vk.ATTACHMENT_LOAD_OP_CLEAR
-		color.store_op = vk.ATTACHMENT_STORE_OP_STORE
-		color.stencil_load_op = vk.ATTACHMENT_LOAD_OP_DONT_CARE
-		color.stencil_store_op = vk.ATTACHMENT_STORE_OP_DONT_CARE
-		color.initial_layout = vk.IMAGE_LAYOUT_UNDEFINED
-		color.final_layout = vk.IMAGE_LAYOUT_PRESENT_SRC_KHR
+		if (samples, color_attachments) in self.render_passes.keys():
+			return self.render_passes[(samples, color_attachments)]
+		else:
+			self.render_passes[(samples, color_attachments)] = self.make_render_pass(samples, color_attachments)
+			return self.render_passes[(samples, color_attachments)]
+	
+	def make_render_pass(self, samples, color_attachments):
+
+
+		colors = (vk.AttachmentDescription * color_attachments)()
+		color_refs = (vk.AttachmentReference * color_attachments)()
+
+		for i in range(0, color_attachments):
+			colors[i] = vk.AttachmentDescription()
+			colors[i].format = self.color_format
+			colors[i].samples = samples
+			colors[i].load_op = vk.ATTACHMENT_LOAD_OP_CLEAR
+			colors[i].store_op = vk.ATTACHMENT_STORE_OP_STORE
+			colors[i].stencil_load_op = vk.ATTACHMENT_LOAD_OP_DONT_CARE
+			colors[i].stencil_store_op = vk.ATTACHMENT_STORE_OP_DONT_CARE
+			colors[i].initial_layout = vk.IMAGE_LAYOUT_UNDEFINED
+			colors[i].final_layout = vk.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+
+			color_refs[i] = vk.AttachmentReference( 
+				attachment=i, 
+				layout=vk.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL 
+			)
+
+		depth = vk.AttachmentDescription()
 
 		depth.format = self.depth_format
 		depth.samples = samples
@@ -538,19 +558,15 @@ class DkInstance(object):
 		depth.initial_layout = vk.IMAGE_LAYOUT_UNDEFINED
 		depth.final_layout = vk.IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 
-		color_ref = vk.AttachmentReference( 
-			attachment=0, 
-			layout=vk.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL 
-		)
 		depth_ref = vk.AttachmentReference( 
-			attachment=1, 
+			attachment=color_attachments, 
 			layout=vk.IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL 
 		)
 
 		subpass = vk.SubpassDescription(
 			pipeline_bind_point=vk.PIPELINE_BIND_POINT_GRAPHICS,
-			color_attachment_count=1, 
-			color_attachments=pointer(color_ref),
+			color_attachment_count=color_attachments, 
+			color_attachments=cast(color_refs, POINTER(vk.AttachmentReference)),
 			resolve_attachments=None, 
 			depth_stencil_attachment=pointer(depth_ref)
 		)
@@ -563,26 +579,36 @@ class DkInstance(object):
 			dst_access_mask=vk.ACCESS_COLOR_ATTACHMENT_READ_BIT | vk.ACCESS_COLOR_ATTACHMENT_WRITE_BIT
 		)
 
-		attachments = (vk.AttachmentDescription*2)(color, depth)
+		attachments = (vk.AttachmentDescription*(color_attachments + 1))(*colors)
+		attachments[color_attachments] = depth
 
 		if samples != vk.SAMPLE_COUNT_1_BIT:
-			color_resolve = vk.AttachmentDescription()
-			color_resolve.format = self.color_format
-			color_resolve.samples = vk.SAMPLE_COUNT_1_BIT
-			color_resolve.load_op = vk.ATTACHMENT_LOAD_OP_DONT_CARE
-			color_resolve.store_op = vk.ATTACHMENT_STORE_OP_STORE
-			color_resolve.stencil_load_op = vk.ATTACHMENT_LOAD_OP_DONT_CARE
-			color_resolve.stencil_store_op = vk.ATTACHMENT_STORE_OP_DONT_CARE
-			color_resolve.initial_layout = vk.IMAGE_LAYOUT_UNDEFINED
-			color_resolve.final_layout = vk.IMAGE_LAYOUT_PRESENT_SRC_KHR
 
-			resolve_ref = vk.AttachmentReference(
-				attachment=2,
-				layout=vk.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-			)
+			resolves = (vk.AttachmentDescription * color_attachments)()
+			resolve_refs = (vk.AttachmentReference * color_attachments)()
 
-			subpass.resolve_attachments = pointer(resolve_ref)
-			attachments = (vk.AttachmentDescription*3)(color, depth, color_resolve)
+			attachments = (vk.AttachmentDescription * (2 * color_attachments + 1))(*attachments)
+
+			for i in range(0, color_attachments):
+
+				resolves[i] = vk.AttachmentDescription()
+				resolves[i].format = self.color_format
+				resolves[i].samples = vk.SAMPLE_COUNT_1_BIT
+				resolves[i].load_op = vk.ATTACHMENT_LOAD_OP_DONT_CARE
+				resolves[i].store_op = vk.ATTACHMENT_STORE_OP_STORE
+				resolves[i].stencil_load_op = vk.ATTACHMENT_LOAD_OP_DONT_CARE
+				resolves[i].stencil_store_op = vk.ATTACHMENT_STORE_OP_DONT_CARE
+				resolves[i].initial_layout = vk.IMAGE_LAYOUT_UNDEFINED
+				resolves[i].final_layout = vk.IMAGE_LAYOUT_PRESENT_SRC_KHR
+
+				resolve_refs[i] = vk.AttachmentReference(
+					attachment=color_attachments + i + 1,
+					layout=vk.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+				)
+
+				attachments[color_attachments + i + 1] = resolves[i]
+
+			subpass.resolve_attachments = cast(resolve_refs, POINTER(vk.AttachmentReference))
 
 		create_info = vk.RenderPassCreateInfo(
 			s_type=vk.STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,

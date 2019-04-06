@@ -106,25 +106,6 @@ class ScreenSize(UniformBufferObject):
 	def get_size():
 		return sizeof(c_float) * 2
 
-class ObjectColor(UniformBufferObject):
-	def __init__(self, color):
-		hex_val = int(color, 16)
-		r = hex_val//(16**4)
-		hex_val -= r
-		g = hex_val//(16**2)
-		hex_val -= g
-		b = hex_val
-
-		self.color = (c_float*3)(r/255, g/255, b/255)
-
-
-	def get_data(self):
-		return self.color
-
-	@staticmethod
-	def get_size():
-		return sizeof(c_float) * 3
-
 class Boolean(UniformBufferObject):
 	def __init__(self, value=True):
 		self.value = value
@@ -135,3 +116,65 @@ class Boolean(UniformBufferObject):
 	@staticmethod
 	def get_size():
 		return sizeof(c_float)
+
+class Tint(UniformBufferObject):
+	def __init__(self, value=(1, 1, 1, 1)):
+		self.value = value
+
+	def get_data(self):
+		return (c_float * 4)(*(self.value))
+
+	@staticmethod
+	def get_size():
+		return sizeof(c_float) * 4
+
+class Color(Tint):
+	def __init__(self, value=(1, 1, 1, 1)):
+		Tint.__init__(self, value)
+
+MAX_LIGHTS = 50
+class SceneLighting(UniformBufferObject):
+	def __init__(self):
+		self.lights = []
+
+	def get_data(self):
+		position = (c_float * (4 * MAX_LIGHTS))()
+		direction = (c_float * (4 * MAX_LIGHTS))()
+		tint = (c_float * (4 * MAX_LIGHTS))()
+		mods = (c_float * (4 * MAX_LIGHTS))()
+
+		for i, light in enumerate(self.lights):
+
+			position[i * 4    ] = light.position[0]
+			position[i * 4 + 1] = light.position[1]
+			position[i * 4 + 2] = light.position[2]
+			position[i * 4 + 3] = 0.0
+
+
+			direction[i * 4    ] = light.rotation[0]
+			direction[i * 4 + 1] = light.rotation[1]
+			direction[i * 4 + 2] = light.rotation[2]
+			direction[i * 4 + 3] = 0.0
+
+			tint[i * 4    ] = light.tint[0]
+			tint[i * 4 + 1] = light.tint[1]
+			tint[i * 4 + 2] = light.tint[2]
+			tint[i * 4 + 3] = 0.0
+
+			mods[i * 4    ] = light.intensity
+			mods[i * 4 + 1] = light.distance
+			mods[i * 4 + 2] = light.spread
+			mods[i * 4 + 3] = 0.0
+
+		final_list = (c_float * (16 * MAX_LIGHTS))(*(
+			list(position) +
+			list(direction) +
+			list(tint) +
+			list(mods)
+		))
+
+		return final_list
+
+	@staticmethod
+	def get_size():
+		return sizeof(c_float) * 16 * MAX_LIGHTS

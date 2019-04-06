@@ -1,11 +1,11 @@
 
-import diskovery 
+import diskovery
 import diskovery_scene_manager
 
 def main():
-	diskovery.init(True)
+	diskovery.init(False, {'input': "editorinput.in"})
 
-	diskovery_scene_manager.load_scene("template.dk")
+	diskovery_scene_manager.edit_scene("template.dk")
 
 	diskovery.run()
 

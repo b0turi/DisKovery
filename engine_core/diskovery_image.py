@@ -116,6 +116,72 @@ class Image(object):
 
 		self.dk.end_command(cmd)
 
+		self.access_mask = dst_access_mask
+		self.stage = dst_stage
+
+	def swap_to_source(self, cmd):
+
+		sub = vk.ImageSubresourceRange(
+			aspect_mask=vk.IMAGE_ASPECT_COLOR_BIT,
+			base_mip_level=0,
+			level_count=1,
+			base_array_layer=0,
+			layer_count=1
+		)
+
+		barrier = vk.ImageMemoryBarrier(
+			s_type=vk.STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+			old_layout=self.layout,
+			new_layout=vk.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			src_queue_family_index=vk.QUEUE_FAMILY_IGNORED,
+			dst_queue_family_index=vk.QUEUE_FAMILY_IGNORED,
+			image=self.image,
+			src_access_mask=self.access_mask,
+			dst_access_mask=vk.ACCESS_TRANSFER_WRITE_BIT,
+			subresource_range=sub
+		)
+
+		self.dk.CmdPipelineBarrier(
+			cmd,
+			self.stage,
+			vk.PIPELINE_STAGE_TRANSFER_BIT,
+			0, 0,
+			None, 0,
+			None, 1,
+			byref(barrier)
+		)
+
+	def swap_from_source(self, cmd):
+		sub = vk.ImageSubresourceRange(
+			aspect_mask=vk.IMAGE_ASPECT_COLOR_BIT,
+			base_mip_level=0,
+			level_count=1,
+			base_array_layer=0,
+			layer_count=1
+		)
+
+		barrier = vk.ImageMemoryBarrier(
+			s_type=vk.STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+			old_layout=vk.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			new_layout=self.layout,
+			src_queue_family_index=vk.QUEUE_FAMILY_IGNORED,
+			dst_queue_family_index=vk.QUEUE_FAMILY_IGNORED,
+			image=self.image,
+			src_access_mask=vk.ACCESS_TRANSFER_WRITE_BIT,
+			dst_access_mask=self.access_mask,
+			subresource_range=sub
+		)
+
+		self.dk.CmdPipelineBarrier(
+			cmd,
+			vk.PIPELINE_STAGE_TRANSFER_BIT,
+			self.stage,
+			0, 0,
+			None, 0,
+			None, 1,
+			byref(barrier)
+		)
+
 	def create_image_view(self, form, aspects, mip):
 		sub = vk.ImageSubresourceRange(
 			aspect_mask=aspects,
@@ -154,6 +220,7 @@ class Image(object):
 		# Newly created images have an undefined layout. This method
 		# fills the image with its given layout.
 		self.set_layout(self.image, form, vk.IMAGE_LAYOUT_UNDEFINED, layout, mip)
+		self.layout = layout
 		self.create_image_view(form, aspects, mip)
 
 	def cleanup(self):
@@ -213,6 +280,21 @@ def buffer_to_image(dk, buff, image, width, height):
 
 	dk.end_command(cmd)
 
+def image_to_buffer(dk, image, buff, region):
+	cmd = dk.start_command()
+	image.swap_to_source(cmd)
+
+	dk.CmdCopyImageToBuffer(
+		cmd,
+		image.image,
+		vk.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		buff,
+		1,
+		byref(region)
+	)
+
+	image.swap_from_source(cmd)
+	dk.end_command(cmd)
 
 class Texture(Image):
 
@@ -257,15 +339,15 @@ class Texture(Image):
 			)
 
 			src_offsets = (vk.Offset3D * 2)(
-				vk.Offset3D(0,0,0), 
+				vk.Offset3D(0,0,0),
 				vk.Offset3D(int(w), int(h), 1)
 			)
 
 			dst_offsets = (vk.Offset3D * 2)(
 				vk.Offset3D(0,0,0),
 				vk.Offset3D(
-					int(w/2) if w > 1 else 1, 
-					int(h/2) if h > 1 else 1, 
+					int(w/2) if w > 1 else 1,
+					int(h/2) if h > 1 else 1,
 					1
 				)
 			)
@@ -291,9 +373,9 @@ class Texture(Image):
 
 			self.dk.CmdBlitImage(
 				cmd,
-				self.image, 
+				self.image,
 				vk.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-				self.image, 
+				self.image,
 				vk.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 				1, byref(blit),
 				vk.FILTER_LINEAR
@@ -305,17 +387,17 @@ class Texture(Image):
 			barrier.dst_access_mask = vk.ACCESS_SHADER_READ_BIT
 
 			self.dk.CmdPipelineBarrier(cmd,
-				vk.PIPELINE_STAGE_TRANSFER_BIT, 
+				vk.PIPELINE_STAGE_TRANSFER_BIT,
 				vk.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-				0, 0, 
-				None, 0, 
-				None, 1, 
+				0, 0,
+				None, 0,
+				None, 1,
 				byref(barrier)
 			)
 
-			if w > 1: 
+			if w > 1:
 				w = int(w/2)
-			if h > 1: 
+			if h > 1:
 				h = int(h/2)
 
 		barrier.subresource_range.base_mip_level = mip - 1
@@ -326,9 +408,9 @@ class Texture(Image):
 
 		self.dk.CmdPipelineBarrier(
 			cmd,
-			vk.PIPELINE_STAGE_TRANSFER_BIT, 
+			vk.PIPELINE_STAGE_TRANSFER_BIT,
 			vk.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			0, 0, 
+			0, 0,
 			None,
 			0, None,
 			1, byref(barrier)
@@ -375,10 +457,10 @@ class Texture(Image):
 
 		staging_buffer = Buffer(dk, size, data)
 		buffer_to_image(
-			dk, 
-			staging_buffer.buffer, 
-			self.image, 
-			extent.width, 
+			dk,
+			staging_buffer.buffer,
+			self.image,
+			extent.width,
 			extent.height
 		)
 		staging_buffer.cleanup()

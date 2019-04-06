@@ -1,0 +1,35 @@
+EditorInput
+RS CamX
+RS CamY
+RS CamRotX
+RS CamRotY
+RS CamZoom
+RS ObjMoveX
+RS ObjMoveY
+RS ObjMoveZ
+BS Rotating
+BS Panning
+BA Select
+
+CamX M_y
+CamY M_x
+CamRotX M_y
+CamRotY M_x
+CamZoom M_s
+ObjMoveX K_a K_d,K_LEFT K_RIGHT
+ObjMoveY K_q K_e
+ObjMoveZ K_s K_w,K_DOWN K_UP
+Panning M_2
+Rotating M_1
+Select M_0
+CamX M_y
+CamY M_x
+CamRotX M_y
+CamRotY M_x
+CamZoom M_s
+ObjMoveX K_a K_d,K_LEFT K_RIGHT
+ObjMoveY K_q K_e
+ObjMoveZ K_s K_w,K_DOWN K_UP
+Panning M_2
+Rotating M_1
+Select M_0

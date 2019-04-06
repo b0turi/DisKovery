@@ -17,6 +17,8 @@ class Shader(object):
 		# A dictionary of the filenames of each stage of the shader
 		self.filenames = {}
 
+		self.color_attachments = 1
+
 		def_uni_map = []
 
 		"""
@@ -42,7 +44,7 @@ class Shader(object):
 				if line[:7] != 'layout(':
 					continue
 
-				# If the variable descriptes the attribute definitions
+				# If the variable describes the attribute definitions
 				if line.split('(')[1][:1] == 'l' and line.split(' ')[3] == 'in':
 					num_attribs = int(line.split(' ')[2][:-1])
 
@@ -62,35 +64,43 @@ class Shader(object):
 		with open(sources[1], 'r') as f:
 			num_attribs = 0
 			for line in f:
-				if line[:8] != 'layout(b':
+				if line[:7] != 'layout(':
 					continue
 
-				binding = int(line.split(' ')[2][:-1])
+				# If the variable describes the number of color attachments
+				if line.split('(')[1][:1] == 'l' and line.split(' ')[3] == 'out':
+					self.color_attachments = int(line.split(' ')[2][:-1]) + 1
 
-				if binding > max_binding:
-						max_binding = binding
+				if line.split('(')[1][:1] == 'b':
+					binding = int(line.split(' ')[2][:-1])
 
-				if line.split(' ')[4] == 'sampler2D':
-					self.definition[binding] = BindingType.TEXTURE_SAMPLER
-				else:
-					self.definition[binding] = BindingType.UNIFORM_BUFFER
-					
-					slots_back = sum(i > binding for i in def_uni_map)
-					def_uni_map.insert(len(def_uni_map) - slots_back, binding)
-					self.uniforms.insert(len(self.uniforms) - slots_back, eval(line.split(' ')[4]))
+					if binding > max_binding:
+							max_binding = binding
+
+					if line.split(' ')[4] == 'sampler2D':
+						self.definition[binding] = BindingType.TEXTURE_SAMPLER
+					else:
+						self.definition[binding] = BindingType.UNIFORM_BUFFER
+						
+						slots_back = sum(i > binding for i in def_uni_map)
+						def_uni_map.insert(len(def_uni_map) - slots_back, binding)
+						if line.split(' ')[4][0] != '_':
+							self.uniforms.insert(len(self.uniforms) - slots_back, eval(line.split(' ')[4]))
+						else:
+							self.uniforms.insert(len(self.uniforms) - slots_back, Boolean)
 
 		self.definition = tuple(self.definition[:(max_binding+1)])
 
 		for src in sources:
-			# if os.path.isfile("{}.spv".format(src)):
-			# 	subprocess.call("rm {}.spv".format(src))
-			# subprocess.call("glslangValidator.exe -V {} -o {}.spv".format(src, src))
+			if os.path.isfile("{}.spv".format(src)):
+				subprocess.call("rm {}.spv".format(src))
+			subprocess.call("glslangValidator.exe -V {} -o {}.spv".format(src, src))
 			# subprocess.call("compile.bat {}".format(src))
 
 			self.filenames[src.split('.')[1]] = "shaders/{}.spv".format(src)
 
 		os.chdir("..")
-
+		
 		self.sources = sources
 
 class Pipeline(object):
@@ -225,20 +235,25 @@ class Pipeline(object):
 			stencil_test_enable=vk.FALSE
 		)
 
-		color_blend_attachment = vk.PipelineColorBlendAttachmentState(
-		    color_write_mask=vk.COLOR_COMPONENT_R_BIT |
+
+		color_blend_attachments = (vk.PipelineColorBlendAttachmentState * self.dk.max_color_attachments)()
+		
+		for i in range(0, self.dk.max_color_attachments):
+			color_blend_attachments[i] = vk.PipelineColorBlendAttachmentState(
+				color_write_mask=vk.COLOR_COMPONENT_R_BIT |
 						    vk.COLOR_COMPONENT_G_BIT |
 						    vk.COLOR_COMPONENT_B_BIT |
 						    vk.COLOR_COMPONENT_A_BIT,
-		    blend_enable=vk.FALSE
-		)
+				blend_enable=vk.FALSE
+			)
+
 
 		color_blend_create = vk.PipelineColorBlendStateCreateInfo(
 		    s_type=vk.STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
 		    logic_op_enable=vk.FALSE,
 		    logic_op=vk.LOGIC_OP_COPY,
-		    attachment_count=1,
-		    attachments=pointer(color_blend_attachment),
+		    attachment_count=self.dk.max_color_attachments,
+		    attachments=cast(color_blend_attachments, POINTER(vk.PipelineColorBlendAttachmentState)),
 		    blend_constants=(c_float*4)(0.,0.,0.,0.)
 		)
 
@@ -257,7 +272,7 @@ class Pipeline(object):
 		    color_blend_state=pointer(color_blend_create),
 		    dynamic_state=None,
 		    layout=self.pipeline_layout,
-		    render_pass=self.dk.get_render_pass(samples)
+		    render_pass=self.dk.get_render_pass(samples, self.dk.max_color_attachments)
 		)
 
 		pipeline = vk.Pipeline(0)
