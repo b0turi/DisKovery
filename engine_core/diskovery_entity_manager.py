@@ -49,7 +49,6 @@ def cleanup_entities():
 
 class Renderer(object):
 
-
 	def add_color_attachment(self):
 		img = Image(
 			self.dk,
@@ -112,7 +111,7 @@ class Renderer(object):
 		for index, view in enumerate(self.src):
 			if len(self.resolve_attachments) > 0:
 				attachments = [x.image_view for x in (self.color_attachments)] + \
-					[self.depth_attachment.image_view, vk.ImageView(view)] + \
+					[self.depth_attachment.image_view] + [vk.ImageView(view)] + \
 					[x.image_view for x in (self.resolve_attachments)]
 			else:
 				attachments = [vk.ImageView(view)] + \
@@ -211,7 +210,7 @@ class Renderer(object):
 						)
 
 					else:
-						clear_values[i].color = vk.ClearColorValue(float32=(c_float*4)(0.,1.,0.,1.))
+						clear_values[i].color = vk.ClearColorValue(float32=(c_float*4)(0.1,0.2,0.3,1.))
 
 				else:
 					clear_values[i].depth_stencil = vk.ClearDepthStencilValue(
@@ -643,7 +642,8 @@ class EntityManager(object):
 
 
 	def get_image(self, renderer_ind = 0, col_att = 0, region = None):
-		img = self.renderers[renderer_ind].resolve_attachments[-1]
+		print(self.renderers[0].resolve_attachments[0].image)
+		img = self.renderers[0].resolve_attachments[0].image
 
 		if region == None:
 			sub = vk.ImageSubresourceLayers(

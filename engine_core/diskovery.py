@@ -829,7 +829,7 @@ def check_selected():
 
 	for i in range(0, dim[1]):
 		for j in range(0, dim[0]):
-			offset = (i * dim[1] + j) * 4
+			offset = (i * dim[0] + j) * 4
 			pixel = pixel_data[offset:(offset + 4)]
 			color = pygame.Color(pixel[0], pixel[1], pixel[2], pixel[3])
 			surface.set_at((j, i), color)

@@ -75,9 +75,9 @@ class DkInstance(object):
 			callback=callback_fn
 		)
 		assert(self.CreateDebugReportCallbackEXT(
-			self.instance, 
-			byref(create_info), 
-			None, 
+			self.instance,
+			byref(create_info),
+			None,
 			byref(self.debugger)
 		) == vk.SUCCESS)
 
@@ -87,7 +87,7 @@ class DkInstance(object):
 
 		buf = (vk.PhysicalDevice*gpu_count.value)()
 		self.EnumeratePhysicalDevices(
-			self.instance, byref(gpu_count), 
+			self.instance, byref(gpu_count),
 			cast(buf, POINTER(vk.PhysicalDevice))
 		)
 
@@ -177,22 +177,22 @@ class DkInstance(object):
 		self.present['queue'] = vk.Queue(0)
 
 		self.GetDeviceQueue(
-			self.device, 
-			self.graphics['index'], 
-			0, 
+			self.device,
+			self.graphics['index'],
+			0,
 			byref(self.graphics['queue'])
 		)
 		self.GetDeviceQueue(
-			self.device, 
-			self.present['index'], 
-			0, 
+			self.device,
+			self.present['index'],
+			0,
 			byref(self.present['queue'])
 		)
 
 	def create_swap_chain(self):
 		capabilities = vk.SurfaceCapabilitiesKHR()
 		self.GetPhysicalDeviceSurfaceCapabilitiesKHR(
-			self.gpu, 
+			self.gpu,
 			self.surface,
 			byref(capabilities)
 		)
@@ -239,9 +239,9 @@ class DkInstance(object):
 
 		format_count = c_uint(0)
 		self.GetPhysicalDeviceSurfaceFormatsKHR(
-			self.gpu, 
-			self.surface, 
-			byref(format_count), 
+			self.gpu,
+			self.surface,
+			byref(format_count),
 			None
 		)
 
@@ -288,17 +288,17 @@ class DkInstance(object):
 		image_count = c_uint(0)
 		self.GetSwapchainImagesKHR(self.device, self.swap_chain, byref(image_count), None)
 
-		images = (vk.Image * image_count.value)()
+		self.images = (vk.Image * image_count.value)()
 		self.GetSwapchainImagesKHR(
-			self.device, 
-			self.swap_chain, 
+			self.device,
+			self.swap_chain,
 			byref(image_count),
-			cast(images, POINTER(vk.Image))
+			cast(self.images, POINTER(vk.Image))
 		)
 
 		self.sc_image_views = (vk.ImageView*self.image_data['count'])()
 
-		for index, image in enumerate(images):
+		for index, image in enumerate(self.images):
 			components = vk.ComponentMapping(
 				r=vk.COMPONENT_SWIZZLE_IDENTITY,
 				g=vk.COMPONENT_SWIZZLE_IDENTITY,
@@ -329,10 +329,10 @@ class DkInstance(object):
 
 	def create_pipeline_cache(self):
 		create_info = vk.PipelineCacheCreateInfo(
-			s_type=vk.STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO, 
+			s_type=vk.STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
 			next=None,
-			flags=0, 
-			initial_data_size=0, 
+			flags=0,
+			initial_data_size=0,
 			initial_data=None
 		)
 
@@ -374,7 +374,7 @@ class DkInstance(object):
 	def __init__(self, debug):
 		# The Vulkan instance (VkInstance)
 		self.instance = vk.Instance(0)
-		# The Vulkan debugger, which prints errors and warnings 
+		# The Vulkan debugger, which prints errors and warnings
 		# to the console when enabled (VkDebugReportCallbackEXT)
 		self.debugger = vk.DebugReportCallbackEXT(0)
 		# The Pygame window, wrapped with a Vulkan surface (VkSurfaceKHR)
@@ -389,7 +389,7 @@ class DkInstance(object):
 		self.graphics = {'index': None, 'queue': None }
 		# The queue that is filled when images are ready to be presented (VkQueue)
 		self.present = {'index': None, 'queue': None }
-		# The Swap Chain: the virtual device that "swaps" 
+		# The Swap Chain: the virtual device that "swaps"
 		# through the data in the queues defined above (VkSwapchainKHR)
 		self.swap_chain = vk.SwapchainKHR(0)
 		# Information that will be used to determine sizes and formats of images and buffers
@@ -446,7 +446,7 @@ class DkInstance(object):
 		props = vk.PhysicalDeviceProperties(0)
 		self.GetPhysicalDeviceProperties(self.gpu, byref(props))
 
-		counts = min(props.limits.framebuffer_color_sample_counts, 
+		counts = min(props.limits.framebuffer_color_sample_counts,
 					props.limits.framebuffer_depth_sample_counts)
 
 		if counts & vk.SAMPLE_COUNT_64_BIT:
@@ -524,7 +524,7 @@ class DkInstance(object):
 		else:
 			self.render_passes[(samples, color_attachments)] = self.make_render_pass(samples, color_attachments)
 			return self.render_passes[(samples, color_attachments)]
-	
+
 	def make_render_pass(self, samples, color_attachments):
 
 
@@ -542,9 +542,9 @@ class DkInstance(object):
 			colors[i].initial_layout = vk.IMAGE_LAYOUT_UNDEFINED
 			colors[i].final_layout = vk.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
 
-			color_refs[i] = vk.AttachmentReference( 
-				attachment=i, 
-				layout=vk.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL 
+			color_refs[i] = vk.AttachmentReference(
+				attachment=i,
+				layout=vk.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
 			)
 
 		depth = vk.AttachmentDescription()
@@ -558,16 +558,16 @@ class DkInstance(object):
 		depth.initial_layout = vk.IMAGE_LAYOUT_UNDEFINED
 		depth.final_layout = vk.IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 
-		depth_ref = vk.AttachmentReference( 
-			attachment=color_attachments, 
-			layout=vk.IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL 
+		depth_ref = vk.AttachmentReference(
+			attachment=color_attachments,
+			layout=vk.IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
 		)
 
 		subpass = vk.SubpassDescription(
 			pipeline_bind_point=vk.PIPELINE_BIND_POINT_GRAPHICS,
-			color_attachment_count=color_attachments, 
+			color_attachment_count=color_attachments,
 			color_attachments=cast(color_refs, POINTER(vk.AttachmentReference)),
-			resolve_attachments=None, 
+			resolve_attachments=None,
 			depth_stencil_attachment=pointer(depth_ref)
 		)
 
@@ -614,8 +614,8 @@ class DkInstance(object):
 			s_type=vk.STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
 			attachment_count=len(attachments),
 			attachments=cast(attachments, POINTER(vk.AttachmentDescription)),
-			subpass_count=1, 
-			subpasses=pointer(subpass), 
+			subpass_count=1,
+			subpasses=pointer(subpass),
 			dependency_count=1,
 			dependencies=pointer(dependency)
 		)
@@ -640,8 +640,8 @@ class DkInstance(object):
 
 	def _find_depth_format(self):
 		return self._find_supported_format(
-			[vk.FORMAT_D32_SFLOAT, 
-			 vk.FORMAT_D32_SFLOAT_S8_UINT, 
+			[vk.FORMAT_D32_SFLOAT,
+			 vk.FORMAT_D32_SFLOAT_S8_UINT,
 			 vk.FORMAT_D24_UNORM_S8_UINT],
 			vk.IMAGE_TILING_OPTIMAL,
 			vk.FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT

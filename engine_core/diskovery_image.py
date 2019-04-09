@@ -282,18 +282,16 @@ def buffer_to_image(dk, buff, image, width, height):
 
 def image_to_buffer(dk, image, buff, region):
 	cmd = dk.start_command()
-	image.swap_to_source(cmd)
 
 	dk.CmdCopyImageToBuffer(
 		cmd,
-		image.image,
+		image,
 		vk.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		buff,
 		1,
 		byref(region)
 	)
 
-	image.swap_from_source(cmd)
 	dk.end_command(cmd)
 
 class Texture(Image):

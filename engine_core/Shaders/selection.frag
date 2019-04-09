@@ -55,8 +55,8 @@ void main() {
 	{
 		for(int i = 0; i < MAX_LIGHTS; i++)
 		{
-			if(lights.position[i] == vec4(0.0) && 
-				lights.direction[i] == vec4(0.0) && 
+			if(lights.position[i] == vec4(0.0) &&
+				lights.direction[i] == vec4(0.0) &&
 				lights.tint[i] == vec4(0.0) &&
 				lights.modifiers[i] == vec4(0.0))
 			{
@@ -88,17 +88,17 @@ void main() {
 
 				totalLightingColor += vec4(diffuse, 1.0);
 			}
-			
+
 		}
 	}
 	else
 	{
 		totalLightingColor = tint.value;
 	}
-	
+
     outColor = totalLightingColor * texture(tex, fragTexCoord);
     if(isSelected.value > 0.5)
     	outColor = texture(tex, fragTexCoord) + 0.2;
 
-    outColorPicker = color.value;
+    outColorPicker = vec4(fragTexCoord.x, fragTexCoord.y, 1.0, 1.0);
 }
