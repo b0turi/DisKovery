@@ -3,136 +3,173 @@ import tkinter as tk
 from tkinter import *
 import os
 
+sys.path.append(os.path.abspath('../engine_core/'))
+import diskovery
+import diskovery_scene_manager
+
+_selected = None
+
+def update_window(self):
+	global _selected
+	
+	name, current = diskovery.get_selected()
+
+	if current != None:
+		if _selected != current:
+
+			self.context_window.fill(diskovery_scene_manager.arguments(name))
+			_selected = current
+	elif current == None and len(self.context_window.props) > 0:
+		_selected = None
+		self.context_window.fill({ })
+
+
 class Display:
 
-	def __init__(self, master, width, height, x, y):
+	def callback(self):
+		self.master.destroy()
+		self.endfunc()
+
+	def __init__(self, master, endfunc):
+		master.wm_state('zoomed')
+		master.iconbitmap("diskovery.ico")	
+		master.protocol("WM_DELETE_WINDOW", self.callback)
+
+
 		self.master = master
+		self.endfunc = endfunc
 		
-		self.width = width
-		self.height = height
-		self.x = x
-		self.y = y
-		self.dim = "{0}{1}{2}{3}{4}{5}{6}".format(str(self.width),'x',str(self.height),
-													 '+',str(self.x),'+',str(self.y))
-		self.master.geometry(self.dim)
-		
+		self.width, self.height = (master.winfo_screenwidth(), master.winfo_screenheight())
+
+		self.x = 0
+		self.y = 0
+
 		self.master.title('DisKovery Engine v0.01')
 		
-		self.listbox = tk.Listbox(self.master, justify = CENTER, width = 50)
-		self.listbox.grid(row=0,column=0)
-		self.listbox.insert (0, "Hello World!")
-		
-		self.menu1 = tk.Toplevel(self.master)
-		self.menu2 = tk.Toplevel(self.master)
-		
-		self.directory = Directory(self.menu1, int(self.width/3), self.height, 0, self.y)
-		self.context = Context(self.menu2, int(self.width/3), self.height, int(4 * self.x) - 5, self.y)
-		
-		
-		
+		dir_frame = tk.Frame(master, width = self.width * 0.12, height = self.height)
+		self.dir = Directory(dir_frame, self.width)
+		dir_frame.pack(fill=BOTH, side=LEFT, expand=False)
+
+		self.embed = tk.Frame(master, width = self.width * 0.76, height = self.height)
+		self.embed.pack(fill=BOTH, side=LEFT)
+
+		con_frame = tk.Frame(master, width = self.width * 0.12, height = self.height)
+		self.con = Context(con_frame, self.width, master)
+		con_frame.pack(fill=BOTH, side=LEFT, expand=False)
+
+		setattr(master, 'update_window', update_window)
+		setattr(master, 'context_window', self.con)
+
 		
 class Directory:
-	def __init__(self, master, width, height, x, y):
+	def __init__(self, master, width):
 		self.master = master
 		
-		self.width = width
-		self.height = height
-		self.x = x
-		self.y = y
-		self.dim = "{0}{1}{2}{3}{4}{5}{6}".format(str(self.width),'x',str(self.height),
-													 '+',str(self.x),'+',str(self.y))
-		self.master.geometry(self.dim)
-		
-		self.dim_dir = "{0}{1}{2}{3}{4}{5}{6}".format(str(self.width),'x',str(self.height),
-													 '+',str(self.x),'+',str(self.y))
-		self.master.title('Directory')
-		
-		self.submenu1 = self.envir_dir(self.master)
-		self.submenu = self.cpu_dir(self.master)
-	
-	def envir_dir(self, master):
-		self.master = master
-		self.environment = tk.Frame(self.master, relief = RAISED, borderwidth = 5)
-		self.environment.grid(row=0,column=0)
-		self.direct1 = tk.Listbox(self.environment, justify = LEFT, height = 20)
-		self.direct1.grid(row=0,column=0)
-		self.direct1.insert(0, "Hello world!")
-	
-	def cpu_dir(self, master):
-		self.master = master
-		self.computer = tk.Frame(self.master, relief = RAISED, borderwidth = 5)
-		self.computer.grid(row=1,column=0)
-		self.direct2 = tk.Listbox(self.computer, justify = LEFT, height = 20)
-		self.direct2.grid(row=0,column=0)
-		self.direct2.insert(0, "Hello world!")
+		self.assets_label = tk.Label(self.master, text="Assets", font=("Arial", 12))
+		self.assets_label.pack()
+		self.assets = tk.Listbox(self.master, width = int(width * 0.02))
+		self.assets.pack(fill=BOTH, expand=True)
+		self.assets.insert(0, "Hello world!sdfg")
+
+
+		self.env_label = tk.Label(self.master, text="Environment", font=("Arial", 12))
+		self.env_label.pack()
+		self.env = tk.Listbox(self.master)
+		self.env.pack(fill=BOTH, expand=True)
+		self.env.insert(0, "Hello world!qwer")
 		
 class Context:
-	def __init__(self, master, width, height, x, y):
+	def __init__(self, master, width, root):
 		self.master = master
 		
-		self.width = width
-		self.height = height
-		self.x = x
-		self.y = y
-		self.dim = "{0}{1}{2}{3}{4}{5}{6}".format(str(self.width),'x',str(self.height),
-													 '+',str(self.x),'+',str(self.y))
-		self.master.geometry(self.dim)
+		self.context_label = tk.Label(self.master, 
+			text="Object Properties", 
+			font=("Arial", 12))
+		self.context_label.pack()
+
+		# self.object_prop = self.object_details()
 		
-		self.dim_dir = "{0}{1}{2}{3}{4}{5}{6}".format(str(self.width),'x',str(self.height),
-													 '+',str(int(self.x)),'+',str(self.y))
-		self.master.title('Context Menu')
-		
-		self.object_prop = self.object_details()
-		
-		for x in range(4):
-			self.object_prop[x] = tk.Frame(self.master, relief = RAISED, borderwidth = 5, height = 175)
-			self.object_prop[x].pack(side = TOP, fill = BOTH)
-			self.object_prop[x].pack_propagate(0)
+		# for x in range(4):
+		# 	self.object_prop[x] = tk.Frame(self.master, height = 175)
+		# 	self.object_prop[x].pack(side = TOP, fill = BOTH, expand=True)
+		# 	self.object_prop[x].pack_propagate(0)
 			
 		self.default_pos = TripleVector(0,0,0)
+
+		self.properties = tk.Frame(self.master, width = int(width*0.02))
+		self.properties.pack(fill=BOTH, expand=True)
+
+		self.props = []
 		
-		self.context_pos(self.object_prop[0])
-		self.context_mesh(self.object_prop[1])
-		self.context_features(self.object_prop[2])
-		self.context_anim(self.object_prop[3])
-		print(x)
+		# self.context_pos(self.object_prop[0])
+		# self.context_mesh(self.object_prop[1])
+		# self.context_features(self.object_prop[2])
+		# self.context_anim(self.object_prop[3])
+		# print(x)
 		
-	def object_details(self):
-		return [0, 1, 2, 3]
-		
-		
-	def context_pos(self, master):
-		self.master = master
-		self.title = tk.Label(self.master, text = "Position", font = ("bold"))
-		self.title.pack(side = TOP)
-		self.position = tk.Label(self.master, text = "Coordinates: ")
-		self.position.pack(side = LEFT)
+
+	def fill(self, data):
+
+
+		for prop in self.props:
+			prop.destroy()
+
+		i = 1
+		for prop, val in data.items():
+			# 3D Vector
+			if 'tuple' in str(type(val)) and len(val) == 3:
+				self.vector_prop(prop, val, i)
+			if 'float' in str(type(val)):
+				print("Float")
+			if 'str' in str(type(val)):
+				print("String")
+
+			i += 1
+
+
+	def vector_prop(self, name, data, num):
+
+		prop = tk.Frame(self.properties)
+
+		prop.columnconfigure(0, weight=3, pad=5)
+		prop.columnconfigure(1, weight=1, pad=5)
+		prop.columnconfigure(2, weight=1, pad=5)
+		prop.columnconfigure(3, weight=1, pad=5)
+
+
+		self.title = tk.Label(prop, text=name, anchor=W)
+		self.title.grid(row=1, column=0, sticky=E)
 	
 		
 		self.x = [0,1]
-		self.x[0] = tk.Label(self.master, text = "X: ")
-		self.x[0].pack(side = LEFT)
-		self.x[1] = tk.Entry(self.master, bd = 1, width = 3)
-		self.x[1].pack(side = LEFT)
+		self.x[0] = tk.Label(prop, text="X")
+		self.x[0].grid(row=0, column=1)
+		self.x[1] = tk.Entry(prop, bd = 1, width = 6)
+		self.x[1].grid(row=1, column=1)
 		
-		self.y = [0, 1]
-		self.y[0] = tk.Label(self.master, text = " Y: ")
-		self.y[0].pack(side = LEFT)
-		self.y[1] = tk.Entry(self.master, bd = 1, width = 3)
-		self.y[1].pack(side = LEFT)
+		self.y = [0,1]
+		self.y[0] = tk.Label(prop, text="Y")
+		self.y[0].grid(row=0, column=2)
+		self.y[1] = tk.Entry(prop, bd = 1, width = 6)
+		self.y[1].grid(row=1, column=2)
 		
 		self.z = [0,1]
-		self.z[0] = tk.Label(self.master, text = " Z: ")
-		self.z[0].pack(side = LEFT)
-		self.z[1] = tk.Entry(self.master, bd = 1, width = 3)
-		self.z[1].pack(side = LEFT)
+		self.z[0] = tk.Label(prop, text="Z")
+		self.z[0].grid(row=0, column=3)
+		self.z[1] = tk.Entry(prop, bd = 1, width = 6)
+		self.z[1].grid(row=1, column=3)
+
 		
-		self.x[1].insert(0, str(self.default_pos.getX()))
-		self.y[1].insert(0, str(self.default_pos.getY()))
-		self.z[1].insert(0, str(self.default_pos.getZ()))
+		self.x[1].insert(0, str(data[0]))
+		self.y[1].insert(0, str(data[1]))
+		self.z[1].insert(0, str(data[2]))
+
+		prop.pack()
+
+		self.props.append(prop)
 		
 	
-	def context_mesh(self, master):
+	def string_prop(self, master):
 		self.master = master
 		self.title = tk.Label(self.master, text = "Mesh Filter", font = ("bold"))
 		self.title.pack(side = TOP)
@@ -145,7 +182,7 @@ class Context:
 		self.mesh.pack(side = LEFT, fill = X)
 		self.mesh.insert(0,self.shape)
 	
-	def context_features(self, master):
+	def bool_prop(self, master):
 		self.master = master
 		self.title = tk.Label(self.master, text = "Additional Features", font = ("bold"))
 		self.title.pack(side = TOP)
@@ -163,7 +200,7 @@ class Context:
 		self.rb_1 = tk.Radiobutton(self.btnCtnr)
 		self.rb_1.pack(anchor = W)
 	
-	def context_anim(self, master):
+	def list_prop(self, master):
 		self.master = master
 		self.title = tk.Label(self.master, text = "Animations", font = ("bold"))
 		self.title.pack(side = TOP)

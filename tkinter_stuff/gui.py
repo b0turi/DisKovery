@@ -4,17 +4,24 @@ import tkinter as tk
 import diskov_win as dw
 import diskov_menu as mb
 
-screen_wd = 1280
-screen_ht = 720
+import os
+import sys
 
+sys.path.append(os.path.abspath('../engine_core/'))
+import diskovery
+import diskovery_scene_manager
+import pygame 
+
+root = tk.Tk()
 def main():
-	root = tk.Tk()
-	diskov_app = dw.Display(root, 768, 700, int(screen_wd * 0.2) + 5, 40)
-	diskov_opt = mb.Menu_Toolbar(root, 768, 40, int(screen_wd * 0.2) + 5, -20)
+	diskov_app = dw.Display(root, diskovery.quit)
 	
-	while True:
-		root.update_idletasks()
-		root.update()
+	root.update()
+	os.environ['SDL_WINDOWID'] = str(diskov_app.embed.winfo_id())
+
+	diskovery.init(False, {'input': "editorinput.in"})
+	diskovery_scene_manager.edit_scene("template.dk")
+	diskovery.run(root)
 
 main()	
 

@@ -11,9 +11,12 @@ import glm
 import pygame
 import sys
 import subprocess
-from PIL import Image
 
 import copy
+
+sys.path.append(os.path.abspath('../engine_core/'))
+
+import diskovery
 
 f_w = 1200 #default width
 f_h = 825 #default height
@@ -95,12 +98,6 @@ direct.insert(25, "Asset Directories")
 direct.insert(25, " ")
 w2.pack(fill = BOTH, expand = True)
 
-projection = Image.open("./vulkan_graphic.gif")
-display = ImageTk.PhotoImage(projection)
-w3 = tk.Canvas(root, bg="white", width = "15c")
-w3.pack(side=LEFT, fill=BOTH, expand = True)
-w3.create_image(f_w/3, f_h/3,anchor=CENTER, image=display)
-
 w4 = tk.Frame(root, height = 50, width = 50)
 pro = tk.Listbox(w4, justify = CENTER, width = 50)
 pro.grid(row=0, column=0)
@@ -108,6 +105,12 @@ pro.insert(25, "Properties")
 w4.pack(side = RIGHT, fill = Y, expand = True)
 
 root.update()
+
+diskovery.init()
+
+diskovery.edit_scene("template.dk")
+
+diskovery.run()
 	
 	
 

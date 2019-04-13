@@ -1,0 +1,38 @@
+Template
+Meshes
+cube.obj Cube F
+test.obj Default F
+model.dae Man T
+Textures
+blank.png Blank
+test.png Default
+character.png Man
+cubemap.png Cube
+grass.jpg Grass
+Shaders
+animated.vert default.frag Animated
+default.vert default.frag Default
+gui.vert gui.frag GUI
+Animations
+model.dae Run
+Camera
+0.0,0,-10.0 0.0,0.0,0.0 1.047 1000 1.7777777777777777
+LightScenes
+MainLight
+Entities
+E BigBoy man
+0.0 3.0 -10.0
+0.0 0.0 0.0
+3.0 3.0 3.0
+E RunningMan sir
+0.0 0.0 -10.0
+0.0 0.0 0.0
+1.0 1.0 1.0
+E Light lel
+-5.0 0.0 -10.0
+0.0 0.0 0.0
+1.0 0.3 0.6
+2.0
+100.0
+0.0
+"MainLight"
