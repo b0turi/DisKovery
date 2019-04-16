@@ -117,6 +117,17 @@ class Boolean(UniformBufferObject):
 	def get_size():
 		return sizeof(c_float)
 
+class Float(UniformBufferObject):
+	def __init__(self, value):
+		self.value = value
+
+	def get_data(self):
+		return (c_float * 1)(self.value)
+
+	@staticmethod
+	def get_size():
+		return sizeof(c_float)
+
 class Tint(UniformBufferObject):
 	def __init__(self, value=(1, 1, 1, 1)):
 		self.value = value

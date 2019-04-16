@@ -1,6 +1,7 @@
+import ast
 import inspect
 import diskovery
-from diskovery import Camera, Entity, RenderedEntity, AnimatedEntity, Light
+from diskovery import Camera, Entity, RenderedEntity, AnimatedEntity, Light, Terrain
 from diskovery_entities import *
 
 _entity_configs = { }
@@ -57,12 +58,17 @@ def load_scene(filename):
 						param = tuple(sub_line.split(' '))
 						if param[0][0] != '\"' and param[0][:2] != '0x':
 							param = tuple([float(x) for x in param])
+
+						elif param[0][0] == '\"' and ',' in param[0]:
+							param = [x[1:-1] for x in param[0].split(',')]
+
 						cmd += str(param[0]) if len(param) == 1 else str(param)
 						cmd += ","
 
 						sub_line = f.readline()[:-1]
 
 					cmd = cmd[:-1] + "), \"{}\")".format(args[2])
+					print(cmd)
 					exec(cmd)
 					line = sub_line
 
@@ -83,11 +89,14 @@ def edit_scene(filename):
 	global _entity_configs
 
 	diskovery.clear_environment()
+	diskovery.edit_mode(True)
 	_entity_configs.clear()
 
 	diskovery.add_shader("selection.vert", "selection.frag", "Selection")
 	diskovery.add_shader("basic.vert", "basic.frag", "Basic")
+	diskovery.add_shader("default.vert", "terrain.frag", "Terrain")
 
+	diskovery.add_texture("blank.png", "Blank")
 	diskovery.add_mesh("cursor.obj", "Cursor", False)
 	diskovery.add_texture("cursor.png", "Cursor")
 	diskovery.add_entity(Cursor(), "Cursor")
@@ -109,7 +118,7 @@ def edit_scene(filename):
 
 		line = f.readline()[:-1]
 
-		color = 100
+		color = 1
 
 		while len(filled) < len(func_map):
 			while line and not line in func_map.keys():
@@ -127,7 +136,7 @@ def edit_scene(filename):
 						else:
 							cmd += "args[{}],".format(i)
 					cmd = cmd[:-1] + ")"
-					if current != 'Shaders':
+					if current != 'Shaders' and current != 'Camera':
 						exec(cmd)
 					line = f.readline()[:-1]
 				else:
@@ -200,6 +209,8 @@ def edit_scene(filename):
 						if class_type == Light:
 							rendered_entity_params['tint'] = tuple(config['tint']) + (1.0,)
 
+							rendered_entity_params['chi'] = "{}-real".format(args[2])
+
 							diskovery.add_entity(Light(
 								config['position'],
 								config['rotation'],
@@ -211,11 +222,16 @@ def edit_scene(filename):
 							), "{}-real".format(args[2]))
 
 					else:
+
 						while sub_line and sub_line[:2] != 'E ':
 							param = tuple(sub_line.split(' '))
 
-							if param[0][0] != '\"' and param[0][:2] != '0x':
+
+							if param[0][0] != '\"' and param[0][:2] != '0x' and param[0][0] != '[':
 								param = tuple([float(x) for x in param])
+
+							elif param[0][0] == '[':
+								param = ast.literal_eval(param[0])
 
 							config[class_args[arg_ptr]] = param
 							arg_ptr += 1
@@ -252,4 +268,18 @@ def edit_scene(filename):
 
 			line = f.readline()[:-1]
 
+		diskovery.add_entity(Terrain(
+			position=(0,10,0),
+			size=300,
+			sub=50,
+			amp=20,
+			heightmap="heightmap.png",
+			name="ter",
+			textures_str=["Grass", "Path", "Blend"]
+		), "ter")
+
 		#diskovery.entity("sir").selected = True
+
+def arguments(entity_name):
+	global _entity_configs
+	return _entity_configs[entity_name]

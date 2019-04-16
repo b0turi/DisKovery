@@ -1,11 +1,11 @@
 MainInput
 RS WalkX
 RS WalkY
-BS Spinning
+RS Rotate
 
 WalkX K_a K_d,K_LEFT K_RIGHT
 WalkY K_s K_w,K_DOWN K_UP
-Spinning K_l
+Rotate M_x
 WalkX K_a K_d,K_LEFT K_RIGHT
 WalkY K_s K_w,K_DOWN K_UP
-Spinning K_l
+Rotate M_x

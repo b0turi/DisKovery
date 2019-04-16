@@ -210,7 +210,7 @@ class Renderer(object):
 						)
 
 					else:
-						clear_values[i].color = vk.ClearColorValue(float32=(c_float*4)(0.1,0.2,0.3,1.))
+						clear_values[i].color = vk.ClearColorValue(float32=(c_float*4)(0.0,0.0,0.0,1.))
 
 				else:
 					clear_values[i].depth_stencil = vk.ClearDepthStencilValue(
@@ -525,6 +525,9 @@ class EntityManager(object):
 		image = vk.Semaphore(self.image_available[self.current_frame])
 		render = vk.Semaphore(self.renders_finished[self.current_frame])
 
+		if self.quitting:
+			return
+
 		self.dk.WaitForFences(
 			self.dk.device,
 			1,
@@ -628,6 +631,7 @@ class EntityManager(object):
 		self.in_flight_fences = (vk.Fence*MAX_FRAMES_IN_FLIGHT)()
 
 		self.current_frame = 0
+		self.quitting = False
 
 		self.TIME_VAL = time.perf_counter()
 
@@ -642,7 +646,6 @@ class EntityManager(object):
 
 
 	def get_image(self, renderer_ind = 0, col_att = 0, region = None):
-		print(self.renderers[0].resolve_attachments[0].image)
 		img = self.renderers[0].resolve_attachments[0].image
 
 		if region == None:
@@ -660,9 +663,7 @@ class EntityManager(object):
 										 self.dk.image_data['extent'].height, 1)
 			)
 
-
-		size = self.dk.image_data['extent'].width * \
-				self.dk.image_data['extent'].height * 4
+		size = 4
 
 		buff = Buffer(self.dk, size, None, None, False)
 		image_to_buffer(self.dk, img, buff.buffer, region)
@@ -690,6 +691,7 @@ class EntityManager(object):
 		Handles necessary Destroy methods for all the Vulkan components
 		contained inside the :class:`~diskovery_entity_manager.EntityManager`
 		"""
+		self.dk.DeviceWaitIdle(self.dk.device)
 		for r in self.renderers:
 			r.cleanup()
 
@@ -699,3 +701,33 @@ class EntityManager(object):
 			self.dk.DestroyFence(self.dk.device, self.in_flight_fences[i], None)
 
 		cleanup_entities()
+
+	def deselect(self):
+		global _entities
+
+		_entities["Cursor"].hide()
+
+		for ent in _entities.values():
+			ent.selected = False
+
+	def entity_by_color(self, color):
+		global _entities
+		for ent in _entities.values():
+			if hasattr(ent, 'color') and ent.color == tuple(x/255 for x in color):
+				return ent
+
+	def is_selected(self):
+		global _entities
+		for ent in _entities.values():
+			if hasattr(ent, 'selected') and ent.selected:
+				return True
+
+		return False
+
+	def get_selected(self):
+		global _entities
+		for name, ent in _entities.items():
+			if hasattr(ent, 'selected') and ent.selected:
+				return (name, ent)
+
+		return (None, None)

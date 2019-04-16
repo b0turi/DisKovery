@@ -163,7 +163,7 @@ class Parser(object):
 		).find('float_array')
 
 		count = int(src_data_loc.attrib['count'])
-		src_data = src_data_loc.text.split(' ')
+		src_data = [x for x in src_data_loc.text.split(' ') if x != '']
 
 		for i in range(0, int(count/dim)):
 			x = float(src_data[i * dim])
@@ -243,10 +243,12 @@ class Parser(object):
 				weights_id
 			).find('float_array')
 
-			weights = [float(x) for x in weights_loc.text.split(' ')]
+			formatted_weights = ' '.join(weights_loc.text.split('\n'))
+			weights = [float(x) for x in formatted_weights.split(' ') if x != '']
 
 			joint_counts_loc = skin.find('vertex_weights').find('vcount')
-			joint_counts = [int(x) for x in joint_counts_loc.text.split(' ')[:-1]]
+			joint_counts = [int(x) for x in joint_counts_loc.text.split(' ') if x != '']
+
 
 			p = 0
 			skin_values = []
@@ -260,6 +262,9 @@ class Parser(object):
 					skin.add_effect(float(joint), float(weight))
 				skin.scale(MAX_JOINTS)
 				skin_values.append(skin)
+
+			print(len(skin_values))
+
 
 		normals = []
 		textures = []
@@ -279,7 +284,9 @@ class Parser(object):
 		).find('float_array')
 
 		count = int(pos_data_loc.attrib['count'])
-		pos_data = pos_data_loc.text.split(' ')
+		pos_data = [x for x in ' '.join(pos_data_loc.text.split('\n')).split(' ') if x != '']
+
+		print(len(pos_data))
 
 		for i in range(0, int(count/3)):
 			x = float(pos_data[i * 3])
@@ -292,6 +299,8 @@ class Parser(object):
 			else:
 				corr = glm.mat4(1.0)
 			vec = corr * vec
+
+
 
 			if rigged:
 				v = VertexLoader(
@@ -322,7 +331,7 @@ class Parser(object):
 
 		poly = mesh.find('polylist')
 		type_count = len(poly.findall('input'))
-		full_data = poly.find('p').text.split(' ')
+		full_data = [x for x in poly.find('p').text.split(' ') if x != '']
 
 		new_norm = ((c_float*3)*int(len(full_data)/type_count))()
 		new_tex = ((c_float*2)*int(len(full_data)/type_count))()
@@ -387,11 +396,14 @@ class Parser(object):
 		root = xml.parse(file).getroot()
 
 		rig = self.get_child_with_attribute(
-			root.find('library_visual_scenes').find('visual_scene'),
-			'node',
-			'id',
-			'Armature'
-		)
+				root.find('library_visual_scenes').find('visual_scene'),
+				'node',
+				'id',
+				'Armature'
+			)	
+		
+		if rig == None:
+			rig = root.find('library_visual_scenes').find('visual_scene')
 
 		root_joint = self.load_joint(rig.find('node'), joints, correction, True)
 		return Rig(root_joint, self.joint_count)
@@ -577,6 +589,39 @@ class Joint:
 		self.anim_transform = glm.mat4(1.0)
 		self.inverse_transform = glm.mat4(1.0)
 
+class TerrainMesh(Mesh):
+	def __init__(self, dk, positions, normals, uvs, indices):
+		v_size = sizeof(Vertex) * len(positions)
+		i_size = sizeof(c_uint) * len(indices)
+
+		vertex_list = []
+		for i, pos in enumerate(positions):
+			v = Vertex()
+			v.position = (c_float * 3)(*pos)
+			v.normal = (c_float * 3)(*normals[i])
+			v.tex_coord = (c_float * 2)(*uvs[i])
+			vertex_list.append(v)
+
+		vertex_array = (Vertex * len(positions))(*vertex_list)
+		index_array = (c_uint * len(indices))(*indices)
+
+		self.vertices = Buffer(
+			dk,
+			v_size,
+			vertex_array,
+			vk.BUFFER_USAGE_VERTEX_BUFFER_BIT
+		)
+
+		self.indices = Buffer(
+			dk,
+			i_size,
+			index_array,
+			vk.BUFFER_USAGE_INDEX_BUFFER_BIT
+		)
+
+		self.count = len(indices)
+
+
 class AnimatedMesh(Mesh):
 	def __init__(self, dk, file, correction=False, extract_anim=False):
 
@@ -693,6 +738,12 @@ class Animator(object):
 		self.current_anim = key
 		self.anim_time = 0
 
+	def stop(self):
+		self.current_anim = None
+
+	def playing(self):
+		return self.current_anim != None
+
 	def prev_and_next(self):
 		for index, frame in enumerate(self.anim_dict[self.current_anim].keys):
 			if frame.timestamp > self.anim_time:
@@ -750,5 +801,5 @@ class Animator(object):
 		for anim in anims:
 			self.animations.append(anim)
 
-		self.current_anim = self.animations[0]
+		self.current_anim = None
 		self.anim_time = 0

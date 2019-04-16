@@ -100,5 +100,5 @@ void main() {
     if(isSelected.value > 0.5)
     	outColor = texture(tex, fragTexCoord) + 0.2;
 
-    outColorPicker = vec4(fragTexCoord.x, fragTexCoord.y, 1.0, 1.0);
+    outColorPicker = color.value;
 }

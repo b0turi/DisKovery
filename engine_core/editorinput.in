@@ -10,6 +10,8 @@ RS ObjMoveZ
 BS Rotating
 BS Panning
 BA Select
+BS Ctrl
+BA Save
 
 CamX M_y
 CamY M_x
@@ -22,6 +24,8 @@ ObjMoveZ K_s K_w,K_DOWN K_UP
 Panning M_2
 Rotating M_1
 Select M_0
+Ctrl K_RCTRL,K_LCTRL
+Save K_s
 CamX M_y
 CamY M_x
 CamRotX M_y
@@ -33,3 +37,5 @@ ObjMoveZ K_s K_w,K_DOWN K_UP
 Panning M_2
 Rotating M_1
 Select M_0
+Ctrl K_RCTRL,K_LCTRL
+Save K_s

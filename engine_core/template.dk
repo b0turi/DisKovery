@@ -2,29 +2,30 @@ Template
 Meshes
 cube.obj Cube F
 test.obj Default F
-model.dae Man T
+Idle.dae Man T
 Textures
 blank.png Blank
 test.png Default
 character.png Man
 cubemap.png Cube
+grass.jpg Grass
+path.jpg Path
+blend_map.png Blend
 Shaders
+default.vert terrain.frag Terrain
 animated.vert default.frag Animated
 default.vert default.frag Default
 gui.vert gui.frag GUI
 Animations
-model.dae Run
+Idle.dae Run
 Camera
-0.0,0,-10.0 0.0,0.0,0.0 1.047 1000 1.7777777777777777
+0.0,50.0,-10.0 0.0,0.0,0.0 1.047 1000 1.7777777777777777
 LightScenes
 MainLight
+Terrain
 Entities
-E BigBoy man
-0.0 3.0 -10.0
-0.0 0.0 0.0
-3.0 3.0 3.0
 E RunningMan sir
-0.0 0.0 -10.0
+0.0 -50.0 0.0
 0.0 0.0 0.0
 1.0 1.0 1.0
 E Light lel
@@ -35,3 +36,19 @@ E Light lel
 100.0
 0.0
 "MainLight"
+E Light sun
+0.0 0.0 0.0
+0.2 -1.0 0.3
+1.0 0.88 0.8
+1.0
+1.0
+1.0
+"Terrain"
+E Terrain land
+0.0 20.0 0.0
+300.0
+50.0
+100.0
+"heightmap.png"
+"land"
+"Grass","Path","Blend"

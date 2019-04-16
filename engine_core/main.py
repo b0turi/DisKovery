@@ -3,9 +3,9 @@ import diskovery
 import diskovery_scene_manager
 
 def main():
-	diskovery.init(False, {'input': "editorinput.in"})
+	diskovery.init(False)
 
-	diskovery_scene_manager.edit_scene("template.dk")
+	diskovery_scene_manager.load_scene("template.dk")
 
 	diskovery.run()
 

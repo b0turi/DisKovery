@@ -73,6 +73,7 @@ class InputManager:
 		self.default_inputs = { }
 		self.input_values = { }
 		self.control_set = "Empty"
+		self.quitting = False
 
 		self.scrollwheel = 0
 
@@ -82,6 +83,10 @@ class InputManager:
 	def update(self):
 
 		global _keyboard_state, _mouse_state, _gamepad_state
+
+		if self.quitting:
+			return
+
 		_keyboard_state = pygame.key.get_pressed()
 
 		m_delta = pygame.mouse.get_rel()

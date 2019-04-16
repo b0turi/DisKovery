@@ -29,6 +29,7 @@ entity types, from which DisKovery users can extend their own custom object defi
 - :class:`~diskovery.AnimatedEntity` - a :class:`~diskovery.RenderedEntity` with an :class:`~diskovery_animator.Animator` to handle skeletal animation
 """
 import glm
+import sys
 import math
 import pygame
 import inspect
@@ -36,8 +37,8 @@ import importlib
 from ctypes import *
 
 import vk
-from diskovery_mesh import Mesh, AnimatedMesh, Animator, Rig
-from diskovery_ubos import MVPMatrix, SceneLighting
+from diskovery_mesh import Mesh, AnimatedMesh, Animator, Rig, TerrainMesh
+from diskovery_ubos import MVPMatrix, SceneLighting, Float
 from diskovery_image import Texture
 from diskovery_buffer import UniformBuffer
 from diskovery_instance import DkInstance
@@ -45,6 +46,9 @@ from diskovery_pipeline import Shader, Pipeline
 from diskovery_entity_manager import EntityManager, Renderer
 from diskovery_descriptor import make_set_layout, Descriptor
 from diskovery_input_manager import InputManager
+
+_running = True
+_editing = False
 
 # Dictionaries and objects wrapped by this module for convenience
 _dk = None
@@ -63,6 +67,10 @@ _pipelines = { }
 
 _light_scenes = { }
 
+def edit_mode(val):
+	global _editing
+	_editing = val
+
 def clear_environment():
 	global _meshes, _textures, _animations, _shaders, _descriptors, _pipelines, _light_scenes
 
@@ -74,7 +82,7 @@ def clear_environment():
 	_pipelines.clear()
 	_light_scenes.clear()
 
-def add_mesh(filename, name=None, animated=False):
+def add_mesh(data, name=None, animated=False, raw=False):
 	"""
 	Creates and adds a :class:`~diskovery_mesh.Mesh` to the dictionary
 	of Meshes stored in this module. Has some basic wrapping to ensure
@@ -86,10 +94,12 @@ def add_mesh(filename, name=None, animated=False):
 	"""
 	global _meshes
 
-	if not animated:
-		m = Mesh(_dk, filename)
-	else:
-		m = AnimatedMesh(_dk, filename, True, False)
+	if not animated and not raw:
+		m = Mesh(_dk, data)
+	elif animated and not raw:
+		m = AnimatedMesh(_dk, data, True, False)
+	elif raw:
+		m = data
 
 	if name is None:
 		_meshes[filename[:-4]] = m
@@ -304,6 +314,7 @@ def init(debug_mode=False, config=None, edit_mode=False):
 	add_class(AnimatedEntity, "AnimatedEntity")
 	add_class(Camera, "Camera")
 	add_class(Light, "Light")
+	add_class(Terrain, "Terrain")
 
 	custom_module = 'diskovery_entities'
 
@@ -318,7 +329,8 @@ def init(debug_mode=False, config=None, edit_mode=False):
 	cam_rot = glm.vec3()
 	fov = glm.radians(60)
 	draw_distance = 1000
-	aspect_ratio = 16/9
+
+	aspect_ratio = _dk.image_data['extent'].width/_dk.image_data['extent'].height
 
 	if config != None:
 		if 'cam_pos' in config:
@@ -336,22 +348,33 @@ def init(debug_mode=False, config=None, edit_mode=False):
 		if 'bg_color' in config:
 			_dk.bg_color = config['bg_color']
 
+
 	_camera = Camera(cam_pos, cam_rot, fov, draw_distance, aspect_ratio)
 	_scene.add_entity(_camera, "Camera")
 
 def draw():
 	_scene.draw()
 
-def run():
+def run(context = None):
 	"""Begins the game loop and starts the event handler"""
-	global _dk, _input, _scene, _light_scenes
+	global _dk, _input, _scene, _light_scenes, _running
 
-	running = True
-	while running:
+	while _running:
+
+		
+
+		if context != None:
+			context.update_idletasks()
+			context.update()
+			context.update_window(context)
+
 		#for ls in _light_scenes.values():
 			#ls.update()
 		_scene.draw()
 		_input.update()
+
+		if not _running:
+			return
 
 		for event in pygame.event.get():
 			if event.type == pygame.MOUSEBUTTONDOWN:
@@ -360,8 +383,6 @@ def run():
 				if event.button == 5:
 					_input.scrollwheel = -1
 			if event.type == pygame.QUIT:
-				running = False
-				_dk.DeviceWaitIdle(_dk.device)
 				quit()
 				break
 
@@ -369,9 +390,14 @@ def run():
 
 def quit():
 	"""Handles necessary Vulkan Destroy methods for all Vulkan components"""
-	global _dk, _meshes, _textures, _pipelines, _descriptors, _scene
+	global _dk, _meshes, _textures, _pipelines, _descriptors, _scene, _running, _input
+	_running = False
 
-	pygame.joystick.quit()
+	_scene.quitting = True
+	_input.quitting = True
+	_dk.DeviceWaitIdle(_dk.device)
+
+	# pygame.joystick.quit()
 	_scene.cleanup()
 
 	for mesh in _meshes.values():
@@ -388,6 +414,7 @@ def quit():
 
 	_dk.cleanup()
 	pygame.quit()
+	sys.exit(0)
 
 class Entity():
 	"""
@@ -493,6 +520,11 @@ class Entity():
 		self.parent = parent
 		parent.children.append(self)
 
+def set_camera_target(entity):
+	global _camera
+
+	_camera.target = entity
+
 class Camera(Entity):
 
 	presets = { }
@@ -510,6 +542,8 @@ class Camera(Entity):
 
 		self.view_matrix = glm.mat4()
 		self.proj_matrix = glm.mat4()
+
+		self.target = None
 
 		self.update(0)
 		self.update_projection()
@@ -532,7 +566,11 @@ class Camera(Entity):
 	def update(self, ind):
 		self.view_matrix = glm.rotate(glm.mat4(1.0), self.rotation.x, glm.vec3(1,0,0)) * \
 							glm.rotate(glm.mat4(1.0), self.rotation.y, glm.vec3(0,1,0)) * \
-							glm.translate(glm.mat4(1.0), self.position)
+							glm.translate(glm.mat4(1.0), -self.position)
+
+		if self.target != None:
+			self.position = self.target.position + self.target.forward() * 20 + glm.vec3(0, -8, 0)
+			self.rotation = -self.target.rotation
 
 		forward = self.forward()
 		forward.z *= -1
@@ -543,9 +581,10 @@ class Camera(Entity):
 		left = self.left()
 		left.z *= -1
 
-		self.position += left * self.cam_speed * input("ObjMoveX") * -0.5
-		self.position += forward * self.cam_speed * input("ObjMoveZ") * -0.5
-		self.position += up * self.cam_speed * input("ObjMoveY") * -0.25
+		if not _scene.is_selected():
+			self.position += left * self.cam_speed * input("ObjMoveX") * -0.5
+			self.position += forward * self.cam_speed * input("ObjMoveZ") * -0.5
+			self.position += up * self.cam_speed * input("ObjMoveY") * -0.25
 
 		if input("Panning"):
 			self.position += up * self.cam_speed * input("CamX")
@@ -556,8 +595,11 @@ class Camera(Entity):
 
 		self.position += forward * -3 * input("CamZoom")
 
-		if input("Select"):
+		if input("Select") and _editing:
 			check_selected()
+
+		if input("Ctrl") and input("Save"):
+			_save_scene("template.dk", "Template")
 
 class Light(Entity):
 
@@ -670,6 +712,8 @@ class RenderedEntity(Entity):
 		for u_type in uniform_types:
 			self.uniforms.append(UniformBuffer(_dk, u_type))
 
+		print(self.textures)
+
 		if len(self.definition) > 0:
 			self.descriptor = Descriptor(
 				_dk,
@@ -740,6 +784,102 @@ class RenderedEntity(Entity):
 		if hasattr(self, "descriptor"):
 			self.descriptor.cleanup()
 
+class Terrain(RenderedEntity):
+	
+	presets = {
+			"shader_str": "Terrain"
+		}
+
+	def __init__(self,
+		position=None,
+		size=None,
+		sub=None,
+		amp=None,
+		heightmap=None,
+		name=None,
+		textures_str=None):
+		
+		self.size = size
+		self.sub = int(sub)
+		self.amp = amp
+
+		self.img = pygame.image.load(heightmap)
+
+		self.heights = []
+
+		positions = []
+		normals = []
+		tex_coords = []
+
+		indices = []
+
+		for i in range(0, self.sub):
+			height_row = []
+			for j in range(0, self.sub):
+				positions.append(
+					glm.vec3(
+						j/(self.sub - 1) * size * 2 - size, 
+						self.get_height(i, j),
+						i/(self.sub - 1) * size * 2 - size
+					)
+				)
+
+				height_row.append(self.get_height(i, j))
+
+				# Calculate normal vector
+				hl = self.get_height(i - 1, j)
+				hr = self.get_height(i + 1, j)
+				hd = self.get_height(i, j - 1)
+				hu = self.get_height(i, j + 1)
+
+				normals.append(glm.normalize(glm.vec3(hl - hr, -2, hd - hu)))
+
+				tex_coords.append(glm.vec2(j/self.sub-1, i/self.sub-1))
+			self.heights.append(height_row)
+
+		for gz in range(0, self.sub - 1):
+			for gx in range(0, self.sub - 1):
+				top_left = gz * self.sub + gx
+				top_right = top_left + 1
+				bot_left = (gz + 1) * self.sub + gx
+				bot_right = bot_left + 1
+
+				indices.append(top_left)
+				indices.append(top_right)
+				indices.append(bot_left)
+
+				indices.append(top_right)
+				indices.append(bot_right)
+				indices.append(bot_left)
+
+
+		add_mesh(TerrainMesh(_dk, positions, normals, tex_coords, indices), name, raw=True)
+
+		RenderedEntity.__init__(self,
+			position=position,
+			rotation=(0, 0, 0),
+			scale=(1, 1, 1),
+			shader_str=Terrain.presets['shader_str'],
+			mesh_str=name,
+			textures_str=textures_str,
+			light_scene="Terrain" if "Terrain" in _light_scenes else "MainLight"
+		)
+
+	def get_height(self, x, y):
+		if x < 0 or x > self.img.get_width()-1 or y < 0 or y > self.img.get_height():
+			return 0
+
+		return -((self.img.get_at(( int(x/self.sub * (self.img.get_width() - 1)),
+								   int(y/self.sub * (self.img.get_height() - 1)))).r / 255
+				) * self.amp)
+
+	def update(self, ind):
+		RenderedEntity.update(self, ind)
+		sub_val = Float(self.sub)
+		self.uniforms[2].update(sub_val.get_data(), ind)
+
+
+
 class AnimatedEntity(RenderedEntity):
 	def __init__(self,
 		position=None,
@@ -757,9 +897,6 @@ class AnimatedEntity(RenderedEntity):
 		self.rig = Rig.from_template(mesh(mesh_str).rig)
 
 		self.animator = Animator(_scene, _animations, self, self.animations)
-		if len(self.animations) > 0:
-			self.animator.play(self.animations[0])
-
 
 	def update(self, ind):
 		"""
@@ -822,18 +959,29 @@ def _save_scene(filename, scene_name):
 def check_selected():
 	m_pos = pygame.mouse.get_pos()
 
-	pixel_data = _scene.get_image(0, 1)
-	dim = (_dk.image_data['extent'].width, _dk.image_data['extent'].height)
+	sub = vk.ImageSubresourceLayers(
+		aspect_mask=vk.IMAGE_ASPECT_COLOR_BIT,
+		layer_count=1,
+	)
 
-	surface = pygame.Surface((dim[0], dim[1]))
+	region = vk.BufferImageCopy(
+		image_subresource=sub,
+		image_offset=vk.Offset3D(m_pos[0], m_pos[1], 0),
+		image_extent=vk.Extent3D(1, 1, 1)
+	)
 
-	for i in range(0, dim[1]):
-		for j in range(0, dim[0]):
-			offset = (i * dim[0] + j) * 4
-			pixel = pixel_data[offset:(offset + 4)]
-			color = pygame.Color(pixel[0], pixel[1], pixel[2], pixel[3])
-			surface.set_at((j, i), color)
+	_scene.deselect()
 
-	#print(surface.get_at(m_pos))
+	pixel_data = _scene.get_image(0, 1, region)
+	reformatted = [pixel_data[2], pixel_data[1], pixel_data[0], pixel_data[3]]
 
-	pygame.image.save(surface, "test_img.png")
+	selected_entity = _scene.entity_by_color(tuple(reformatted))
+	if selected_entity:
+		selected_entity.selected = True
+
+def get_selected():
+	global _scene
+	return _scene.get_selected()
+
+def arguments(entity):
+	return dict(inspect.getmembers(entity.__class__.__init__.__code__))['co_varnames']
