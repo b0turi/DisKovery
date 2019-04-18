@@ -2,6 +2,7 @@ import glm
 import math
 import diskovery
 from diskovery_ubos import *
+import diskovery_scene_manager
 
 """ Classes used in the Level Editor """
 
@@ -14,6 +15,7 @@ class SelectableEntity(diskovery.RenderedEntity):
 		textures_str=["Blank"],
 		light_scene="MainLight", 
 		color=0,
+		name=None,
 		tint=(1, 1, 1, 1),
 		is_lit=True,
 		selected = False,
@@ -41,7 +43,9 @@ class SelectableEntity(diskovery.RenderedEntity):
 		self.is_lit = is_lit
 		self.selected = selected
 
-		self.speed = 0.04
+		self.name = name
+
+		self.speed = 30
 
 		self.chi = chi
 
@@ -66,13 +70,89 @@ class SelectableEntity(diskovery.RenderedEntity):
 			diskovery.entity("Cursor").position = self.position
 			diskovery.entity("Cursor").rotation = self.rotation
 
-			self.position += self.left() * self.speed * diskovery.input("ObjMoveX")
-			self.position += -self.forward() * self.speed * diskovery.input("ObjMoveZ")
-			self.position += -self.up() * self.speed * diskovery.input("ObjMoveY")
+			self.position += self.left() * self.speed * diskovery.input("ObjMoveX") * diskovery.frame_time()
+			self.position += -self.forward() * self.speed * diskovery.input("ObjMoveZ")* diskovery.frame_time()
+			self.position += -self.up() * self.speed * diskovery.input("ObjMoveY")* diskovery.frame_time()
 
 			if self.chi != None:
 				diskovery.entity(self.chi).position = self.position
 				diskovery.entity(self.chi).rotation = self.rotation
+			
+			diskovery_scene_manager.update_config(self, self.name, 'position')
+
+class SelectableTerrain(diskovery.Terrain):
+	def __init__(self, 
+		position=None,
+		size=None,
+		sub=None,
+		amp=None,
+		heightmap=None,
+		name=None,
+		textures_str=None, 
+		color=0,
+		tint=(1, 1, 1, 1),
+		is_lit=True,
+		selected = False,
+		chi = None):
+		diskovery.Terrain.__init__(
+			self,
+			position=position,
+			size=size,
+			sub=sub,
+			amp=amp,
+			heightmap=heightmap,
+			name=name,
+			textures_str=textures_str
+		)
+
+		hex_val = str(hex(color))[2:]
+		if len(hex_val) <= 2:
+			self.color = (0, 0, int(hex_val, 16)/255, 1)
+		elif len(hex_val) <= 4:
+			self.color = (0, int(hex_val[:2], 16)/255, int(hex_val[2:], 16)/255, 1)
+		elif len(hex_val) > 4:
+			self.color = (int(hex_val[:2], 16)/255, int(hex_val[2:4], 16)/255, int(hex_val[4:], 16)/255, 1)
+
+		self.tint = tint
+		self.is_lit = is_lit
+		self.selected = selected
+
+		self.speed = 30
+
+		self.chi = chi
+
+	def update(self, ind):
+		diskovery.RenderedEntity.update(self, ind)
+
+		lit = Boolean(self.is_lit)
+		self.uniforms[2].update(lit.get_data(), ind)
+
+		tint = Tint(self.tint)
+		self.uniforms[3].update(tint.get_data(), ind)
+
+		selected = Boolean(self.selected)
+		self.uniforms[4].update(selected.get_data(), ind)
+
+		col = Color(self.color)
+		self.uniforms[5].update(col.get_data(), ind)
+
+		sub = Float(self.sub)
+		self.uniforms[6].update(sub.get_data(), ind)
+
+		if self.selected:
+			diskovery.entity("Cursor").show()
+			diskovery.entity("Cursor").position = self.position
+			diskovery.entity("Cursor").rotation = self.rotation
+
+			self.position += self.left() * self.speed * diskovery.input("ObjMoveX") * diskovery.frame_time()
+			self.position += -self.forward() * self.speed * diskovery.input("ObjMoveZ") * diskovery.frame_time()
+			self.position += -self.up() * self.speed * diskovery.input("ObjMoveY") * diskovery.frame_time()
+
+			if self.chi != None:
+				diskovery.entity(self.chi).position = self.position
+				diskovery.entity(self.chi).rotation = self.rotation
+
+			diskovery_scene_manager.update_config(self, self.name, 'position')
 
 
 class HidableEntity(diskovery.RenderedEntity):
@@ -125,7 +205,7 @@ class Cursor(HidableEntity):
 
 		if not self.hidden:
 			dist = glm.length(self.position - diskovery.camera().position)
-			self.scale = glm.vec3(1, 1, 1) * 10
+			self.scale = glm.vec3(1, 1, 1) * dist/3
 
 		
 
@@ -162,6 +242,43 @@ class BigBoy(diskovery.RenderedEntity):
 		if diskovery.input("Spinning"):
 			self.rotation.y += self.speed
 
+
+def barycentric(v1, v2, v3, pos):
+		det = (v2.z - v3.z) * (v1.x - v3.x) + (v3.x - v2.x) * (v1.z - v3.z)
+		l1 = ((v2.z - v3.z) * (pos.x - v3.x) + (v3.x - v2.x) * (pos.y - v3.z)) / det
+		l2 = ((v3.z - v1.z) * (pos.x - v3.x) + (v1.x - v3.x) * (pos.y - v3.z)) / det
+		l3 = 1 - l1 - l2
+		return l1 * v1.y + l2 * v2.y + l3 * v3.y
+
+def get_height(x, z, terrain):
+	unit_size = (2 * terrain.size)/terrain.sub
+
+	dz = x - (terrain.position.x - terrain.size) - unit_size/2
+	dx = z - (terrain.position.z - terrain.size) - unit_size/2
+
+
+	gx = math.floor(dx/(unit_size))
+	gz = math.floor(dz/(unit_size))
+
+	if gx < 0 or gz < 0 or gx > len(terrain.heights) - 2 or gz > len(terrain.heights) - 2:
+		return terrain.position.y
+	else:
+		sx = (dx % unit_size) / unit_size
+		sz = (dz % unit_size) / unit_size
+
+		if sx <= 1 - sz:
+			height = barycentric(glm.vec3(0, terrain.heights[gx][gz], 0),
+									  glm.vec3(0, terrain.heights[gx][gz+1], 1),
+									  glm.vec3(1, terrain.heights[gx+1][gz], 0),
+									  glm.vec2(sx, sz))
+		else:
+			height = barycentric(glm.vec3(1, terrain.heights[gx+1][gz], 0),
+									  glm.vec3(0, terrain.heights[gx][gz+1], 1),
+									  glm.vec3(1, terrain.heights[gx+1][gz+1], 1),
+									  glm.vec2(sx, sz))
+
+		return height + terrain.position.y
+
 class RunningMan(diskovery.AnimatedEntity):
 	
 	presets = {
@@ -181,25 +298,21 @@ class RunningMan(diskovery.AnimatedEntity):
 			shader_str=self.presets['shader_str'],
 			mesh_str=self.presets['mesh_str'],
 			textures_str=self.presets['textures_str'],
-			animations_str=self.presets['animations_str']
+			animations_str=self.presets['animations_str'],
+			light_scene="Terrain"
 		)
 
-		self.speed = 0.01
+		self.speed = 20
 		self.running = False
 
 		diskovery.set_camera_target(self)
 
-	def barycentric(self, v1, v2, v3, pos):
-		det = (v2.z - v3.z) * (v1.x - v3.x) + (v3.x - v2.x) * (v1.z - v3.z)
-		l1 = ((v2.z - v3.z) * (pos.x - v3.x) + (v3.x - v2.x) * (pos.y - v3.z)) / det
-		l2 = ((v3.z - v1.z) * (pos.x - v3.x) + (v1.x - v3.x) * (pos.y - v3.z)) / det
-		l3 = 1 - l1 - l2
-		return l1 * v1.y + l2 * v2.y + l3 * v3.y
+	
 
 	def update(self, ind):
 		diskovery.AnimatedEntity.update(self, ind)
-		self.position += self.forward() * -self.speed * diskovery.input("WalkY")
-		self.position += self.left() * self.speed * diskovery.input("WalkX")
+		self.position += self.forward() * -self.speed * diskovery.input("WalkY") * diskovery.frame_time()
+		self.position += self.left() * self.speed * diskovery.input("WalkX") * diskovery.frame_time()
 
 		if diskovery.input("WalkX") == 0 and diskovery.input("WalkY") == 0:
 			self.running = False
@@ -211,39 +324,10 @@ class RunningMan(diskovery.AnimatedEntity):
 		elif not self.running and self.animator.playing():
 			self.animator.stop()
 
-		base = diskovery.entity("land")
+		self.position.y = get_height(self.position.x, self.position.z, diskovery.entity("land"))
+		self.rotation.y += diskovery.input("Rotate") * -self.speed * diskovery.frame_time() * 0.05
 
-		unit_size = (2 * base.size)/base.sub
-
-		dz = self.position.x - (base.position.x - base.size) - unit_size/2
-		dx = self.position.z - (base.position.z - base.size) - unit_size/2
-
-
-		gx = math.floor(dx/(unit_size))
-		gz = math.floor(dz/(unit_size))
-
-		if gx < 0 or gz < 0 or gx > len(base.heights) - 2 or gz > len(base.heights) - 2:
-			self.position.y = base.position.y
-		else:
-			sx = (dx % unit_size) / unit_size
-			sz = (dz % unit_size) / unit_size
-
-			if sx <= 1 - sz:
-				height = self.barycentric(glm.vec3(0, base.heights[gx][gz], 0),
-										  glm.vec3(0, base.heights[gx][gz+1], 1),
-										  glm.vec3(1, base.heights[gx+1][gz], 0),
-										  glm.vec2(sx, sz))
-			else:
-				height = self.barycentric(glm.vec3(1, base.heights[gx+1][gz], 0),
-										  glm.vec3(0, base.heights[gx][gz+1], 1),
-										  glm.vec3(1, base.heights[gx+1][gz+1], 1),
-										  glm.vec2(sx, sz))
-
-			self.position.y = height + base.position.y
-
-		self.rotation.y += diskovery.input("Rotate") * -self.speed
-
-class CubeMan(diskovery.RenderedEntity):
+class Sprite(diskovery.RenderedEntity):
 
 	presets = {
 			"shader_str": "GUI",
@@ -268,3 +352,89 @@ class CubeMan(diskovery.RenderedEntity):
 		dim = diskovery.dimensions()
 		s = ScreenSize(dim[0], dim[1])
 		self.uniforms[1].update(s.get_data(), ind)
+
+class Tree(diskovery.RenderedEntity):
+
+	presets = {
+		"shader_str": "Default",
+		"mesh_str": "Tree",
+		"textures_str": ["Tree"]
+	}
+
+	def __init__(self, position, rotation, scale):
+
+		diskovery.RenderedEntity.__init__(
+			self,
+			position=position,
+			rotation=rotation,
+			scale=scale,
+			shader_str=self.presets['shader_str'],
+			mesh_str=self.presets['mesh_str'],
+			textures_str=self.presets['textures_str'],
+			light_scene="Terrain"
+		)
+		self.position.y = get_height(self.position.x, self.position.z, diskovery.entity("land")) + 0.3
+		
+class Rock(diskovery.RenderedEntity):
+
+	presets = {
+		"shader_str": "Default",
+		"mesh_str": "Rock",
+		"textures_str": ["Boulder"]
+	}
+
+	def __init__(self, position, rotation, scale):
+
+		diskovery.RenderedEntity.__init__(
+			self,
+			position=position,
+			rotation=rotation,
+			scale=scale,
+			shader_str=self.presets['shader_str'],
+			mesh_str=self.presets['mesh_str'],
+			textures_str=self.presets['textures_str'],
+			light_scene="Terrain"
+		)
+		self.position.y = get_height(self.position.x, self.position.z, diskovery.entity("land")) + 0.01
+
+class Plant(diskovery.RenderedEntity):
+
+	presets = {
+		"shader_str": "Default",
+		"mesh_str": "Plant",
+		"textures_str": ["Plant"]
+	}
+
+	def __init__(self, position, rotation, scale):
+
+		diskovery.RenderedEntity.__init__(
+			self,
+			position=position,
+			rotation=rotation,
+			scale=scale,
+			shader_str=self.presets['shader_str'],
+			mesh_str=self.presets['mesh_str'],
+			textures_str=self.presets['textures_str'],
+			light_scene="Terrain"
+		)
+		self.position.y = get_height(self.position.x, self.position.z, diskovery.entity("land")) + 0.01
+
+class Cube(diskovery.RenderedEntity):
+
+	presets = {
+		"shader_str": "Default",
+		"mesh_str": "Cube",
+		"textures_str": ["Cube"]
+	}
+
+	def __init__(self, position, rotation, scale):
+
+		diskovery.RenderedEntity.__init__(
+			self,
+			position=position,
+			rotation=rotation,
+			scale=scale,
+			shader_str=self.presets['shader_str'],
+			mesh_str=self.presets['mesh_str'],
+			textures_str=self.presets['textures_str']
+		)

@@ -3,7 +3,7 @@
 
 const int MAX_LIGHTS = 50;
 
-layout(binding = 0) uniform sampler2D tex;
+layout(binding = 0) uniform sampler2D base;
 
 layout(binding = 2) uniform SceneLighting
 {
@@ -22,8 +22,10 @@ layout(binding = 3) uniform Float {
 	float value;
 } sub;
 
-layout(binding = 4) uniform sampler2D other_tex;
-layout(binding = 5) uniform sampler2D blend;
+layout(binding = 4) uniform sampler2D alt1;
+layout(binding = 5) uniform sampler2D alt2;
+layout(binding = 6) uniform sampler2D alt3;
+layout(binding = 7) uniform sampler2D blend;
 
 float ambient = 0.6;
 
@@ -76,8 +78,20 @@ void main() {
 	}
 
 	vec2 tiled_uv = fragTexCoord * sub.value;
-	vec4 tex_color = texture(tex, tiled_uv) * (1 - texture(blend, fragTexCoord).r);
-	tex_color += texture(other_tex, tiled_uv) * texture(blend, fragTexCoord).r;
+	vec4 tex_color = texture(base, tiled_uv);
+	if(texture(blend, fragTexCoord).r > 0){
+		tex_color *= (1 - texture(blend, fragTexCoord).r);
+		tex_color += texture(alt1, tiled_uv) * texture(blend, fragTexCoord).r;
+	}
+	if(texture(blend, fragTexCoord).g > 0){
+		tex_color *= (1 - texture(blend, fragTexCoord).g);
+		tex_color += texture(alt2, tiled_uv) * texture(blend, fragTexCoord).g;
+	}
+	if(texture(blend, fragTexCoord).b > 0){
+		tex_color *= (1 - texture(blend, fragTexCoord).b);
+		tex_color += texture(alt3, tiled_uv) * texture(blend, fragTexCoord).b;
+	}
+		
 	
     outColor = totalLightingColor * tex_color;
 }

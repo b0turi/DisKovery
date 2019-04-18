@@ -67,6 +67,10 @@ _pipelines = { }
 
 _light_scenes = { }
 
+def frame_time():
+	global _scene
+	return _scene.get_frame_time()
+
 def edit_mode(val):
 	global _editing
 	_editing = val
@@ -537,8 +541,8 @@ class Camera(Entity):
 		self.draw_distance = draw_distance
 		self.aspect_ratio = aspect_ratio
 
-		self.cam_speed = 0.04
-		self.rot_speed = 0.004
+		self.cam_speed = 30
+		self.rot_speed = 10
 
 		self.view_matrix = glm.mat4()
 		self.proj_matrix = glm.mat4()
@@ -568,6 +572,9 @@ class Camera(Entity):
 							glm.rotate(glm.mat4(1.0), self.rotation.y, glm.vec3(0,1,0)) * \
 							glm.translate(glm.mat4(1.0), -self.position)
 
+		if not hasattr(_scene, 'LAST_TIME_VAL'):
+			return
+
 		if self.target != None:
 			self.position = self.target.position + self.target.forward() * 20 + glm.vec3(0, -8, 0)
 			self.rotation = -self.target.rotation
@@ -582,18 +589,18 @@ class Camera(Entity):
 		left.z *= -1
 
 		if not _scene.is_selected():
-			self.position += left * self.cam_speed * input("ObjMoveX") * -0.5
-			self.position += forward * self.cam_speed * input("ObjMoveZ") * -0.5
-			self.position += up * self.cam_speed * input("ObjMoveY") * -0.25
+			self.position += left * self.cam_speed * input("ObjMoveX") * 0.5 * _scene.get_frame_time()
+			self.position += forward * self.cam_speed * input("ObjMoveZ") * 0.5 * _scene.get_frame_time()
+			self.position += up * self.cam_speed * input("ObjMoveY") * 0.25 * _scene.get_frame_time()
 
 		if input("Panning"):
-			self.position += up * self.cam_speed * input("CamX")
-			self.position += left * self.cam_speed * input("CamY")
+			self.position += up * self.cam_speed * input("CamX") * _scene.get_frame_time()
+			self.position += left * self.cam_speed * input("CamY") * _scene.get_frame_time()
 		if input("Rotating"):
-			self.rotation.x -= input("CamRotX") * self.rot_speed
-			self.rotation.y += input("CamRotY") * self.rot_speed
+			self.rotation.x -= input("CamRotX") * self.rot_speed * _scene.get_frame_time()
+			self.rotation.y += input("CamRotY") * self.rot_speed * _scene.get_frame_time()
 
-		self.position += forward * -3 * input("CamZoom")
+		self.position += forward * 3000 * input("CamZoom") * _scene.get_frame_time()
 
 		if input("Select") and _editing:
 			check_selected()
@@ -712,8 +719,6 @@ class RenderedEntity(Entity):
 		for u_type in uniform_types:
 			self.uniforms.append(UniformBuffer(_dk, u_type))
 
-		print(self.textures)
-
 		if len(self.definition) > 0:
 			self.descriptor = Descriptor(
 				_dk,
@@ -802,6 +807,10 @@ class Terrain(RenderedEntity):
 		self.size = size
 		self.sub = int(sub)
 		self.amp = amp
+
+		self.heightmap = heightmap
+		self.name = name
+		self.textures_str = textures_str
 
 		self.img = pygame.image.load(heightmap)
 

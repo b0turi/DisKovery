@@ -5,7 +5,7 @@ import diskovery_scene_manager
 def main():
 	diskovery.init(False)
 
-	diskovery_scene_manager.load_scene("template.dk")
+	diskovery_scene_manager.load_scene("terrain.dk")
 
 	diskovery.run()
 

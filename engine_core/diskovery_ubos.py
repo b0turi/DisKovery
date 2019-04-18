@@ -82,7 +82,7 @@ class MVPMatrix(UniformBufferObject):
 	def get_size():
 		return sizeof(_matrix_type) * 3
 
-MAX_JOINTS = 50
+MAX_JOINTS = 100
 class JointData(UniformBufferObject):
 	def __init__(self):
 		self.joint_data = (_matrix_type * MAX_JOINTS)()

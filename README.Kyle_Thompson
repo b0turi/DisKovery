@@ -1,4 +1,48 @@
 #################################################################################
+									Week 8
+#################################################################################
+
+I guess somehow my updates to the README didn't get added when I pushed last Friday,
+but basically over the course of the past two weeks I've been consolidating the 
+functionality and getting the GUI in better shape so that we can actually have a
+viable product for the demos and presentations at the end of the semester. 
+
+Last week I added camera controls and the ability to move selected objects in the
+editor window, essentially. Created a 3D model for a cursor that indicates when an
+object is selected, like in Unity or Blender. 
+
+The list of files at the bottom includes last week and this week.
+
+It's looking like we're going to be kind of letting testing and documentation go by
+the wayside because Jaafar isn't in the group anymore, but I think we'll still
+be able to get nearly all of the original functionality we described as a result.
+At this point, color picking is finally working (on some GPUs but not others?
+might look into that if there's time) and we're able to select objects based on
+their position in the 3D world and have their properties be displayed in the GUI.
+Next steps will include getting those values to reflect changes real-time, and to
+allow a change of a value in the text boxes on the side to alter the way that
+objects appear in the game itself. In terms of the terrain generation, I've got the
+algorithm for creating a terrain based off of a heightmap implemented, and that's
+probably going to be the last big feature I plan on implementing. Things like 
+particle effects and normal mapping would be nice to have but again because we're
+short a member we're trying to trim down on what we think is reasonable. The last
+big thing I want to make sure we include is rendering text from embedded fonts,
+because games need to have text in order to function. That, and some collision
+detection between entities and terrains so that the player can walk around
+the world. After those two things are implemented, we'll just need to get the UI
+editor in good shape and then the project should be about as done as we'll have it
+by the time week 10 is over.
+
+New/Edited Files:
+- diskovery_entity_manager.py
+- diskovery_entities.py
+- diskovery.py
+- tkinter_stuff/gui_edit.py
+- tkinter_stuff/diskov_win_edit.py
+- editorinput.in
+- diskovery.ico
+
+#################################################################################
 									Week 6
 #################################################################################
 

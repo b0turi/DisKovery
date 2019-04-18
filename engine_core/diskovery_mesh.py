@@ -94,7 +94,7 @@ class Parser(object):
 
 		with open(file, 'r') as f:
 			for line in f:
-				contents = line.split(' ')
+				contents = [x for x in line.split(' ') if x != '' and x != '\n']
 
 				if line[0] == '#':
 					continue
@@ -117,8 +117,22 @@ class Parser(object):
 						 float(contents[3]))
 					)
 				elif line[:2] == 'f ':
-					for i in range(1, 4):
-						for value in contents[i].split('/'):
+					if len(contents) == 4:
+						for i in range(1, 4):
+							for value in contents[i].split('/'):
+								input_list.append(int(value) - 1)
+					elif len(contents) == 5:
+						for value in contents[1].split('/'):
+							input_list.append(int(value) - 1)
+						for value in contents[2].split('/'):
+							input_list.append(int(value) - 1)
+						for value in contents[4].split('/'):
+							input_list.append(int(value) - 1)
+						for value in contents[2].split('/'):
+							input_list.append(int(value) - 1)
+						for value in contents[3].split('/'):
+							input_list.append(int(value) - 1)
+						for value in contents[4].split('/'):
 							input_list.append(int(value) - 1)
 
 		for i in range(0, int(len(input_list)/3)):
@@ -228,7 +242,7 @@ class Parser(object):
 				'id',
 				joints_id
 			).find('Name_array')
-			joint_list = joints_loc.text.split(' ')
+			joint_list = [x for x in ' '.join(joints_loc.text.split('\n')).split(' ') if x != '']
 
 			weights_id = self.get_child_with_attribute(
 				skin.find('vertex_weights'),
@@ -249,22 +263,19 @@ class Parser(object):
 			joint_counts_loc = skin.find('vertex_weights').find('vcount')
 			joint_counts = [int(x) for x in joint_counts_loc.text.split(' ') if x != '']
 
-
 			p = 0
 			skin_values = []
 			skin_data = skin.find('vertex_weights').find('v').text.split(' ')
+
 			for count in joint_counts:
 				skin = VertexSkin()
 				for i in range(0, count):
 					joint = skin_data[p]
 					weight = weights[int(skin_data[p + 1])]
 					p += 2
-					skin.add_effect(float(joint), float(weight))
+					skin.add_effect(int(joint), float(weight))
 				skin.scale(MAX_JOINTS)
 				skin_values.append(skin)
-
-			print(len(skin_values))
-
 
 		normals = []
 		textures = []
@@ -286,8 +297,6 @@ class Parser(object):
 		count = int(pos_data_loc.attrib['count'])
 		pos_data = [x for x in ' '.join(pos_data_loc.text.split('\n')).split(' ') if x != '']
 
-		print(len(pos_data))
-
 		for i in range(0, int(count/3)):
 			x = float(pos_data[i * 3])
 			y = float(pos_data[i * 3 + 1])
@@ -299,8 +308,6 @@ class Parser(object):
 			else:
 				corr = glm.mat4(1.0)
 			vec = corr * vec
-
-
 
 			if rigged:
 				v = VertexLoader(
@@ -370,11 +377,13 @@ class Parser(object):
 		return (vertex_list, index_list)
 
 	# DAE Rig Parsing #
-	def load_joint(self, node, joints, correction, is_root):
+	def load_joint(self, node, joints, correction, is_root, indent):
 
 		name_id = node.attrib['id']
 		index = joints.index(name_id)
+
 		matrix_data = [float(x) for x in node.find('matrix').text.split(' ')]
+
 		matrix = glm.mat4(matrix_data)
 		matrix = glm.transpose(matrix)
 
@@ -388,8 +397,8 @@ class Parser(object):
 		j = Joint(index, name_id, matrix)
 		self.joint_count += 1
 		for child in node.findall('node'):
-			j.children.append(self.load_joint(child, joints, 0, False))
-
+			if child.attrib['id'] in joints:
+				j.children.append(self.load_joint(child, joints, 0, False, ' '+indent))
 		return j
 
 	def load_rig(self, file, joints, correction):
@@ -405,7 +414,7 @@ class Parser(object):
 		if rig == None:
 			rig = root.find('library_visual_scenes').find('visual_scene')
 
-		root_joint = self.load_joint(rig.find('node'), joints, correction, True)
+		root_joint = self.load_joint(rig.find('node'), joints, correction, True, '')
 		return Rig(root_joint, self.joint_count)
 
 	# DAE Animation Parsing #
@@ -413,14 +422,19 @@ class Parser(object):
 		root = xml.parse(file).getroot()
 
 		anim = root.find('library_animations').find('animation')
-		root_joint = self.get_child_with_attribute(
+		root_ptr = self.get_child_with_attribute(
 			root.find('library_visual_scenes').find('visual_scene'),
 			'node',
 			'id',
 			'Armature'
-		).find('node').attrib['id']
+		)
 
-		times = [float(x) for x in anim.find('source').find('float_array').text.split(' ')]
+		if root_ptr != None:
+			root_joint = root_ptr.find('node').attrib['id']
+		else:
+			root_joint = root.find('library_visual_scenes').find('visual_scene').find('node').attrib['id']
+
+		times = [float(x) for x in ' '.join(anim.find('source').find('float_array').text.split('\n')).split(' ') if x != '']
 		duration = times[len(times) - 1]
 
 		keyframes = []
@@ -438,12 +452,12 @@ class Parser(object):
 				'OUTPUT'
 			).attrib['source'][1:]
 
-			transforms = [float(x) for x in self.get_child_with_attribute(
+			transforms = [float(x) for x in ' '.join(self.get_child_with_attribute(
 				joint_node,
 				'source',
 				'id',
 				data_id
-			).find('float_array').text.split(' ')]
+			).find('float_array').text.split('\n')).split(' ') if x != '']
 
 			for i, time in enumerate(times):
 				matrix = glm.mat4(transforms[i*16:(i+1)*16])
@@ -685,15 +699,17 @@ class Rig(object):
 
 		self.root.set_inverse_transform(glm.mat4(1.0))
 
-	def fill_joints(self, head, arr):
+	def fill_joints(self, head, arr, names):
 		arr[head.index] = get_matrix_data(head.anim_transform)
+		names[head.index] = head.name
 		for child in head.children:
-			self.fill_joints(child, arr)
+			self.fill_joints(child, arr, names)
 
 	def get_joint_data(self):
 		matrix_type = (c_float*4)*4
 		joint_data = (matrix_type*self.joint_count)()
-		self.fill_joints(self.root, joint_data)
+		joint_names = [None] * self.joint_count
+		self.fill_joints(self.root, joint_data, joint_names)
 		return joint_data
 
 class JointTransform(object):

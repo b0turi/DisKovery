@@ -299,7 +299,7 @@ class Renderer(object):
 	def __init__(self, dk, samples, src=None, size=None, bg_color=None):
 		self.dk = dk
 
-		self.bg_color = (0.1, 0.2, 0.3) if bg_color is None else bg_color
+		self.bg_color = (0.25, 0.25, 0.25) if bg_color is None else bg_color
 
 		self.color_format = dk.color_format
 		self.depth_format = dk.depth_format

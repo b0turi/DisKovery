@@ -1,0 +1,68 @@
+Template
+Meshes
+cube.obj Cube F
+test.obj Default F
+Textures
+blank.png Blank
+blank.png Cube
+test.png Default
+Shaders
+default.vert default.frag Default
+gui.vert gui.frag GUI
+Camera
+0.0,0.0,2.0 0.0,0.0,0.0 1.047 1000 1.7777777777777777
+LightScenes
+MainLight
+Entities
+E Light lel
+1.5 0.0 0.0
+0.0 0.0 0.0
+0.3 0.0 0.0
+2.0
+100.0
+0.0
+"MainLight"
+E Light lel2
+0.0 -1.5 0.0
+0.0 0.0 0.0
+0.0 0.3 0.0
+2.0
+100.0
+0.0
+"MainLight"
+E Light lel3
+0.0 0.0 1.5
+0.0 0.0 0.0
+0.0 0.0 0.3
+2.0
+100.0
+0.0
+"MainLight"
+E Light lel4
+0.0 -1.5 1.5
+0.0 0.0 0.0
+0.3 0.3 0.0
+2.0
+100.0
+0.0
+"MainLight"
+E Light lel5
+1.5 -1.5 0.0
+0.0 0.0 0.0
+0.3 0.0 0.3
+2.0
+100.0
+0.0
+"MainLight"
+E Light lel6
+1.5 0.0 1.5
+0.0 0.0 0.0
+0.0 0.3 0.3
+2.0
+100.0
+0.0
+"MainLight"
+E Cube c
+0.0 0.0 0.0
+0.0 0.0 0.0
+1.0 1.0 1.0
