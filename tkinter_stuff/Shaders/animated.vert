@@ -1,7 +1,7 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-const int MAX_JOINTS = 50;
+const int MAX_JOINTS = 100;
 const int MAX_WEIGHTS = 3;
 
 layout(binding = 1) uniform MVPMatrix

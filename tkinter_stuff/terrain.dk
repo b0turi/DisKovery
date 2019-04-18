@@ -1,0 +1,62 @@
+Template
+Meshes
+cube.obj Cube F
+test.obj Default F
+tree.obj Tree F
+rock.obj Rock F
+plant.obj Plant F
+model.dae Man T
+Textures
+blank.png Blank
+boulder.jpg Boulder
+test.png Default
+tree.jpg Tree
+character.png Man
+cubemap.png Cube
+grass.jpg Grass
+path.jpg Path
+water.jpg Water
+rock.jpg Rock
+blend_map.png Blend
+plant.png Plant
+Shaders
+default.vert terrain.frag Terrain
+animated.vert default.frag Animated
+default.vert default.frag Default
+gui.vert gui.frag GUI
+Animations
+model.dae Run
+Camera
+0.0,50.0,-10.0 0.0,0.0,0.0 1.047 1000 1.7777777777777777
+LightScenes
+MainLight
+Terrain
+Entities
+E RunningMan sir
+0.0 -50.0 0.0
+0.0 0.0 0.0
+0.8 0.8 0.8
+E Light lel
+-5.0 0.0 -10.0
+0.0 0.0 0.0
+1.0 0.3 0.6
+2.0
+100.0
+0.0
+"MainLight"
+E Light sun
+0.0 0.0 0.0
+0.2 -1.0 0.3
+1.0 0.88 0.8
+1.0
+1.0
+1.0
+"Terrain"
+E Terrain land
+0.0 20.0 0.0
+500.0
+70.0
+120.0
+"heightmap.png"
+"land"
+"Grass","Path","Water","Rock","Blend"

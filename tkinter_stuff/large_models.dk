@@ -1,0 +1,29 @@
+Template
+Meshes
+Running.dae Man T
+cube.obj Cube F
+Textures
+Paladin_diffuse.png Man
+blank.png Blank
+blank.png Cube
+test.png Default
+Shaders
+default.vert default.frag Default
+gui.vert gui.frag GUI
+Camera
+0.0,0.0,2.0 0.0,0.0,0.0 1.047 1000 1.7777777777777777
+LightScenes
+MainLight
+Entities
+E RunningMan run
+0.0 0.0 0.0
+1.5707 0.0 0.0
+0.08 0.08 0.08
+E Light lel2
+0.0 0.0 0.0
+0.0 -1.0 0.0
+1.0 1.0 1.0
+2.0
+100.0
+0.0
+"MainLight"

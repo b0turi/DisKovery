@@ -9,7 +9,7 @@ import tkinter as tk
 
 class Menu_Toolbar:
     
-	def __init__(self, master, width, height, x, y):
+	def __init__(self, master):
 		self.master = master
 		
 		menubar = tk.Menu(self.master)

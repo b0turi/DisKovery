@@ -29,6 +29,9 @@ layout(location = 0) out vec4 outColor;
 
 void main() {
 
+	if (texture(tex, fragTexCoord).a < 0.5)
+		discard;
+
 	vec4 totalLightingColor = vec4(0.0);
 	vec3 unitNormal = normalize(fragNormal);
 
