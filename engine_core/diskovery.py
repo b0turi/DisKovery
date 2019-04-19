@@ -368,8 +368,8 @@ def run(context = None):
 		
 
 		if context != None:
-			context.update_idletasks()
 			context.update()
+			context.update_idletasks()
 			context.update_window(context)
 
 		#for ls in _light_scenes.values():

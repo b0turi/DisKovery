@@ -7,7 +7,6 @@ sys.path.append(os.path.abspath('../engine_core/'))
 import diskovery
 import diskovery_scene_manager
 
-_selected_name = None
 _selected = None
 
 def update_window(self):
@@ -16,15 +15,13 @@ def update_window(self):
 	name, current = diskovery.get_selected()
 
 	if current != None:
-		if _selected != current:
+		if _selected != name:
 
 			self.context_window.fill(diskovery_scene_manager.arguments(name))
-			_selected = current
-			_selected_name = name
+			_selected = name
 		
 	elif current == None and len(self.context_window.props) > 0:
 		_selected = None
-		_selected_name = None
 		self.context_window.fill({ })
 
 	if _selected != None:
@@ -90,10 +87,13 @@ def start_edit(e):
 	e.widget.editing = True
 
 def change_value(e):
-	global _selected_name
-	diskovery_scene_manager.update_attribute(_selected_name, e.widget.index, e.widget.get(), e.widget.tuple_bit)
+	global _selected
+	diskovery_scene_manager.update_attribute(_selected, e.widget.index, e.widget.get(), e.widget.tuple_bit)
+	e.widget.editing = False
+
 
 def stop_edit(e):
+	change_value(e)
 	e.widget.editing = False
 
 class Context:

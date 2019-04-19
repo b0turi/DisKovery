@@ -355,8 +355,8 @@ def update_attribute(entity_name, index, value, tuple_bit = -1):
 
 	if tuple_bit != -1:
 		v = _entity_configs[entity_name][attrib_name]
-		_entity_configs[entity_name][attrib_name] = tuple([value, v[1], v[2]])
-		setattr(diskovery.entity(entity_name), attrib_name, glm.vec3(tuple([value, v[1], v[2]])))
+		setattr(diskovery.entity(entity_name), attrib_name, glm.vec3(float(value), v[1], v[2]))
+		print(getattr(diskovery.entity(entity_name), attrib_name))
 	else:
 		_entity_configs[entity_name][attrib_name] = value
 

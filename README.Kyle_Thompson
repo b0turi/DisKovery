@@ -1,4 +1,34 @@
 #################################################################################
+									Week 9
+#################################################################################
+
+This week went pretty well. Got terrain generation completely implemented and 
+fully integrated with the UI. Worked with Oliver to get our poster done for the
+presentations today, which went pretty well. At this point the main focus is 
+getting the UI working well enough that the demo can be useful and also having a
+product that shows all that the engine is capable of. It's going to be a stressful
+couple of weeks leading up to the final presentations and we're probably going to
+end up working past the 10 weeks and into the reading days to get stuff entirely
+done, not to mention the paper and prepping for the presentation. It's been quite
+the journey getting to this point but I feel like we're in a pretty good spot at
+this point. As long as we can get the UI integrated and working well, which I don't
+forsee being too hard of a task, I think we're gonna be in a good spot.
+
+In terms of other new features I added this week, I got better integration with
+the UI to the point where text fields are updated realtime as objects move around
+in the game and I'm in the process of getting it so that you can edit the values
+in the text boxes and then those changes will be reflected in the UI. 
+
+In terms of key functionality that still needs to be added, there's:
+
+- Saving levels from the UI
+- The Assets and Environment menus of the UI
+- Functionality to allow changing the rotation and scale of entities via the UI
+- GUI objects integrated with the UI, and text rendering along with it
+- The ability to add new entities and new assets via the UI
+
+
+#################################################################################
 									Week 8
 #################################################################################
 
