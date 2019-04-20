@@ -1,0 +1,11 @@
+MainInput
+RS WalkX
+RS WalkY
+BS Spinning
+
+WalkX K_a K_d,K_LEFT K_RIGHT
+WalkY K_s K_w,K_DOWN K_UP
+Spinning K_l
+WalkX K_a K_d,K_LEFT K_RIGHT
+WalkY K_s K_w,K_DOWN K_UP
+Spinning K_l

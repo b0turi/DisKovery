@@ -1,4 +1,17 @@
 /*************************
+	Week 9
+**************************/
+This week, Kyle had been finishing the terrain generation feature of the DisKovery engine. I helped with the 
+construction of our poster for the project, but it was mostly completing one section and adjusting the title.
+The remaining work included skyboxes, some optimization, and gamepad support. Well, besides the UI, of 
+course. My task had been to renovate the current UI to a better one. While the simpler UI we displayed for
+the poster serves its purpose well enough, I need to have each frame in the UI accurately display contents, 
+such as the computer directory and the assets in the environment.
+
+Once again, no progress made this week. I created a separate folder called tkinter_latestGUI and moved in all
+the files that I will edit to renovate the GUI, but nothing else of note was done.
+
+/*************************
 	Week 8
 **************************/
 There was sigificant lack of progress made on my end after finishing the basic form of the context menus. I 
