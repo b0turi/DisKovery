@@ -21,7 +21,7 @@ def main():
 	os.environ['SDL_WINDOWID'] = str(diskov_app.embed.winfo_id())
 
 	diskovery.init(False, {'input': "editorinput.in"})
-	diskovery_scene_manager.edit_scene("terrain.dk")
+	diskovery_scene_manager.edit_scene("terrain.dk", root)
 	diskovery.run(root)
 
 main()	

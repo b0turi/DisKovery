@@ -61,6 +61,9 @@ _meshes = { }
 _textures = { }
 _animations = { }
 
+_sounds = { }
+_fonts = { }
+
 _shaders = { }
 _descriptors = { }
 _pipelines = { }
@@ -162,6 +165,20 @@ def add_shader(vert, frag, name):
 		_descriptors[s.definition] = make_set_layout(_dk, s.definition)
 
 	_pipelines[name] = Pipeline(_dk, s, _descriptors[s.definition], s.animated)
+
+def add_texture(filename, name=None, ):
+	"""
+
+	:param filename: A str of the name of a file stored locally that contains sound data (all common formats accepted)
+	:param name: A given name for the newly created sound. If not defined, the filename without its extension will be the key used in the dictionary
+	"""
+	global _sounds
+
+	t = Texture(_dk, filename)
+	if name is None:
+		_textures[filename[:-4]] = t
+	else:
+		_textures[name] = t
 
 def add_entity(entity, name):
 	"""
@@ -358,39 +375,40 @@ def init(debug_mode=False, config=None, edit_mode=False):
 
 def draw():
 	_scene.draw()
+	_scene.draw()
+	_scene.draw()
 
 def run(context = None):
 	"""Begins the game loop and starts the event handler"""
 	global _dk, _input, _scene, _light_scenes, _running
 
 	while _running:
-
-		
-
 		if context != None:
 			context.update()
 			context.update_idletasks()
 			context.update_window(context)
 
-		#for ls in _light_scenes.values():
-			#ls.update()
-		_scene.draw()
-		_input.update()
-
 		if not _running:
 			return
 
-		for event in pygame.event.get():
-			if event.type == pygame.MOUSEBUTTONDOWN:
-				if event.button == 4:
-					_input.scrollwheel = 1
-				if event.button == 5:
-					_input.scrollwheel = -1
-			if event.type == pygame.QUIT:
-				quit()
-				break
+		if context == None or (context != None and context.embed_focus):
 
+			#for ls in _light_scenes.values():
+			#ls.update()
+			_scene.draw()
+			_input.update()
 
+			for event in pygame.event.get():
+				if event.type == pygame.MOUSEBUTTONDOWN:
+					if event.button == 4:
+						_input.scrollwheel = 1
+					if event.button == 5:
+						_input.scrollwheel = -1
+					if event.button == 1 and context != None:
+						context.lose_focus(context)
+				if event.type == pygame.QUIT:
+					quit()
+					break
 
 def quit():
 	"""Handles necessary Vulkan Destroy methods for all Vulkan components"""
@@ -994,3 +1012,29 @@ def get_selected():
 
 def arguments(entity):
 	return dict(inspect.getmembers(entity.__class__.__init__.__code__))['co_varnames']
+
+def select(entity_name):
+	global _scene, _camera
+
+	e = _scene.entities()[entity_name]
+
+	_scene.deselect()
+	e.selected = True
+
+	# Move the camera to be facing the newly selected entity
+	direction = glm.normalize(e.position - _camera.position)
+	
+	_camera.rotation = glm.vec3(-math.atan(direction.y / glm.length(glm.vec3(direction.x, 0, direction.z))),
+								math.atan2(direction.z, direction.x) + glm.radians(90), 0)
+
+def get_all_assets():
+	global _meshes, _shaders, _animations, _textures
+
+	data = { 'Meshes': _meshes, 'Shaders': _shaders, 'Textures': _textures, 'Animations': _animations}
+
+	return data
+
+def asset_count():
+	global _meshes, _shaders, _animations, _textures
+
+	return (len(_meshes.values()), len(_shaders.values()), len(_textures.values()), len(_animations.values()))

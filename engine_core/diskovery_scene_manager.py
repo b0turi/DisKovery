@@ -1,6 +1,7 @@
 import ast
 import glm
 import inspect
+import pygame
 import random
 import diskovery
 from diskovery import Camera, Entity, RenderedEntity, AnimatedEntity, Light, Terrain
@@ -110,7 +111,7 @@ def configs():
 	global _entity_configs
 	print(_entity_configs)
 
-def edit_scene(filename):
+def edit_scene(filename, context):
 
 	global _entity_configs
 
@@ -334,6 +335,9 @@ def edit_scene(filename):
 
 		#diskovery.entity("sir").selected = True
 
+	context.embed_focus = True
+	rclick = pygame.event.Event(pygame.MOUSEBUTTONDOWN, {'button': 2})
+	pygame.event.post(rclick)
 
 def simplify(attribute):
 	if 'vec3' in str(type(attribute)):
@@ -360,9 +364,12 @@ def update_attribute(entity_name, index, value, tuple_bit = -1):
 	else:
 		_entity_configs[entity_name][attrib_name] = value
 
-
 def update_config(entity, name, attribute):
 	global _entity_configs
 	if name == None:
 		name = entity.name
 	_entity_configs[name][attribute] = simplify(getattr(entity, attribute))
+
+def names():
+	global _entity_configs
+	return _entity_configs.keys()
