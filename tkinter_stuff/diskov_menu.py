@@ -9,39 +9,27 @@ import tkinter as tk
 from tkinter import filedialog
 import diskovery_scene_manager
 
-
-
-
 class Menu_Toolbar:
     
 	def __init__(self, master):
 		self.master = master
 		self.opened = False
 
-		def edit_scene():
-			scene_name = filedialog.askopenfilename(
-							initialdir='.', 
-							title="Scene File", 
-							filetypes=[
-								("DisKovery Scenes (.dk)", "*.dk")
-							])
-			diskovery_scene_manager.edit_scene(scene_name)
-			self.opened = True
-			print("FUCK")
+		self.edit_mode = 0
 
 		menubar = tk.Menu(self.master)
 		m_file = tk.Menu(menubar, tearoff=0)
 		m_file.add_command(label="New")
-		m_file.add_command(label="Open", command=edit_scene)
+		m_file.add_command(label="Open")
 		m_file.add_command(label="Save")
 		m_file.add_separator()
 		m_file.add_command(label="Exit", command=master.destroy) # root.quit
 		menubar.add_cascade(label="File", menu=m_file)
 		
 		m_edit = tk.Menu(menubar, tearoff=0)
-		m_edit.add_command(label="Copy")
-		m_edit.add_command(label="Paste")
-		m_edit.add_command(label="Delete")
+		m_edit.add_command(label="Translate")
+		m_edit.add_command(label="Rotate")
+		m_edit.add_command(label="Scale")
 		m_edit.add_separator()
 		m_edit.add_command(label="Preferences")
 		menubar.add_cascade(label="Edit", menu=m_edit)

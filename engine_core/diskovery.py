@@ -49,6 +49,7 @@ from diskovery_input_manager import InputManager
 
 _running = True
 _editing = False
+_context = None
 
 # Dictionaries and objects wrapped by this module for convenience
 _dk = None
@@ -89,7 +90,7 @@ def clear_environment():
 	_pipelines.clear()
 	_light_scenes.clear()
 
-def add_mesh(data, name=None, animated=False, raw=False):
+def add_mesh(data, name=None, animated=False, raw=False, overwrite=True, rename=None):
 	"""
 	Creates and adds a :class:`~diskovery_mesh.Mesh` to the dictionary
 	of Meshes stored in this module. Has some basic wrapping to ensure
@@ -99,7 +100,7 @@ def add_mesh(data, name=None, animated=False, raw=False):
 	:param filename: A str of the name of a file stored locally that contains 3D object data (either .obj or .dae format)
 	:param name: A given name for the newly created mesh. If not defined, the filename without its extension will be the key used in the dictionary
 	"""
-	global _meshes
+	global _meshes, _scene
 
 	if not animated and not raw:
 		m = Mesh(_dk, data)
@@ -111,9 +112,25 @@ def add_mesh(data, name=None, animated=False, raw=False):
 	if name is None:
 		_meshes[filename[:-4]] = m
 	else:
-		_meshes[name] = m
+		if name in _meshes and overwrite:
+			remove_mesh(name)
+			_meshes[name] = m
+		elif name in _meshes and not overwrite:
+			_meshes["{}-copy".format(name)] = m
+		else:
+			_meshes[name] = m
 
-def add_animation(filename, name=None):
+		if rename != None and rename != name:
+			remove_mesh(rename)
+			_scene.side_effect('mesh', rename, name)
+
+def remove_mesh(name):
+	global _meshes 
+
+	_meshes[name].cleanup()
+	del _meshes[name]
+
+def add_animation(filename, name=None, overwrite=True):
 	global _animations
 
 	a = AnimatedMesh(_dk, filename, True, True).anim
@@ -123,9 +140,17 @@ def add_animation(filename, name=None):
 	if name is None:
 		_animations[filename[:-4]] = a
 	else:
-		_animations[name] = a
+		if name in _animations and overwrite:
+			_animations[name].cleanup()
+			del _animations[name]
 
-def add_texture(filename, name=None):
+			_animations[name] = a
+		elif name in _animations and not overwrite:
+			_animations["{}-copy".format(name)] = a
+		else:
+			_animations[name] = a
+
+def add_texture(filename, name=None, overwrite=True, rename=None):
 	"""
 	Creates and adds a :class:`~diskovery_image.Texture` to the dictionary
 	of Textures stored in this module. Has some basic wrapping to ensure
@@ -141,9 +166,26 @@ def add_texture(filename, name=None):
 	if name is None:
 		_textures[filename[:-4]] = t
 	else:
-		_textures[name] = t
+		if name in _textures and overwrite:
+			remove_texture(name)
+			_textures[name] = t
+			_scene.side_effect('texture', name, name)
+		elif name in _textures and not overwrite:
+			_textures["{}-copy".format(name)] = t
+		else:
+			_textures[name] = t
 
-def add_shader(vert, frag, name):
+		if rename != None and rename != name:
+			remove_texture(rename)
+			_scene.side_effect('texture', rename, name)
+
+def remove_texture(name):
+	global _textures
+
+	_textures[name].cleanup()
+	del _textures[name]
+
+def add_shader(vert, frag, name, overwrite=True, rename=None):
 	"""
 	Creates and adds a :class:`~diskovery_pipeline.Shader` to the dictionary
 	of Shaders stored in this module. Also creates a :class:`~diskovery_pipeline.Pipeline`
@@ -155,30 +197,36 @@ def add_shader(vert, frag, name):
 	:param definition: A tuple of :class:`~diskovery_descriptor.BindingType` objects that reflect the bindings used in the shader
 	:param uniforms: A list of :class:`~diskovery_descriptor.UniformType` objects that reflect the content of each of the above bindings that binds a uniform
 	"""
-	global _shaders
+	global _shaders, _pipelines
 
 	s = Shader([vert, frag])
-
-	_shaders[name] = s
 
 	if s.definition not in _descriptors.keys():
 		_descriptors[s.definition] = make_set_layout(_dk, s.definition)
 
-	_pipelines[name] = Pipeline(_dk, s, _descriptors[s.definition], s.animated)
-
-def add_texture(filename, name=None, ):
-	"""
-
-	:param filename: A str of the name of a file stored locally that contains sound data (all common formats accepted)
-	:param name: A given name for the newly created sound. If not defined, the filename without its extension will be the key used in the dictionary
-	"""
-	global _sounds
-
-	t = Texture(_dk, filename)
-	if name is None:
-		_textures[filename[:-4]] = t
+	if name in _shaders and overwrite:
+		remove_shader(name)
+		_shaders[name] = s
+		_pipelines[name] = Pipeline(_dk, s, _descriptors[s.definition], s.animated)
+	elif name in _shaders and not overwrite:
+		_shaders["{}-copy".format(name)] = s
+		_pipelines["{}-copy".format(name)] = Pipeline(_dk, s, _descriptors[s.definition], s.animated)
 	else:
-		_textures[name] = t
+		_shaders[name] = s
+		_pipelines[name] = Pipeline(_dk, s, _descriptors[s.definition], s.animated)
+
+	if rename != None and rename != name:
+		remove_shader(rename)
+		_scene.side_effect('shader', rename, name)
+
+def remove_shader(name):
+	global _shaders, _pipelines
+
+	_pipelines[name].cleanup()
+
+	del _shaders[name]
+	del _pipelines[name]
+	
 
 def add_entity(entity, name):
 	"""
@@ -230,7 +278,9 @@ def mesh(name):
 	:param name: The name (key) of the :class:`~diskovery_mesh.Mesh`
 	"""
 	global _meshes
-	return _meshes[name]
+	if name in _meshes:
+		return _meshes[name]
+	return None
 
 def texture(name):
 	"""
@@ -249,6 +299,11 @@ def shader(name):
 	"""
 	global _shaders
 	return _shaders[name]
+
+def animation(name):
+
+	global _animations
+	return _animations[name]
 
 def descriptor(definition):
 	"""
@@ -281,7 +336,9 @@ def extent():
 
 def get_class(name):
 	global _classes
-	return _classes[name]
+	if name in _classes:
+		return _classes[name]
+	return None
 
 def input(name):
 	global _input
@@ -378,9 +435,16 @@ def draw():
 	_scene.draw()
 	_scene.draw()
 
+
+def context():
+	global _context
+	return _context
+
 def run(context = None):
 	"""Begins the game loop and starts the event handler"""
-	global _dk, _input, _scene, _light_scenes, _running
+	global _dk, _input, _scene, _light_scenes, _running, _context
+
+	_context = context
 
 	while _running:
 		if context != None:
@@ -404,8 +468,8 @@ def run(context = None):
 						_input.scrollwheel = 1
 					if event.button == 5:
 						_input.scrollwheel = -1
-					if event.button == 1 and context != None:
-						context.lose_focus(context)
+					if event.button == -1 and context != None:
+						print("THIS IS BAD")
 				if event.type == pygame.QUIT:
 					quit()
 					break
@@ -476,6 +540,7 @@ class Entity():
 		self.children = []
 
 	presets = NotImplemented
+	types = [tuple, tuple]
 
 	def world_position(self):
 		"""
@@ -550,6 +615,7 @@ def set_camera_target(entity):
 class Camera(Entity):
 
 	presets = { }
+	types = [tuple, tuple, float, float, float]
 
 	def __init__(self, position, rotation, fov, draw_distance, aspect_ratio):
 		Entity.__init__(self, position, rotation)
@@ -623,12 +689,18 @@ class Camera(Entity):
 		if input("Select") and _editing:
 			check_selected()
 
+		if self.rotation.x < -math.pi / 2:
+			self.rotation.x = -math.pi / 2
+		if self.rotation.x > math.pi / 2:
+			self.rotation.x = math.pi / 2
+
 		if input("Ctrl") and input("Save"):
 			_save_scene("template.dk", "Template")
 
 class Light(Entity):
 
 	presets = { }
+	types = [tuple, tuple, tuple, float, float, float, str]
 
 	def __init__(self, position, direction, tint, intensity, distance, spread, scene):
 		Entity.__init__(self, position, direction)
@@ -641,6 +713,8 @@ class Light(Entity):
 
 		# To make a point light (infinite spread), use a value of -1
 		self.spread = spread
+
+		self.scene = scene
 
 		_light_scenes[scene].lights.append(self)
 
@@ -711,6 +785,9 @@ class RenderedEntity(Entity):
 	"""
 	global _dk
 
+	presets = {}
+	types = [tuple, tuple, tuple, str, str, list, str]
+
 	def __init__(self,
 		position=None,
 		rotation=None,
@@ -723,15 +800,20 @@ class RenderedEntity(Entity):
 
 		self.scale = glm.vec3(scale) if scale != None else glm.vec3(1, 1, 1)
 
+		if light_scene:
+			self.light_scene = light_scene
+
 		self.textures = textures_str if textures_str != None else ["Default"]
 		self.mesh = mesh_str if mesh_str != None else None
 
+		self.fill_descriptor(shader_str, self.textures)
+
+	def fill_descriptor(self, shader_str, textures):
 		self.definition = shader(shader_str).definition if shader_str != None else shader("Default").definition
 		self.pipeline = shader_str
 		self.uniforms = []
 
-		if light_scene:
-			self.light_scene = light_scene
+		self.textures = textures
 
 		uniform_types = shader(shader_str).uniforms
 		for u_type in uniform_types:
@@ -743,7 +825,7 @@ class RenderedEntity(Entity):
 				self.definition,
 				descriptor(self.definition),
 				self.uniforms,
-				[texture(t) for t in self.textures]
+				[texture(t) for t in textures]
 			)
 
 	def update(self, ind):
@@ -813,74 +895,26 @@ class Terrain(RenderedEntity):
 			"shader_str": "Terrain"
 		}
 
+	types = [tuple, float, int, float, str, str, list]
+
 	def __init__(self,
 		position=None,
 		size=None,
-		sub=None,
+		sub_div=None,
 		amp=None,
 		heightmap=None,
 		name=None,
 		textures_str=None):
 		
 		self.size = size
-		self.sub = int(sub)
+		self.sub_div = int(sub_div)
 		self.amp = amp
 
 		self.heightmap = heightmap
 		self.name = name
 		self.textures_str = textures_str
 
-		self.img = pygame.image.load(heightmap)
-
-		self.heights = []
-
-		positions = []
-		normals = []
-		tex_coords = []
-
-		indices = []
-
-		for i in range(0, self.sub):
-			height_row = []
-			for j in range(0, self.sub):
-				positions.append(
-					glm.vec3(
-						j/(self.sub - 1) * size * 2 - size, 
-						self.get_height(i, j),
-						i/(self.sub - 1) * size * 2 - size
-					)
-				)
-
-				height_row.append(self.get_height(i, j))
-
-				# Calculate normal vector
-				hl = self.get_height(i - 1, j)
-				hr = self.get_height(i + 1, j)
-				hd = self.get_height(i, j - 1)
-				hu = self.get_height(i, j + 1)
-
-				normals.append(glm.normalize(glm.vec3(hl - hr, -2, hd - hu)))
-
-				tex_coords.append(glm.vec2(j/self.sub-1, i/self.sub-1))
-			self.heights.append(height_row)
-
-		for gz in range(0, self.sub - 1):
-			for gx in range(0, self.sub - 1):
-				top_left = gz * self.sub + gx
-				top_right = top_left + 1
-				bot_left = (gz + 1) * self.sub + gx
-				bot_right = bot_left + 1
-
-				indices.append(top_left)
-				indices.append(top_right)
-				indices.append(bot_left)
-
-				indices.append(top_right)
-				indices.append(bot_right)
-				indices.append(bot_left)
-
-
-		add_mesh(TerrainMesh(_dk, positions, normals, tex_coords, indices), name, raw=True)
+		self.make_mesh()
 
 		RenderedEntity.__init__(self,
 			position=position,
@@ -896,18 +930,77 @@ class Terrain(RenderedEntity):
 		if x < 0 or x > self.img.get_width()-1 or y < 0 or y > self.img.get_height():
 			return 0
 
-		return -((self.img.get_at(( int(x/self.sub * (self.img.get_width() - 1)),
-								   int(y/self.sub * (self.img.get_height() - 1)))).r / 255
+		return -((self.img.get_at(( int(x/self.sub_div * (self.img.get_width() - 1)),
+								   int(y/self.sub_div * (self.img.get_height() - 1)))).r / 255
 				) * self.amp)
 
 	def update(self, ind):
 		RenderedEntity.update(self, ind)
-		sub_val = Float(self.sub)
+		sub_val = Float(self.sub_div)
 		self.uniforms[2].update(sub_val.get_data(), ind)
 
+	def make_mesh(self):
+		self.img = pygame.image.load(self.heightmap)
 
+		self.heights = []
+
+		positions = []
+		normals = []
+		tex_coords = []
+
+		indices = []
+
+		print(self.sub_div, " WEW")
+
+		self.sub_div = int(self.sub_div)
+
+		for i in range(0, self.sub_div):
+			height_row = []
+			for j in range(0, self.sub_div):
+				positions.append(
+					glm.vec3(
+						j/(self.sub_div - 1) * self.size * 2 - self.size, 
+						self.get_height(i, j),
+						i/(self.sub_div - 1) * self.size * 2 - self.size
+					)
+				)
+
+				height_row.append(self.get_height(i, j))
+
+				# Calculate normal vector
+				hl = self.get_height(i - 1, j)
+				hr = self.get_height(i + 1, j)
+				hd = self.get_height(i, j - 1)
+				hu = self.get_height(i, j + 1)
+
+				normals.append(glm.normalize(glm.vec3(hl - hr, -2, hd - hu)))
+
+				tex_coords.append(glm.vec2(j/self.sub_div-1, i/self.sub_div-1))
+			self.heights.append(height_row)
+
+		for gz in range(0, self.sub_div - 1):
+			for gx in range(0, self.sub_div - 1):
+				top_left = gz * self.sub_div + gx
+				top_right = top_left + 1
+				bot_left = (gz + 1) * self.sub_div + gx
+				bot_right = bot_left + 1
+
+				indices.append(top_left)
+				indices.append(top_right)
+				indices.append(bot_left)
+
+				indices.append(top_right)
+				indices.append(bot_right)
+				indices.append(bot_left)
+
+		print("we made a new mesh!")
+
+		add_mesh(TerrainMesh(_dk, positions, normals, tex_coords, indices), self.name, raw=True)
 
 class AnimatedEntity(RenderedEntity):
+
+	types = [tuple, tuple, tuple, str, str, list, list, str]
+
 	def __init__(self,
 		position=None,
 		rotation=None,
@@ -1013,7 +1106,7 @@ def get_selected():
 def arguments(entity):
 	return dict(inspect.getmembers(entity.__class__.__init__.__code__))['co_varnames']
 
-def select(entity_name):
+def select(entity_name, move_camera = True):
 	global _scene, _camera
 
 	e = _scene.entities()[entity_name]
@@ -1021,11 +1114,16 @@ def select(entity_name):
 	_scene.deselect()
 	e.selected = True
 
-	# Move the camera to be facing the newly selected entity
-	direction = glm.normalize(e.position - _camera.position)
-	
-	_camera.rotation = glm.vec3(-math.atan(direction.y / glm.length(glm.vec3(direction.x, 0, direction.z))),
-								math.atan2(direction.z, direction.x) + glm.radians(90), 0)
+	if move_camera:
+		# Move the camera to be facing the newly selected entity
+		direction = glm.normalize(e.position - _camera.position)
+		
+		_camera.rotation = glm.vec3(-math.atan(direction.y / glm.length(glm.vec3(direction.x, 0, direction.z))),
+									math.atan2(direction.z, direction.x) + glm.radians(90), 0)
+
+def deselect():
+	global _scene
+	_scene.deselect()
 
 def get_all_assets():
 	global _meshes, _shaders, _animations, _textures
@@ -1038,3 +1136,15 @@ def asset_count():
 	global _meshes, _shaders, _animations, _textures
 
 	return (len(_meshes.values()), len(_shaders.values()), len(_textures.values()), len(_animations.values()))
+
+def is_used(asset_type, name):
+	if asset_type == 'Meshes':
+		return _scene.uses_mesh(name)
+	if asset_type == 'Textures':
+		return _scene.uses_texture(name)
+
+def remove_entity(name):
+	global _scene, _light_scenes
+	if hasattr(entity(name), 'scene'):
+		_light_scenes[entity(name).scene].lights.remove(entity(name))
+	_scene.remove_entity(name)

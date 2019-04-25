@@ -457,6 +457,8 @@ class EntityManager(object):
 		ent = _entities[name]
 		ent.cleanup()
 
+		del _entities[name]
+
 		self.refresh()
 
 	def refresh(self):
@@ -731,3 +733,61 @@ class EntityManager(object):
 				return (name, ent)
 
 		return (None, None)
+
+	def side_effect(self, asset, old, new):
+		global _entities
+
+		if asset == 'mesh':
+			for name, ent in _entities.items():
+				if hasattr(ent, asset) and getattr(ent, asset) == old:
+					setattr(ent, asset, new)
+
+		if asset == 'shader':
+			for name, ent in _entities.items():
+				if hasattr(ent, 'pipeline') and getattr(ent, 'pipeline') == old:
+					ent.fill_descriptor(new, ent.textures)
+
+		if asset == 'texture':
+			for name, ent in _entities.items():
+				if hasattr(ent, 'textures') and old in getattr(ent, 'textures'):
+					old_index = getattr(ent, 'textures').index(old)
+					new_textures = getattr(ent, 'textures')
+					new_textures[old_index] = new
+					ent.fill_descriptor(ent.pipeline, new_textures)
+
+	def uses_mesh(self, name):
+		global _entities
+
+		for i, ent in _entities.items():
+			if hasattr(ent, 'mesh') and ent.mesh == name:
+				return True
+
+		return False
+
+	def uses_texture(self, name):
+		global _entities
+
+		for i, ent in _entities.items():
+			if hasattr(ent, 'textures') and name in ent.textures:
+				return True
+
+		return False
+
+	def uses_shader(self, name):
+		global _entities
+
+		for i, ent in _entities.items():
+			if hasattr(ent, 'pipeline') and ent.pipeline == name:
+				return True
+
+		return False
+
+	def uses_animation(self, name):
+		global _entities
+
+		for i, ent in _entities.items():
+			if hasattr(ent, 'animations') and name in ent.animations:
+				return True
+
+		return False
+

@@ -8,6 +8,17 @@ from diskovery import Camera, Entity, RenderedEntity, AnimatedEntity, Light, Ter
 from diskovery_entities import *
 
 _entity_configs = { }
+_shader_configs = { }
+_animation_configs = { }
+_color = 1
+
+class ShaderRep():
+	def __init__(self, vert, frag):
+		self.sources = (vert, frag)
+
+class AnimationRep():
+	def __init__(self, filename):
+		self.filename = filename
 
 def save_scene(filename, scene_name):
 	diskovery._save_scene(filename, scene_name)
@@ -71,7 +82,6 @@ def load_scene(filename):
 						sub_line = f.readline()[:-1]
 
 					cmd = cmd[:-1] + "), \"{}\")".format(args[2])
-					print(cmd)
 					exec(cmd)
 					line = sub_line
 
@@ -107,13 +117,9 @@ def load_scene(filename):
 
 			diskovery.add_entity(p, "plant" + str(p))
 
-def configs():
-	global _entity_configs
-	print(_entity_configs)
-
 def edit_scene(filename, context):
 
-	global _entity_configs
+	global _entity_configs, _color
 
 	diskovery.clear_environment()
 	diskovery.edit_mode(True)
@@ -145,8 +151,6 @@ def edit_scene(filename, context):
 
 		line = f.readline()[:-1]
 
-		color = 1
-
 		while len(filled) < len(func_map):
 			while line and not line in func_map.keys():
 
@@ -163,8 +167,12 @@ def edit_scene(filename, context):
 						else:
 							cmd += "args[{}],".format(i)
 					cmd = cmd[:-1] + ")"
-					if current != 'Shaders' and current != 'Camera':
+					if current != 'Shaders' and current != 'Camera' and current != 'Animations':
 						exec(cmd)
+					if current == 'Shaders':
+						_shader_configs[args[2]] = ShaderRep(args[0], args[1])
+					if current == 'Animations':
+						_animation_configs[args[1]] = AnimationRep(args[0])
 					line = f.readline()[:-1]
 				else:
 					class_type = diskovery.get_class(args[1])
@@ -176,10 +184,10 @@ def edit_scene(filename, context):
 							'scale':		None,
 							'mesh_str': 	None,
 							'textures_str': None,
-							'color':		(color,)
+							'color':		(_color,)
 						}
 
-						color += 1
+						_color += 1
 
 						if 'NotImplementedType' in str(type(class_type.presets)):
 							raise NotImplementedError(
@@ -196,6 +204,7 @@ def edit_scene(filename, context):
 						arg_ptr = 0
 
 						config = {}
+						config['type'] = class_type
 
 						if not issubclass(class_type, RenderedEntity):
 
@@ -288,7 +297,6 @@ def edit_scene(filename, context):
 							cmd += ","
 
 						cmd = cmd[:-1] + "), '{}')".format(args[2])
-						print(cmd)
 						exec(cmd)
 					else:
 
@@ -296,6 +304,7 @@ def edit_scene(filename, context):
 						arg_ptr = 0
 
 						config = {}
+						config['type'] = class_type
 
 						cmd = "diskovery.add_entity(SelectableTerrain("
 
@@ -308,16 +317,18 @@ def edit_scene(filename, context):
 							elif param[0][0] == '\"' and ',' in param[0]:
 								param = [x[1:-1] for x in param[0].split(',')]
 
-							config[class_args[arg_ptr]] = param
+							param = param[0] if len(param) == 1 else param
+
+							config[class_args[arg_ptr]] = param if str(param)[0] != '\"' else param[1:-1]
 							arg_ptr += 1
 
-							cmd += str(param[0]) if len(param) == 1 else str(param)
+							cmd += str(param)
 							cmd += ","
 
 							sub_line = f.readline()[:-1]
 
-						cmd += str(color) + ","
-						color += 1
+						cmd += str(_color) + ","
+						_color += 1
 
 						cmd = cmd[:-1] + "), '{}')".format(args[2])
 						exec(cmd)
@@ -342,34 +353,218 @@ def edit_scene(filename, context):
 def simplify(attribute):
 	if 'vec3' in str(type(attribute)):
 		return tuple(attribute)
+	if 'float' in str(type(attribute)):
+		return float(attribute)
+	if 'int' in str(type(attribute)):
+		return int(attribute)
 
 def arguments(entity_name):
 	global _entity_configs
-	return _entity_configs[entity_name]
+	dict_filter = lambda x, y: dict([(i, x[i]) for i in x if i != y])
+	return dict_filter(_entity_configs[entity_name], 'type')
 
-def update_attribute(entity_name, index, value, tuple_bit = -1):
+def update_attribute(entity_name, index, value, tuple_bit = -1, type_val = None):
 	global _entity_configs
+
+	cast_map = {
+		'string': str,
+		'float': float,
+		'int': int
+	}
+
+	if type_val != None:
+		if type_val != 'list':
+			value = cast_map[type_val](value)
+		else:
+			value = value.split(',')
 
 	attrib_name = None 
 	for i, val in enumerate(_entity_configs[entity_name].keys()):
 		if i == index:
 			attrib_name = val
 
-	print(entity_name, attrib_name)
+	print(attrib_name)
+
+	e = diskovery.entity(entity_name)
 
 	if tuple_bit != -1:
 		v = _entity_configs[entity_name][attrib_name]
-		setattr(diskovery.entity(entity_name), attrib_name, glm.vec3(float(value), v[1], v[2]))
-		print(getattr(diskovery.entity(entity_name), attrib_name))
+		if tuple_bit == 0:
+			setattr(e, attrib_name, glm.vec3(float(value), v[1], v[2]))
+		if tuple_bit == 1:
+			setattr(e, attrib_name, glm.vec3(v[0], float(value), v[2]))
+		if tuple_bit == 2:
+			setattr(e, attrib_name, glm.vec3(v[0], v[1], float(value)))
 	else:
-		_entity_configs[entity_name][attrib_name] = value
+		if hasattr(e, attrib_name):
+			if attrib_name != 'name':
+				setattr(e, attrib_name, value)
+			else:
+				l = getattr(e, attrib_name)
+				l = value
+			if hasattr(e, 'heightmap') and attrib_name != 'position' and attrib_name != 'name':
+				e.make_mesh()
+
+	if hasattr(e, attrib_name):
+		update_config(e, None, attrib_name)
+
+	if e.chi != None:
+		child = diskovery.entity(e.chi)
+		if tuple_bit != -1:
+			v = _entity_configs[entity_name][attrib_name]
+			if tuple_bit == 0:
+				setattr(child, attrib_name, glm.vec3(float(value), v[1], v[2]))
+			if tuple_bit == 1:
+				setattr(child, attrib_name, glm.vec3(v[0], float(value), v[2]))
+			if tuple_bit == 2:
+				setattr(child, attrib_name, glm.vec3(v[0], v[1], float(value)))
+		else:
+			setattr(child, attrib_name, value)
+		update_config(child, entity_name, attrib_name)
 
 def update_config(entity, name, attribute):
 	global _entity_configs
 	if name == None:
 		name = entity.name
+
 	_entity_configs[name][attribute] = simplify(getattr(entity, attribute))
+
+
 
 def names():
 	global _entity_configs
-	return _entity_configs.keys()
+	return [name for name in _entity_configs.keys() if name != 'type']
+
+def get_asset(asset_type, name):
+	asset_map = {
+		"Meshes": diskovery.mesh,
+		"Shaders": diskovery_scene_manager.shader,
+		"Textures": diskovery.texture,
+		"Animations": diskovery_scene_manager.animation
+	}
+
+	return asset_map[asset_type](name)
+
+def get_assets():
+	assets = diskovery.get_all_assets()
+	assets['Shaders'] = _shader_configs
+	assets['Animations'] = _animation_configs
+
+	return assets
+
+def asset_count():
+	counts = diskovery.asset_count()
+	counts = (counts[0], len(_shader_configs.keys()), counts[2], len(_animation_configs.keys()))
+	return counts
+
+def add_shader(vert, frag, name, overwrite, rename):
+	global _shader_configs
+
+	s = ShaderRep(vert, frag)
+
+	if name in _shader_configs and overwrite:
+		del _shader_configs[name]
+		_shader_configs[name] = s
+	elif name in _shader_configs and not overwrite:
+		_shader_configs["{}-copy".format(name)] = s
+	else:
+		_shader_configs[name] = s
+
+	if rename != None and rename != name:
+		del _shader_configs[rename]
+
+def remove_shader(name):
+	global _shader_configs
+
+	del _shader_configs[name]
+
+def shader(name):
+	global _shader_configs
+
+	return _shader_configs[name]
+
+def add_animation(filename, name, overwrite, rename):
+	global _shader_configs
+
+	a = AnimationRep(filename)
+
+	if name in _animation_configs and overwrite:
+		del _animation_configs[name]
+		_animation_configs[name] = a
+	elif name in _animation_configs and not overwrite:
+		_animation_configs["{}-copy".format(name)] = a
+	else:
+		_animation_configs[name] = a
+
+	if rename != None and rename != name:
+		del _animation_configs[rename]
+
+def remove_animation(name):
+	global _animation_configs
+
+	del _animation_configs[name]
+
+def animation(name):
+	global _animation_configs
+
+	return _animation_configs[name]
+
+def is_used(asset_type, name):
+	if asset_type == 'Meshes' or asset_type == 'Textures':
+		return diskovery.is_used(asset_type, name)
+	else:
+		if asset_type == 'Shaders':
+			for i, config in _entity_configs.items():
+				dest = config
+				if 'shader_str' not in dest:
+					dest = config['type'].presets
+
+				if 'shader_str' not in dest:
+					continue
+
+				if dest['shader_str'] == name:
+					return True
+
+			return False
+
+		if asset_type == 'Animations':
+			for i, config in _entity_configs.items():
+				dest = config
+				if 'animations_str' not in dest:
+					dest = config['type'].presets
+
+				if 'animations_str' not in dest:
+					continue
+
+				if name in dest['animations_str']:
+					return True
+			return False
+
+def color():
+	global _color
+	_color += 1
+	return _color - 1
+
+def add_config(config, name):
+	global _entity_configs
+
+	type_list = config['type'].types
+
+	for i, val in enumerate(config.keys()):
+		if i == 0:
+			continue
+		if type_list[i-1] == tuple and 'tuple' not in str(type(config[val])):
+			config[val] = tuple([float(x) for x in config[val][1:-1].split(',') if x != ''])
+		if type_list[i-1] == float and 'float' not in str(type(config[val])):
+			config[val] = float(config[val])
+		if type_list[i-1] == int and 'int' not in str(type(config[val])):
+			config[val] = int(config[val])
+		if type_list[i-1] == list:
+			config[val] = config[val].split(',')
+
+	_entity_configs[name] = config
+
+def remove_config(name):
+	global _entity_configs
+
+	del _entity_configs[name]

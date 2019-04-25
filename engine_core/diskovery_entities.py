@@ -70,21 +70,25 @@ class SelectableEntity(diskovery.RenderedEntity):
 			diskovery.entity("Cursor").position = self.position
 			diskovery.entity("Cursor").rotation = self.rotation
 
-			self.position += self.left() * self.speed * diskovery.input("ObjMoveX") * diskovery.frame_time()
-			self.position += -self.forward() * self.speed * diskovery.input("ObjMoveZ")* diskovery.frame_time()
-			self.position += -self.up() * self.speed * diskovery.input("ObjMoveY")* diskovery.frame_time()
+			manip_param = self.position
+
+			manip_param += self.left() * self.speed * diskovery.input("ObjMoveX") * diskovery.frame_time()
+			manip_param += -self.forward() * self.speed * diskovery.input("ObjMoveZ")* diskovery.frame_time()
+			manip_param += -self.up() * self.speed * diskovery.input("ObjMoveY")* diskovery.frame_time()
 
 			if self.chi != None:
 				diskovery.entity(self.chi).position = self.position
 				diskovery.entity(self.chi).rotation = self.rotation
 			
 			diskovery_scene_manager.update_config(self, self.name, 'position')
+			#diskovery_scene_manager.update_config(self, self.name, 'rotation')
+			#diskovery_scene_manager.update_config(self, self.name, 'scale')
 
 class SelectableTerrain(diskovery.Terrain):
 	def __init__(self, 
 		position=None,
 		size=None,
-		sub=None,
+		sub_div=None,
 		amp=None,
 		heightmap=None,
 		name=None,
@@ -98,7 +102,7 @@ class SelectableTerrain(diskovery.Terrain):
 			self,
 			position=position,
 			size=size,
-			sub=sub,
+			sub_div=sub_div,
 			amp=amp,
 			heightmap=heightmap,
 			name=name,
@@ -136,7 +140,7 @@ class SelectableTerrain(diskovery.Terrain):
 		col = Color(self.color)
 		self.uniforms[5].update(col.get_data(), ind)
 
-		sub = Float(self.sub)
+		sub = Float(self.sub_div)
 		self.uniforms[6].update(sub.get_data(), ind)
 
 		if self.selected:
@@ -251,7 +255,7 @@ def barycentric(v1, v2, v3, pos):
 		return l1 * v1.y + l2 * v2.y + l3 * v3.y
 
 def get_height(x, z, terrain):
-	unit_size = (2 * terrain.size)/terrain.sub
+	unit_size = (2 * terrain.size)/terrain.sub_div
 
 	dz = x - (terrain.position.x - terrain.size) - unit_size/2
 	dx = z - (terrain.position.z - terrain.size) - unit_size/2
@@ -287,6 +291,8 @@ class RunningMan(diskovery.AnimatedEntity):
 			"textures_str": ["Man"],
 			"animations_str": ["Run"]
 		}
+
+	types = [tuple, tuple, tuple]
 
 	def __init__(self, position, rotation, scale):
 
@@ -331,11 +337,12 @@ class Sprite(diskovery.RenderedEntity):
 
 	presets = {
 			"shader_str": "GUI",
-			"mesh_str": "Default",
-			"textures_str": ["Default"]
+			"mesh_str": "Default"
 		}
 
-	def __init__(self, position, rotation, scale):
+	types = [tuple, tuple, tuple, list]
+
+	def __init__(self, position, rotation, scale, textures_str):
 
 		diskovery.RenderedEntity.__init__(
 			self,
@@ -344,7 +351,7 @@ class Sprite(diskovery.RenderedEntity):
 			scale=scale,
 			shader_str=self.presets['shader_str'],
 			mesh_str=self.presets['mesh_str'],
-			textures_str=self.presets['textures_str']
+			textures_str=textures_str
 		)
 
 	def update(self, ind):
@@ -360,6 +367,8 @@ class Tree(diskovery.RenderedEntity):
 		"mesh_str": "Tree",
 		"textures_str": ["Tree"]
 	}
+
+	types = [tuple, tuple, tuple]
 
 	def __init__(self, position, rotation, scale):
 
@@ -383,6 +392,8 @@ class Rock(diskovery.RenderedEntity):
 		"textures_str": ["Boulder"]
 	}
 
+	types = [tuple, tuple, tuple]
+
 	def __init__(self, position, rotation, scale):
 
 		diskovery.RenderedEntity.__init__(
@@ -405,6 +416,8 @@ class Plant(diskovery.RenderedEntity):
 		"textures_str": ["Plant"]
 	}
 
+	types = [tuple, tuple, tuple]
+
 	def __init__(self, position, rotation, scale):
 
 		diskovery.RenderedEntity.__init__(
@@ -426,6 +439,8 @@ class Cube(diskovery.RenderedEntity):
 		"mesh_str": "Cube",
 		"textures_str": ["Cube"]
 	}
+
+	types = [tuple, tuple, tuple]
 
 	def __init__(self, position, rotation, scale):
 
