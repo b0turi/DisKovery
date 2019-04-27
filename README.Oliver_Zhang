@@ -1,4 +1,19 @@
 /*************************
+	Week 10
+**************************/
+I was asked by Kyle to research a way to use the py2exe package to convert any games we produce into 
+executables and set it as an option in the UI's menu. Unfortunately, I haven't made much progress since
+the package has software limitations: py2exe will outright fail to work past Python 3.4. So I had to work
+around it by installing the older Python version and tried practicing with test files (hello.py and setup.py
+in the tkinter_latestGUI folder). The produced executable is in the dist folder in the same directory.
+Time, however, is running out, and we both have other assignments that will divert our attention before the 
+due date. Kyle will not be able to dedicate much time until after Monday. Unfortunately, I am in a similar 
+situation with other assignments.
+
+As a result, a lot of the time this weekend and next week before the presentation and demo on Friday will 
+be spent on finishing our report, but I will try to get the "build executable" function working before then.
+
+/*************************
 	Week 9
 **************************/
 This week, Kyle had been finishing the terrain generation feature of the DisKovery engine. I helped with the 
