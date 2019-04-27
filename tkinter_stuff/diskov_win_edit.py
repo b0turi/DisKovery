@@ -19,7 +19,7 @@ _root = None
 
 def update_window(self):
 	global _selected
-	
+
 	self.directory_window.update(diskovery_scene_manager.names())
 
 	name, current = diskovery.get_selected()
@@ -33,7 +33,7 @@ def update_window(self):
 		if _selected != name:
 			self.context_window.fill(diskovery_scene_manager.arguments(name))
 			_selected = name
-		
+
 	elif current == None and len(self.context_window.props) > 0:
 		_selected = None
 		self.context_window.fill({ })
@@ -61,6 +61,17 @@ def lose_embed():
 	global _root
 	_root.embed_focus = False
 
+
+menu_select = False
+def check_menu_select(e):
+	global _root, menu_select
+	if e.y < 50 and not menu_select:
+		menu_select = True
+		_root.embed_focus = False
+	elif e.y >= 50 and menu_select:
+		menu_select = False
+		_root.embed_focus = True
+
 class Display:
 
 	def callback(self):
@@ -72,19 +83,19 @@ class Display:
 		_root = master
 
 		master.wm_state('zoomed')
-		master.iconbitmap("diskovery.ico")	
+		master.iconbitmap("diskovery.ico")
 		master.protocol("WM_DELETE_WINDOW", self.callback)
 
 		self.master = master
 		self.endfunc = endfunc
-		
+
 		self.width, self.height = (master.winfo_screenwidth(), master.winfo_screenheight())
 
 		self.x = 0
 		self.y = 0
 
 		self.master.title('DisKovery Engine v0.01')
-		
+
 		dir_frame = tk.Frame(master, width = self.width * 0.12, height = self.height)
 		self.dir = Directory(dir_frame, self.width)
 		dir_frame.pack(fill=BOTH, side=LEFT, expand=False)
@@ -107,6 +118,8 @@ class Display:
 
 		self.dir.asset_update(diskovery.get_all_assets())
 
+		master.bind("<Motion>", check_menu_select)
+
 def deselect(e):
 	if hasattr(e, 'widget'):
 		e.widget.selection_clear(0, END)
@@ -127,7 +140,7 @@ def select(e):
 			break
 
 	diskovery.select(new_name)
-	
+
 	force_click(960,540, False)
 	force_click(960,540)
 
@@ -166,8 +179,8 @@ def file_entry(parent, label, title, type_desc, types, row_num, default=None):
 		entry.delete(0, 'end')
 		entry.insert(0, filedialog.askopenfilename(
 			parent=parent,
-			initialdir='.', 
-			title=title, 
+			initialdir='.',
+			title=title,
 			filetypes=[
 				(type_desc, types)
 			]))
@@ -196,8 +209,8 @@ def string_entry(parent, label, row_num, default=None):
 	return e
 
 def mesh_form(parent, popup, action, data=None, base_name=None):
-	file = file_entry(parent, 
-		"Filename:", "Mesh Filename", 
+	file = file_entry(parent,
+		"Filename:", "Mesh Filename",
 		"3D Models (.obj or .dae)", "*.obj;*.dae", 1,
 		None if data == None else data[0]
 	)
@@ -215,9 +228,9 @@ def mesh_form(parent, popup, action, data=None, base_name=None):
 	def add_mesh(e):
 		global _root
 		diskovery.add_mesh(
-			file.get(), 
-			name.get(), 
-			animated.get(), 
+			file.get(),
+			name.get(),
+			animated.get(),
 			False,
 			(action != 'Add'),
 			base_name
@@ -232,14 +245,14 @@ def mesh_form(parent, popup, action, data=None, base_name=None):
 	add_button.grid(row=4, column=1)
 
 def shader_form(parent, popup, action, data=None, base_name=None):
-	vert = file_entry(parent, 
-		"Vertex Shader:", "Vertex Shader Filename", 
+	vert = file_entry(parent,
+		"Vertex Shader:", "Vertex Shader Filename",
 		"GLSL Vertex Shaders (.vert, .glsl)", "*.vert;*.glsl", 1,
 		None if data == None else data[0]
 	)
 
-	frag = file_entry(parent, 
-		"Fragment Shader:", "Fragment Shader Filename", 
+	frag = file_entry(parent,
+		"Fragment Shader:", "Fragment Shader Filename",
 		"GLSL Fragment Shaders (.frag, .glsl)", "*.frag;*.glsl", 2,
 		None if data == None else data[1]
 	)
@@ -250,8 +263,8 @@ def shader_form(parent, popup, action, data=None, base_name=None):
 	def add_shader(e):
 		global _root
 		diskovery_scene_manager.add_shader(
-			os.path.basename(vert.get()), 
-			os.path.basename(frag.get()), 
+			os.path.basename(vert.get()),
+			os.path.basename(frag.get()),
 			name.get(),
 			(action != 'Add'),
 			base_name
@@ -265,8 +278,8 @@ def shader_form(parent, popup, action, data=None, base_name=None):
 	add_button.grid(row=4, column=1)
 
 def texture_form(parent, popup, action, data=None, base_name=None):
-	file = file_entry(parent, 
-		"Filename:", "Image Filename", 
+	file = file_entry(parent,
+		"Filename:", "Image Filename",
 		"Image Files", "*.png;*.jpg;*.gif;*.bmp;*.tiff", 1,
 		None if data == None else data[0]
 	)
@@ -277,7 +290,7 @@ def texture_form(parent, popup, action, data=None, base_name=None):
 	def add_texture(e):
 		global _root
 		diskovery.add_texture(
-			file.get(), 
+			file.get(),
 			name.get(),
 			(action != 'Add'),
 			base_name
@@ -292,8 +305,8 @@ def texture_form(parent, popup, action, data=None, base_name=None):
 	add_button.grid(row=4, column=1)
 
 def animation_form(parent, popup, action, data=None, base_name=None):
-	file = file_entry(parent, 
-		"Filename:", "Animation Filename", 
+	file = file_entry(parent,
+		"Filename:", "Animation Filename",
 		"COLLADA Files (.dae)", "*.dae", 1,
 		None if data == None else data[0]
 	)
@@ -304,7 +317,7 @@ def animation_form(parent, popup, action, data=None, base_name=None):
 	def add_animation(e):
 		global _root
 		diskovery_scene_manager.add_animation(
-			file.get(), 
+			file.get(),
 			name.get(),
 			(action != 'Add'),
 			base_name
@@ -432,7 +445,7 @@ def class_form(parent, restore, action, class_name):
 class Directory:
 
 	def new_asset(self, e):
-		global _root 
+		global _root
 
 		popup = Tk()
 
@@ -456,10 +469,10 @@ class Directory:
 		contents.columnconfigure(2, weight=1, pad=5)
 
 		def fill_for_type(e):
-			
+
 			for widget in contents.winfo_children():
 				widget.destroy()
-			
+
 			form_map = {
 				"Mesh": mesh_form,
 				"Shader": shader_form,
@@ -482,7 +495,7 @@ class Directory:
 		contents.pack(side=TOP, fill=BOTH, expand=True, pady=15)
 
 	def edit_asset(self, e):
-		global _root 
+		global _root
 
 		item = self.assets.focus()
 		item_type = self.assets.parent(item)
@@ -621,7 +634,7 @@ class Directory:
 
 	def __init__(self, master, width):
 		self.master = master
-		
+
 		self.open_states = {'Meshes': False, 'Shaders': False, 'Textures': False, 'Animations': False}
 
 		self.assets_label = tk.Label(self.master, text="Assets", font=("Arial", 12))
@@ -699,7 +712,7 @@ def start_edit(e):
 def stop_edit(e):
 	global _selected, _root
 	e.widget.editing = False
-	
+
 	if e.type == EventType.KeyPress:
 		if hasattr(e.widget, 'tuple_bit'):
 			diskovery_scene_manager.update_attribute(_selected, e.widget.index, e.widget.get(), e.widget.tuple_bit)
@@ -728,8 +741,8 @@ class Context:
 	def __init__(self, master, width, root):
 		self.master = master
 
-		self.context_label = tk.Label(self.master, 
-			text="Object Properties", 
+		self.context_label = tk.Label(self.master,
+			text="Object Properties",
 			font=("Arial", 12))
 		self.context_label.pack()
 
@@ -799,7 +812,7 @@ class Context:
 
 		self.title = tk.Label(prop, text=name, anchor=W)
 		self.title.grid(row=1, column=0, sticky=E)
-		
+
 		x = [0,1]
 		x_val = DoubleVar()
 		x[0] = tk.Label(prop, text="X")
@@ -817,7 +830,7 @@ class Context:
 		setattr(x[1], 'index', num)
 		setattr(x[1], 'tuple_bit', 0)
 
-		
+
 		y = [0,1]
 		y_val = DoubleVar()
 		y[0] = tk.Label(prop, text="Y")
@@ -835,7 +848,7 @@ class Context:
 		setattr(y[1], 'index', num)
 		setattr(y[1], 'tuple_bit', 1)
 
-		
+
 		z = [0,1]
 		z_val = DoubleVar()
 		z[0] = tk.Label(prop, text="Z")
@@ -856,14 +869,14 @@ class Context:
 		prop.pack()
 
 		self.props.append(prop)
-		
-	
+
+
 	def string_prop(self, name, data, num):
-		
+
 		prop = tk.Frame(self.properties)
 		self.title = tk.Label(prop, text=name, anchor=W)
 		self.title.grid(row=0, column=0, sticky=E)
-		
+
 		str_val = StringVar()
 		value = tk.Entry(prop, bd = 1, width = 10, textvariable=str_val)
 		value.bind("<Button-1>", start_edit)
@@ -884,11 +897,11 @@ class Context:
 		self.props.append(prop)
 
 	def float_prop(self, name, data, num):
-		
+
 		prop = tk.Frame(self.properties)
 		self.title = tk.Label(prop, text=name, anchor=W)
 		self.title.grid(row=0, column=0, sticky=E)
-		
+
 		dbl_val = DoubleVar()
 		value = tk.Entry(prop, bd = 1, width = 10, textvariable=dbl_val)
 		value.bind("<Button-1>", start_edit)
@@ -909,11 +922,11 @@ class Context:
 		self.props.append(prop)
 
 	def int_prop(self, name, data, num):
-		
+
 		prop = tk.Frame(self.properties)
 		self.title = tk.Label(prop, text=name, anchor=W)
 		self.title.grid(row=0, column=0, sticky=E)
-		
+
 		int_val = IntVar()
 		value = tk.Entry(prop, bd = 1, width = 10, textvariable=int_val)
 		value.bind("<Button-1>", start_edit)
@@ -932,30 +945,30 @@ class Context:
 		setattr(value, 'type_val', 'int')
 
 		self.props.append(prop)
-	
+
 	def bool_prop(self, master):
 		self.master = master
 		self.title = tk.Label(self.master, text = "Additional Features", font = ("bold"))
 		self.title.pack(side = TOP)
-		
+
 		self.btnCtnr = tk.Frame(self.master)
 		self.btnCtnr.pack(side = RIGHT, fill = Y)
-		
+
 		self.condition = tk.Label(self.master, text = "Lighted: ")
 		self.condition.pack(anchor = W)
 		self.rb = tk.Radiobutton(self.btnCtnr)
 		self.rb.pack(anchor = W)
-		
+
 		self.condition_1 = tk.Label(self.master, text = "Colored: ")
 		self.condition_1.pack(anchor = W)
 		self.rb_1 = tk.Radiobutton(self.btnCtnr)
 		self.rb_1.pack(anchor = W)
-	
+
 	def list_prop(self, name, data, num):
 		prop = tk.Frame(self.properties)
 		self.title = tk.Label(prop, text=name, anchor=W)
 		self.title.grid(row=0, column=0, sticky=E)
-		
+
 		str_val = StringVar()
 		value = tk.Entry(prop, bd = 1, width = 10, textvariable=str_val)
 		value.bind("<Button-1>", start_edit)
@@ -974,4 +987,3 @@ class Context:
 		setattr(value, 'type_val', 'list')
 
 		self.props.append(prop)
-	

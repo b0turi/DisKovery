@@ -1,10 +1,55 @@
 #################################################################################
+									Week 10
+#################################################################################
+
+Well, here we are. The engine is basicallly working at this point. There's still
+more I want to do before we present, but the main things I'd be adding in the
+week between then and now would be for our demo, as we're trying to make a small
+game using the engine to showcase all its features and I might try to add a few
+more features so the demo looks more impressive.
+
+In terms of what I worked on this week, I spent a lot of time getting the UI
+fully integrated, and now users are able to use all the menus within the UI to
+edit the game scene. The work for this week was split primarily between:
+- diskov_win_edit.py
+- diskov_menu.py
+- diskovery_scene_manager.py
+- diskovery.py
+
+I definitely want to try to clean up our code a bit more in the coming days,
+just so that if you guys want to actually read through it it's a lot more clear
+what we're actually using and how it all works together because a good chunk
+of the files we have right now are duplicates or not being used. Testing and
+documentation have also definitely not been as big as they should have been
+along the way during development, so I'm going to try to make sure we get those
+included before the presentations on Friday. It's been a wild ride trying to
+manage such an ambitious project with only 2 people, but I'm definitely happy
+with the result.
+
+
+I sunk probably 200+ hours into this project over the course of this
+semester. From the start, our idea was ambitious, and Soumya warned us. Jaafar
+withdrew around Week 5 of development having not completed any of his tasks.
+The fact that we got as far as we did is only because I sacrificed so much of
+my time to work on this project. Though Oliver clearly didn't match my
+contributions in terms of volume of code written, I don't think he should be
+faulted for that. I was lucky enough to have a light enough workload this
+semester outside of this class that I could devote nearly all the time I spent
+on ANY homework whatsoever working on this project. Oliver didn't have that
+luxury. I know our project appears very one-sided and in all honesty, it was,
+but it wasn't because Oliver wasn't willing to step up and do his part. After
+Jaafar withdrew I basically took it upon myself to work on everything he was
+supposed to do rather than splitting it equally with Oliver, and as a result a
+lot of what he was supposed to be working on couldn't be fully realized because
+I was too busy juggling the other parts and not reaching out to him for help.
+
+#################################################################################
 									Week 9
 #################################################################################
 
-This week went pretty well. Got terrain generation completely implemented and 
+This week went pretty well. Got terrain generation completely implemented and
 fully integrated with the UI. Worked with Oliver to get our poster done for the
-presentations today, which went pretty well. At this point the main focus is 
+presentations today, which went pretty well. At this point the main focus is
 getting the UI working well enough that the demo can be useful and also having a
 product that shows all that the engine is capable of. It's going to be a stressful
 couple of weeks leading up to the final presentations and we're probably going to
@@ -17,7 +62,7 @@ forsee being too hard of a task, I think we're gonna be in a good spot.
 In terms of other new features I added this week, I got better integration with
 the UI to the point where text fields are updated realtime as objects move around
 in the game and I'm in the process of getting it so that you can edit the values
-in the text boxes and then those changes will be reflected in the UI. 
+in the text boxes and then those changes will be reflected in the UI.
 
 In terms of key functionality that still needs to be added, there's:
 
@@ -33,13 +78,13 @@ In terms of key functionality that still needs to be added, there's:
 #################################################################################
 
 I guess somehow my updates to the README didn't get added when I pushed last Friday,
-but basically over the course of the past two weeks I've been consolidating the 
+but basically over the course of the past two weeks I've been consolidating the
 functionality and getting the GUI in better shape so that we can actually have a
-viable product for the demos and presentations at the end of the semester. 
+viable product for the demos and presentations at the end of the semester.
 
 Last week I added camera controls and the ability to move selected objects in the
 editor window, essentially. Created a 3D model for a cursor that indicates when an
-object is selected, like in Unity or Blender. 
+object is selected, like in Unity or Blender.
 
 The list of files at the bottom includes last week and this week.
 
@@ -53,7 +98,7 @@ Next steps will include getting those values to reflect changes real-time, and t
 allow a change of a value in the text boxes on the side to alter the way that
 objects appear in the game itself. In terms of the terrain generation, I've got the
 algorithm for creating a terrain based off of a heightmap implemented, and that's
-probably going to be the last big feature I plan on implementing. Things like 
+probably going to be the last big feature I plan on implementing. Things like
 particle effects and normal mapping would be nice to have but again because we're
 short a member we're trying to trim down on what we think is reasonable. The last
 big thing I want to make sure we include is rendering text from embedded fonts,

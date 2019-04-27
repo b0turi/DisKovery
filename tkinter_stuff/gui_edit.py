@@ -10,13 +10,13 @@ import sys
 sys.path.append(os.path.abspath('../engine_core/'))
 import diskovery
 import diskovery_scene_manager
-import pygame 
+import pygame
 
 root = tk.Tk()
 def main():
 	diskov_app = dw.Display(root, diskovery.quit)
-	diskov_menu = dm.Menu_Toolbar(root)
-	
+	diskov_menu = dm.Menu_Toolbar(root, diskov_app)
+
 	root.update()
 	os.environ['SDL_WINDOWID'] = str(diskov_app.embed.winfo_id())
 
@@ -24,7 +24,7 @@ def main():
 	diskovery_scene_manager.edit_scene("terrain.dk", root)
 	diskovery.run(root)
 
-main()	
+main()
 
 """
 end
