@@ -125,7 +125,7 @@ def add_mesh(data, name=None, animated=False, raw=False, overwrite=True, rename=
 			_scene.side_effect('mesh', rename, name)
 
 def remove_mesh(name):
-	global _meshes 
+	global _meshes
 
 	_meshes[name].cleanup()
 	del _meshes[name]
@@ -226,7 +226,7 @@ def remove_shader(name):
 
 	del _shaders[name]
 	del _pipelines[name]
-	
+
 
 def add_entity(entity, name):
 	"""
@@ -890,7 +890,7 @@ class RenderedEntity(Entity):
 			self.descriptor.cleanup()
 
 class Terrain(RenderedEntity):
-	
+
 	presets = {
 			"shader_str": "Terrain"
 		}
@@ -905,7 +905,7 @@ class Terrain(RenderedEntity):
 		heightmap=None,
 		name=None,
 		textures_str=None):
-		
+
 		self.size = size
 		self.sub_div = int(sub_div)
 		self.amp = amp
@@ -950,8 +950,6 @@ class Terrain(RenderedEntity):
 
 		indices = []
 
-		print(self.sub_div, " WEW")
-
 		self.sub_div = int(self.sub_div)
 
 		for i in range(0, self.sub_div):
@@ -959,7 +957,7 @@ class Terrain(RenderedEntity):
 			for j in range(0, self.sub_div):
 				positions.append(
 					glm.vec3(
-						j/(self.sub_div - 1) * self.size * 2 - self.size, 
+						j/(self.sub_div - 1) * self.size * 2 - self.size,
 						self.get_height(i, j),
 						i/(self.sub_div - 1) * self.size * 2 - self.size
 					)
@@ -992,8 +990,6 @@ class Terrain(RenderedEntity):
 				indices.append(top_right)
 				indices.append(bot_right)
 				indices.append(bot_left)
-
-		print("we made a new mesh!")
 
 		add_mesh(TerrainMesh(_dk, positions, normals, tex_coords, indices), self.name, raw=True)
 
@@ -1117,7 +1113,7 @@ def select(entity_name, move_camera = True):
 	if move_camera:
 		# Move the camera to be facing the newly selected entity
 		direction = glm.normalize(e.position - _camera.position)
-		
+
 		_camera.rotation = glm.vec3(-math.atan(direction.y / glm.length(glm.vec3(direction.x, 0, direction.z))),
 									math.atan2(direction.z, direction.x) + glm.radians(90), 0)
 

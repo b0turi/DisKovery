@@ -3,7 +3,7 @@ import diskovery
 import diskovery_scene_manager
 
 def main():
-	diskovery.init(False)
+	diskovery.init(False, {'fullscreen':True})
 
 	diskovery_scene_manager.load_scene("terrain.dk")
 

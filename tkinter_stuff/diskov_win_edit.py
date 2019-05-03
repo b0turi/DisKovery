@@ -118,7 +118,7 @@ class Display:
 
 		self.dir.asset_update(diskovery.get_all_assets())
 
-		master.bind("<Motion>", check_menu_select)
+		#master.bind("<Motion>", check_menu_select)
 
 def deselect(e):
 	if hasattr(e, 'widget'):
@@ -671,7 +671,6 @@ class Directory:
 		self.env_label.pack()
 		self.env = tk.Listbox(self.master, selectmode=SINGLE)
 		self.env.pack(fill=BOTH, expand=True)
-		self.env.insert(0, "Hello world!qwer")
 		self.env.bind('<<ListboxSelect>>', select)
 
 		env_menu = Frame(self.master)

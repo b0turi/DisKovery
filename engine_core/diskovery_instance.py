@@ -417,7 +417,7 @@ class DkInstance(object):
 		self.create_instance(debug)
 		if debug:
 			self.create_debugger()
-		self.window = Window(self, {'width': 1280, 'height': 720, 'resizable': True})
+		self.window = Window(self, {'fullscreen': True})
 		self.surface = self.window.surface
 		self.pick_gpu()
 		self.depth_format = self._find_depth_format()
